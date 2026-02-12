@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contract Tracker</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+      function initGoogleAPI() {
+        gapi.load('client:auth2', () => {
+          gapi.client.init({
+            apiKey: 'AIzaSyBvOkBwN6Ca6FNtsSLlirxuFHYY7-rMnwE',
+            clientId: '123456789-abcdefghijklmnop.apps.googleusercontent.com',
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+            scope: 'https://www.googleapis.com/auth/calendar'
+          });
+        });
+      }
+      
+      if (typeof gapi !== 'undefined') {
+        initGoogleAPI();
+      } else {
+        window.addEventListener('load', initGoogleAPI);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
