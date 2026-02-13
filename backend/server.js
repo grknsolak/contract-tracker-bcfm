@@ -258,9 +258,10 @@ app.post("/api/customers/sync", auth, async (req, res) => {
 app.get("/api/contracts", auth, async (req, res) => {
   const result = await pool.query('SELECT * FROM contracts ORDER BY created_at DESC');
   const rows = result.rows;
-  // parse scope
   rows.forEach((r) => {
     try { r.scope = r.scope ? (typeof r.scope === 'string' ? JSON.parse(r.scope) : r.scope) : []; } catch { r.scope = []; }
+    r.startDate = r.start_date;
+    r.endDate = r.end_date;
   });
   res.json(rows);
 });
