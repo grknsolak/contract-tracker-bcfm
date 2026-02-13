@@ -825,7 +825,7 @@ export default function ContractApp({ user, setUser }) {
                               style={{width: '100%', margin: 0}}
                             />
                           ) : (
-                            c.startDate ? new Date(c.startDate).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(c.startDate).getFullYear().toString().slice(-2) : '-'
+                            c.startDate ? new Date(c.startDate).toLocaleDateString('tr-TR') : '-'
                           )}
                         </td>
                         <td>
@@ -838,7 +838,7 @@ export default function ContractApp({ user, setUser }) {
                               style={{width: '100%', margin: 0}}
                             />
                           ) : (
-                            c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(c.endDate).getFullYear().toString().slice(-2) : '-'
+                            c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR') : '-'
                           )}
                         </td>
                         <td className="right">
