@@ -94,14 +94,28 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS contracts (
       id SERIAL PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
-      duration VARCHAR(50) NOT NULL,           -- '6ay' | '1yil'
-      scope JSONB,                             -- JSON array
+      duration VARCHAR(50) NOT NULL,
+      scope JSONB,
       team VARCHAR(255) NOT NULL,
       owner VARCHAR(255) NOT NULL,
       start_date DATE NOT NULL,
       end_date DATE NOT NULL,
+      notes TEXT,
       created_at TIMESTAMP NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS contract_history (
+      id SERIAL PRIMARY KEY,
+      customer_id INTEGER NOT NULL,
+      contract_name VARCHAR(255) NOT NULL,
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      amount DECIMAL(15,2),
+      currency VARCHAR(10) DEFAULT 'TL',
+      notes TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS revenue_history (
@@ -252,20 +266,19 @@ app.get("/api/contracts", auth, async (req, res) => {
 });
 
 app.post("/api/contracts", auth, async (req, res) => {
-  const { name, duration, scope, team, owner, startDate, endDate } = req.body || {};
+  const { name, duration, scope, team, owner, startDate, endDate, notes } = req.body || {};
   if (!name || !duration || !team || !owner || !startDate || !endDate)
     return res.status(400).json({ error: "Missing required fields" });
 
   const s = Array.isArray(scope) ? scope : [];
   try {
     const result = await pool.query(
-      'INSERT INTO contracts (name, duration, scope, team, owner, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [name.trim(), duration, JSON.stringify(s), team, owner, startDate, endDate]
+      'INSERT INTO contracts (name, duration, scope, team, owner, start_date, end_date, notes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [name.trim(), duration, JSON.stringify(s), team, owner, startDate, endDate, notes || '']
     );
     const row = result.rows[0];
     row.scope = s;
     
-    // Send Slack notification
     await sendSlackNotification(createContractMessage('Yeni Sözleşme Oluşturuldu', row));
     
     res.json(row);
@@ -276,12 +289,12 @@ app.post("/api/contracts", auth, async (req, res) => {
 });
 
 app.put("/api/contracts/:id", auth, async (req, res) => {
-  const { name, duration, scope, team, owner, startDate, endDate } = req.body || {};
+  const { name, duration, scope, team, owner, startDate, endDate, notes } = req.body || {};
   const s = Array.isArray(scope) ? scope : [];
   try {
     const result = await pool.query(
-      'UPDATE contracts SET name=$1, duration=$2, scope=$3, team=$4, owner=$5, start_date=$6, end_date=$7, updated_at=NOW() WHERE id=$8 RETURNING *',
-      [name, duration, JSON.stringify(s), team, owner, startDate, endDate, req.params.id]
+      'UPDATE contracts SET name=$1, duration=$2, scope=$3, team=$4, owner=$5, start_date=$6, end_date=$7, notes=$8, updated_at=NOW() WHERE id=$9 RETURNING *',
+      [name, duration, JSON.stringify(s), team, owner, startDate, endDate, notes || '', req.params.id]
     );
     const row = result.rows[0];
     if (row) row.scope = s;
@@ -372,6 +385,42 @@ app.get("/api/analytics/contracts-by-team", auth, async (req, res) => {
     ORDER BY count DESC
   `);
   res.json(result.rows);
+});
+
+// ---- contract history
+app.get("/api/contract-history/:customerId", auth, async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM contract_history WHERE customer_id = $1 ORDER BY start_date DESC',
+    [req.params.customerId]
+  );
+  res.json(result.rows);
+});
+
+app.post("/api/contract-history", auth, async (req, res) => {
+  const { customerId, contractName, startDate, endDate, amount, currency, notes } = req.body || {};
+  if (!customerId || !contractName || !startDate || !endDate) 
+    return res.status(400).json({ error: "Missing required fields" });
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO contract_history (customer_id, contract_name, start_date, end_date, amount, currency, notes) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [customerId, contractName, startDate, endDate, amount || 0, currency || 'TL', notes || '']
+    );
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error('Contract history creation error:', e);
+    res.status(500).json({ error: "Failed to create contract history" });
+  }
+});
+
+app.delete("/api/contract-history/:id", auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM contract_history WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Contract history deletion error:', e);
+    res.status(500).json({ error: "Failed to delete contract history" });
+  }
 });
 
 app.get("/api/analytics/contracts-by-duration", auth, async (req, res) => {
