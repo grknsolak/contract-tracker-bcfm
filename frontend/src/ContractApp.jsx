@@ -528,7 +528,15 @@ export default function ContractApp({ user, setUser }) {
   };
 
   const soon30 = useMemo(()=> contracts.filter(c => {
-    const d=daysLeft(c.endDate); return d!=null && d<=30;
+    const d=daysLeft(c.endDate); return d!=null && d<=30 && d>0;
+  }), [contracts]);
+
+  const soon60 = useMemo(()=> contracts.filter(c => {
+    const d=daysLeft(c.endDate); return d!=null && d>30 && d<=60;
+  }), [contracts]);
+
+  const expired = useMemo(()=> contracts.filter(c => {
+    const d=daysLeft(c.endDate); return d!=null && d<=0 && d>=-15;
   }), [contracts]);
 
   const customersWithRevenue = useMemo(() => {
@@ -549,10 +557,6 @@ export default function ContractApp({ user, setUser }) {
       };
     });
   }, [customers, revenueHistory]);
-
-  const soon60 = useMemo(()=> contracts.filter(c => {
-    const d=daysLeft(c.endDate); return d!=null && d>30 && d<=60;
-  }), [contracts]);
 
   return (
     <div className="screen">
@@ -715,6 +719,23 @@ export default function ContractApp({ user, setUser }) {
                   ))
                 )}
               </div>
+            </div>
+
+            <div className="card glass float" style={{marginTop: '1rem'}}>
+              <div className="alert-header">
+                <div className="badge" style={{background: '#dc2626'}}>❌ SÜRESİ GEÇMİŞ</div>
+                <div className="badge" style={{background: '#991b1b', color: 'white'}}>SON 15 GÜN</div>
+              </div>
+              {expired.length===0 ? (
+                <div className="muted">Kayıt yok</div>
+              ) : (
+                expired.map(c=>(
+                  <div key={c.id} className="row-pill">
+                    <span>{c.name}</span>
+                    <span className="pill" style={{background: '#dc2626', color: 'white'}}>{Math.abs(daysLeft(c.endDate))} gün önce</span>
+                  </div>
+                ))
+              )}
             </div>
 
             <section className="card glass">
