@@ -424,6 +424,42 @@ app.delete("/api/contract-history/:id", auth, async (req, res) => {
   }
 });
 
+// ---- contract notes
+app.get("/api/contract-notes/:contractId", auth, async (req, res) => {
+  const result = await pool.query(
+    'SELECT * FROM contract_notes WHERE contract_id = $1 ORDER BY created_at DESC',
+    [req.params.contractId]
+  );
+  res.json(result.rows);
+});
+
+app.post("/api/contract-notes", auth, async (req, res) => {
+  const { contractId, note } = req.body || {};
+  if (!contractId || !note) 
+    return res.status(400).json({ error: "Missing required fields" });
+  
+  try {
+    const result = await pool.query(
+      'INSERT INTO contract_notes (contract_id, note, created_by) VALUES ($1, $2, $3) RETURNING *',
+      [contractId, note, req.user.email]
+    );
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error('Contract note creation error:', e);
+    res.status(500).json({ error: "Failed to create note" });
+  }
+});
+
+app.delete("/api/contract-notes/:id", auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM contract_notes WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Contract note deletion error:', e);
+    res.status(500).json({ error: "Failed to delete note" });
+  }
+});
+
 app.get("/api/analytics/contracts-by-duration", auth, async (req, res) => {
   const result = await pool.query(`
     SELECT duration, COUNT(*) as count 

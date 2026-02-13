@@ -28,3 +28,7 @@ export const removeRevenue = (id) => api.delete(`/api/revenue-history/${id}`);
 export const listContractHistory = (customerId) => api.get(`/api/contract-history/${customerId}`);
 export const addContractHistory = (data) => api.post('/api/contract-history', data);
 export const removeContractHistory = (id) => api.delete(`/api/contract-history/${id}`);
+
+export const listContractNotes = (contractId) => api.get(`/api/contract-notes/${contractId}`);
+export const addContractNote = (data) => api.post('/api/contract-notes', data);
+export const removeContractNote = (id) => api.delete(`/api/contract-notes/${id}`);
