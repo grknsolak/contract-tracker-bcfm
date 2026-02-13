@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { logout, listContracts, addContract, updateContract, removeContract, listCustomers, addCustomer, updateCustomer, removeCustomer, syncCustomers, listRevenue, addRevenue, updateRevenue, removeRevenue } from "./api";
+import { logout, listContracts, addContract, updateContract, removeContract, listCustomers, addCustomer, updateCustomer, removeCustomer, syncCustomers, listRevenue, addRevenue, updateRevenue, removeRevenue, listContractNotes, addContractNote, removeContractNote } from "./api";
 
 const TEAM_OPTIONS  = ["Team B", "Mando", "Solid", "Şisecam", "Atlas", "Apex"];
 const OWNER_OPTIONS = ["Onur", "Döndü", "Gürkan"];
@@ -69,6 +69,9 @@ export default function ContractApp({ user, setUser }) {
   const [selectedQuarter, setSelectedQuarter] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerContracts, setCustomerContracts] = useState([]);
+  const [selectedContractForNotes, setSelectedContractForNotes] = useState(null);
+  const [contractNotes, setContractNotes] = useState([]);
+  const [newNote, setNewNote] = useState('');
   const [revenueHistory, setRevenueHistory] = useState([]);
   const [revenueForm, setRevenueForm] = useState({
     customerId: '', year: new Date().getFullYear(), amount: '', currency: 'TL'
@@ -374,6 +377,43 @@ export default function ContractApp({ user, setUser }) {
       await removeCustomer(id);
       setCustomers(prev => prev.filter(c => c.id !== id));
     }catch(e){ alert("Silme hatası"); }
+  };
+
+  const openContractNotes = async (contract) => {
+    setSelectedContractForNotes(contract);
+    try {
+      const { data } = await listContractNotes(contract.id);
+      setContractNotes(data || []);
+    } catch (e) {
+      console.error('Not yükleme hatası:', e);
+    }
+  };
+
+  const closeContractNotes = () => {
+    setSelectedContractForNotes(null);
+    setContractNotes([]);
+    setNewNote('');
+  };
+
+  const saveNote = async () => {
+    if (!newNote.trim()) return;
+    try {
+      const { data } = await addContractNote({ contractId: selectedContractForNotes.id, note: newNote.trim() });
+      setContractNotes(prev => [data, ...prev]);
+      setNewNote('');
+    } catch (e) {
+      alert('Not eklenirken hata oluştu');
+    }
+  };
+
+  const deleteNote = async (id) => {
+    if (!confirm('Notu silmek istiyor musunuz?')) return;
+    try {
+      await removeContractNote(id);
+      setContractNotes(prev => prev.filter(n => n.id !== id));
+    } catch (e) {
+      alert('Not silinirken hata oluştu');
+    }
   };
 
   const openCustomerDetail = (customer) => {
@@ -883,6 +923,13 @@ export default function ContractApp({ user, setUser }) {
                             <>
                               <button 
                                 className="btn glow-on-hover" 
+                                onClick={() => openContractNotes(c)}
+                                style={{marginRight: '8px'}}
+                              >
+                                📝 Notlar
+                              </button>
+                              <button 
+                                className="btn glow-on-hover" 
                                 onClick={() => startContractEdit(c)}
                                 style={{marginRight: '8px'}}
                               >
@@ -1353,6 +1400,64 @@ export default function ContractApp({ user, setUser }) {
           </>
         )}
       </main>
+
+      {/* Sözleşme Notları Popup */}
+      {selectedContractForNotes && (
+        <div className="modal-overlay" onClick={closeContractNotes}>
+          <div className="customer-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📝 {selectedContractForNotes.name} - Notlar</h2>
+              <button className="close-btn" onClick={closeContractNotes}>✕</button>
+            </div>
+            
+            <div style={{marginBottom: '1rem'}}>
+              <textarea
+                className="interactive"
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder="Not ekleyin..."
+                rows="3"
+                style={{width: '100%', marginBottom: '0.5rem'}}
+              />
+              <button className="btn primary" onClick={saveNote}>
+                💾 Not Ekle
+              </button>
+            </div>
+
+            <div className="contracts-section">
+              <h3 style={{marginBottom: '1rem', color: 'var(--primary)'}}>📋 Not Geçmişi</h3>
+              {contractNotes.length === 0 ? (
+                <div className="no-contracts">
+                  💭 Henüz not eklenmemiş
+                </div>
+              ) : (
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                  {contractNotes.map(note => (
+                    <div key={note.id} className="card glass" style={{padding: '1rem'}}>
+                      <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
+                        <div>
+                          <strong>👤 {note.created_by || note.createdBy}</strong>
+                          <span style={{marginLeft: '1rem', color: 'var(--muted)', fontSize: '0.875rem'}}>
+                            📅 {new Date(note.created_at || note.createdAt).toLocaleString('tr-TR')}
+                          </span>
+                        </div>
+                        <button 
+                          className="btn danger ghost" 
+                          onClick={() => deleteNote(note.id)}
+                          style={{padding: '4px 8px', fontSize: '12px'}}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      <div style={{whiteSpace: 'pre-wrap'}}>{note.note}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Gelir Detay Popup */}
       {selectedRevenueCustomer && (
