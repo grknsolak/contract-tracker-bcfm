@@ -96,6 +96,8 @@ async function initDB() {
       name VARCHAR(255) NOT NULL,
       duration VARCHAR(50) NOT NULL,           -- '6ay' | '1yil'
       scope JSONB,                             -- JSON array
+      scope_prices JSONB NOT NULL DEFAULT '{}'::jsonb,
+      renewal_status VARCHAR(100),
       team VARCHAR(255) NOT NULL,
       owner VARCHAR(255) NOT NULL,
       start_date DATE NOT NULL,
@@ -114,8 +116,28 @@ async function initDB() {
       FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS customer_notes (
+      id SERIAL PRIMARY KEY,
+      customer_id INTEGER NOT NULL,
+      note TEXT NOT NULL,
+      created_by_email VARCHAR(255),
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_contracts_end_date ON contracts(end_date);
     CREATE INDEX IF NOT EXISTS idx_revenue_history_customer_year ON revenue_history(customer_id, year);
+    CREATE INDEX IF NOT EXISTS idx_customer_notes_customer_created ON customer_notes(customer_id, created_at DESC);
+  `);
+
+  // Backward compatible migration
+  await pool.query(`
+    ALTER TABLE contracts
+    ADD COLUMN IF NOT EXISTS scope_prices JSONB NOT NULL DEFAULT '{}'::jsonb;
+  `);
+  await pool.query(`
+    ALTER TABLE contracts
+    ADD COLUMN IF NOT EXISTS renewal_status VARCHAR(100);
   `);
 
   // Check if users exist and create default admin
@@ -240,6 +262,34 @@ app.post("/api/customers/sync", auth, async (req, res) => {
   }
 });
 
+app.get("/api/customers/:id/notes", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM customer_notes WHERE customer_id = $1 ORDER BY created_at DESC',
+      [req.params.id]
+    );
+    res.json(result.rows);
+  } catch (e) {
+    console.error('Customer notes list error:', e);
+    res.status(500).json({ error: "Failed to list customer notes" });
+  }
+});
+
+app.post("/api/customers/:id/notes", auth, async (req, res) => {
+  const note = (req.body?.note || "").trim();
+  if (!note) return res.status(400).json({ error: "Note cannot be empty" });
+  try {
+    const result = await pool.query(
+      'INSERT INTO customer_notes (customer_id, note, created_by_email) VALUES ($1, $2, $3) RETURNING *',
+      [req.params.id, note, req.user?.email || null]
+    );
+    res.json(result.rows[0]);
+  } catch (e) {
+    console.error('Customer note create error:', e);
+    res.status(500).json({ error: "Failed to add customer note" });
+  }
+});
+
 // ---- contracts
 app.get("/api/contracts", auth, async (req, res) => {
   const result = await pool.query('SELECT * FROM contracts ORDER BY created_at DESC');
@@ -247,23 +297,42 @@ app.get("/api/contracts", auth, async (req, res) => {
   // parse scope
   rows.forEach((r) => {
     try { r.scope = r.scope ? (typeof r.scope === 'string' ? JSON.parse(r.scope) : r.scope) : []; } catch { r.scope = []; }
+    try {
+      r.scopePrices = r.scope_prices
+        ? (typeof r.scope_prices === 'string' ? JSON.parse(r.scope_prices) : r.scope_prices)
+        : {};
+    } catch {
+      r.scopePrices = {};
+    }
+    r.renewalStatus = r.renewal_status || null;
   });
   res.json(rows);
 });
 
 app.post("/api/contracts", auth, async (req, res) => {
-  const { name, duration, scope, team, owner, startDate, endDate } = req.body || {};
+  const { name, duration, scope, scopePrices, renewalStatus, team, owner, startDate, endDate } = req.body || {};
   if (!name || !duration || !team || !owner || !startDate || !endDate)
     return res.status(400).json({ error: "Missing required fields" });
 
   const s = Array.isArray(scope) ? scope : [];
+  const rawPrices = scopePrices && typeof scopePrices === 'object' ? scopePrices : {};
+  const filteredPrices = {};
+  for (const key of s) {
+    const value = rawPrices[key];
+    if (value !== undefined && value !== null && value !== '') {
+      const n = Number(value);
+      if (!Number.isNaN(n) && n >= 0) filteredPrices[key] = n;
+    }
+  }
   try {
     const result = await pool.query(
-      'INSERT INTO contracts (name, duration, scope, team, owner, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
-      [name.trim(), duration, JSON.stringify(s), team, owner, startDate, endDate]
+      'INSERT INTO contracts (name, duration, scope, scope_prices, renewal_status, team, owner, start_date, end_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [name.trim(), duration, JSON.stringify(s), JSON.stringify(filteredPrices), renewalStatus || 'Takipte', team, owner, startDate, endDate]
     );
     const row = result.rows[0];
     row.scope = s;
+    row.scopePrices = filteredPrices;
+    row.renewalStatus = row.renewal_status || renewalStatus || 'Takipte';
     
     // Send Slack notification
     await sendSlackNotification(createContractMessage('Yeni Sözleşme Oluşturuldu', row));
@@ -276,15 +345,37 @@ app.post("/api/contracts", auth, async (req, res) => {
 });
 
 app.put("/api/contracts/:id", auth, async (req, res) => {
-  const { name, duration, scope, team, owner, startDate, endDate } = req.body || {};
+  const { name, duration, scope, scopePrices, renewalStatus, team, owner, startDate, endDate } = req.body || {};
   const s = Array.isArray(scope) ? scope : [];
+  let scopePricesPayload = null;
+  if (scopePrices && typeof scopePrices === 'object') {
+    const filteredPrices = {};
+    for (const key of s) {
+      const value = scopePrices[key];
+      if (value !== undefined && value !== null && value !== '') {
+        const n = Number(value);
+        if (!Number.isNaN(n) && n >= 0) filteredPrices[key] = n;
+      }
+    }
+    scopePricesPayload = JSON.stringify(filteredPrices);
+  }
   try {
     const result = await pool.query(
-      'UPDATE contracts SET name=$1, duration=$2, scope=$3, team=$4, owner=$5, start_date=$6, end_date=$7, updated_at=NOW() WHERE id=$8 RETURNING *',
-      [name, duration, JSON.stringify(s), team, owner, startDate, endDate, req.params.id]
+      'UPDATE contracts SET name=$1, duration=$2, scope=$3, scope_prices=COALESCE($4, scope_prices), renewal_status=COALESCE($5, renewal_status), team=$6, owner=$7, start_date=$8, end_date=$9, updated_at=NOW() WHERE id=$10 RETURNING *',
+      [name, duration, JSON.stringify(s), scopePricesPayload, renewalStatus ?? null, team, owner, startDate, endDate, req.params.id]
     );
     const row = result.rows[0];
-    if (row) row.scope = s;
+    if (row) {
+      row.scope = s;
+      try {
+        row.scopePrices = row.scope_prices
+          ? (typeof row.scope_prices === 'string' ? JSON.parse(row.scope_prices) : row.scope_prices)
+          : {};
+      } catch {
+        row.scopePrices = {};
+      }
+      row.renewalStatus = row.renewal_status || null;
+    }
     res.json(row);
   } catch (e) {
     console.error('Contract update error:', e);

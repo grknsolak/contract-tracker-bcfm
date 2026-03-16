@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ci-postgres
+    environment:
+      POSTGRES_DB: contract_intelligence
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - ci_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ci_user -d contract_intelligence"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./apps/api
+    container_name: ci-api
+    environment:
+      NODE_ENV: production
+      PORT: 3100
+      FRONT_ORIGIN: http://localhost:5174
+      JWT_SECRET: ci-dev-secret
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: contract_intelligence
+      DB_USER: ci_user
+      DB_PASSWORD: ci_password
+      FILE_STORAGE_PATH: /app/storage/contracts
+      ALERT_WINDOW_DAYS: "30,60,90"
+    ports:
+      - "3100:3100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ci_contract_docs:/app/storage/contracts
+    restart: unless-stopped
+
+volumes:
+  ci_postgres_data:
+  ci_contract_docs:

@@ -1,22 +1,48 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { logout, listContracts, addContract, updateContract, removeContract, listCustomers, addCustomer, updateCustomer, removeCustomer, syncCustomers, listRevenue, addRevenue, updateRevenue, removeRevenue } from "./api";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { logout, listContracts, addContract, updateContract, removeContract, listCustomers, addCustomer, updateCustomer, removeCustomer, syncCustomers, listCustomerNotes, addCustomerNote, listRevenue, addRevenue, updateRevenue, removeRevenue } from "./api";
 
 const TEAM_OPTIONS  = ["Team B", "Mando", "Solid", "Şisecam", "Atlas", "Apex"];
 const OWNER_OPTIONS = ["Onur", "Döndü", "Gürkan"];
 const SCOPE_OPTIONS = ["DaaS", "7/24 Support", "Man/Day", "Outsource", "Fix", "AWS Resell"];
+const RENEWAL_STATUS_OPTIONS = ["Takipte", "Teklif Gönderildi", "Müzakerede", "İmza Aşamasında", "Yenilendi", "Kaybedildi"];
 
 function formatDateISO(d){ return new Date(d).toISOString().slice(0,10); }
 function addMonths(dateStr, m){ const d=new Date(dateStr); d.setMonth(d.getMonth()+m); return formatDateISO(d); }
 function addYears(dateStr, y){ const d=new Date(dateStr); d.setFullYear(d.getFullYear()+y); return formatDateISO(d); }
+function addDays(dateStr, n){ const d=new Date(dateStr); d.setDate(d.getDate()+n); return formatDateISO(d); }
 function daysLeft(endISO){ if(!endISO) return null; const end=new Date(endISO), today=new Date(); return Math.ceil((end - today)/(1000*60*60*24)); }
+function getStartDate(c){ return c?.startDate || c?.start_date || ""; }
+function getEndDate(c){ return c?.endDate || c?.end_date || ""; }
+function getRenewalStatus(c){ return c?.renewalStatus || c?.renewal_status || "Takipte"; }
+function customerStatusLamp(status){ return status === "Aktif" ? "🟢" : "🔴"; }
+function formatDateTR(iso){
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return "";
+  return `${d}.${m}.${y}`;
+}
+function formatMoney(n){
+  const v = Number(n);
+  if (Number.isNaN(v)) return null;
+  return v.toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+function normalizeMoneyInput(value){
+  return String(value ?? "").replace(/[^\d]/g, "");
+}
+function formatMoneyInput(value){
+  const digits = normalizeMoneyInput(value);
+  if (!digits) return "";
+  return Number(digits).toLocaleString('tr-TR');
+}
 
 export default function ContractApp({ user, setUser }) {
-  const [tab, setTab] = useState("list");
+  const [tab, setTab] = useState("new");
   const [contracts, setContracts] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const startDatePickerRef = useRef(null);
 
   const [form, setForm] = useState({
-    name:"", duration:"", scope:[], team:"", owner:"", startDate:"", endDate:""
+    name:"", duration:"", scope:[], scopePrices:{}, team:"", owner:"", startDate:"", endDate:""
   });
 
   useEffect(()=>{
@@ -43,11 +69,31 @@ export default function ContractApp({ user, setUser }) {
       alert("Lütfen zorunlu alanları doldurun."); return;
     }
     try{
+      const contractCustomerName = form.name.trim();
       const { data } = await addContract(form);
       setContracts(prev=>[data, ...prev]);
-      setForm({name:"",duration:"",scope:[],team:"",owner:"",startDate:"",endDate:""});
-      setTab("list");
+      try {
+        await addCustomer(contractCustomerName, "Aktif");
+        const customerRes = await listCustomers();
+        setCustomers(customerRes.data || []);
+      } catch (e) {
+        if (e?.response?.status !== 409) {
+          console.error("Müşteri senkronizasyon hatası:", e);
+        }
+      }
+      setForm({name:"",duration:"",scope:[],scopePrices:{},team:"",owner:"",startDate:"",endDate:""});
+      setTab("contracts");
     }catch(e){ alert(e?.response?.data?.error || "Kayıt başarısız"); }
+  };
+
+  const openStartDatePicker = () => {
+    const picker = startDatePickerRef.current;
+    if (!picker) return;
+    if (typeof picker.showPicker === "function") {
+      picker.showPicker();
+      return;
+    }
+    picker.focus();
   };
 
   const deleteContract = async (id)=>{
@@ -69,6 +115,13 @@ export default function ContractApp({ user, setUser }) {
   const [selectedQuarter, setSelectedQuarter] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerContracts, setCustomerContracts] = useState([]);
+  const [notesModalCustomer, setNotesModalCustomer] = useState(null);
+  const [customerNotes, setCustomerNotes] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [noteDraft, setNoteDraft] = useState("");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [renewalModalContract, setRenewalModalContract] = useState(null);
+  const [renewalStatusDraft, setRenewalStatusDraft] = useState("Takipte");
   const [revenueHistory, setRevenueHistory] = useState([]);
   const [revenueForm, setRevenueForm] = useState({
     customerId: '', year: new Date().getFullYear(), amount: '', currency: 'TL'
@@ -79,6 +132,7 @@ export default function ContractApp({ user, setUser }) {
     try{
       const { data } = await addCustomer(custName.trim(), custStatus);
       setCustomers(prev=>[data, ...prev]); setCustName(""); setCustStatus("Aktif");
+      setTab("contracts");
     }catch(e){ alert(e?.response?.data?.error || "Müşteri kaydı başarısız"); }
   };
 
@@ -114,8 +168,8 @@ export default function ContractApp({ user, setUser }) {
           c.name,
           c.team,
           c.owner,
-          c.startDate ? new Date(c.startDate).toLocaleDateString('tr-TR') : '-',
-          c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR') : '-',
+          getStartDate(c) ? new Date(getStartDate(c)).toLocaleDateString('tr-TR') : '-',
+          getEndDate(c) ? new Date(getEndDate(c)).toLocaleDateString('tr-TR') : '-',
           c.duration === '6ay' ? '6 Ay' : '1 Yıl'
         ])
       ];
@@ -145,8 +199,8 @@ export default function ContractApp({ user, setUser }) {
     };
     
     return contracts.filter(c => {
-      if (!c.endDate) return false;
-      const endDate = new Date(c.endDate);
+      if (!getEndDate(c)) return false;
+      const endDate = new Date(getEndDate(c));
       const endYear = endDate.getFullYear();
       const endMonth = endDate.getMonth() + 1;
       
@@ -180,8 +234,8 @@ export default function ContractApp({ user, setUser }) {
             ['Sözleşme Adı', 'Takım', 'Sahip', 'Başlangıç', 'Bitiş', 'Süre'],
             ...scopeContracts.map(c => [
               c.name, c.team, c.owner,
-              c.startDate ? new Date(c.startDate).toLocaleDateString('tr-TR') : '-',
-              c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR') : '-',
+              getStartDate(c) ? new Date(getStartDate(c)).toLocaleDateString('tr-TR') : '-',
+              getEndDate(c) ? new Date(getEndDate(c)).toLocaleDateString('tr-TR') : '-',
               c.duration === '6ay' ? '6 Ay' : '1 Yıl'
             ])
           ];
@@ -249,9 +303,9 @@ export default function ContractApp({ user, setUser }) {
     let createdEvents = 0;
 
     for (const contract of contracts) {
-      if (!contract.endDate) continue;
+      if (!getEndDate(contract)) continue;
       
-      const endDate = new Date(contract.endDate);
+      const endDate = new Date(getEndDate(contract));
       const reminder60 = new Date(endDate);
       reminder60.setDate(endDate.getDate() - 60);
       const reminder30 = new Date(endDate);
@@ -346,7 +400,7 @@ export default function ContractApp({ user, setUser }) {
         ...customers.map(c => [
           c.name,
           c.status,
-          c.createdAt ? new Date(c.createdAt).toLocaleDateString('tr-TR') : '-'
+          (c.createdAt || c.created_at) ? new Date(c.createdAt || c.created_at).toLocaleDateString('tr-TR') : '-'
         ])
       ];
 
@@ -395,10 +449,11 @@ export default function ContractApp({ user, setUser }) {
       name: contract.name,
       duration: contract.duration,
       scope: contract.scope || [],
+      scopePrices: contract.scopePrices || contract.scope_prices || {},
       team: contract.team,
       owner: contract.owner,
-      startDate: contract.startDate,
-      endDate: contract.endDate
+      startDate: getStartDate(contract),
+      endDate: getEndDate(contract)
     });
   };
 
@@ -527,8 +582,114 @@ export default function ContractApp({ user, setUser }) {
     setMainRevenueEditData({});
   };
 
+  const customerRows = useMemo(() => {
+    return customers.map((customer) => {
+      const name = (customer.name || "").trim().toLowerCase();
+      const relatedContracts = contracts.filter((c) => (c.name || "").trim().toLowerCase() === name);
+      const createdAt = customer.createdAt || customer.created_at;
+      const teams = [...new Set(relatedContracts.map((c) => c.team).filter(Boolean))];
+      const owners = [...new Set(relatedContracts.map((c) => c.owner).filter(Boolean))];
+      const totalScopeAmount = relatedContracts.reduce((sum, contract) => {
+        const prices = contract.scopePrices || contract.scope_prices || {};
+        const contractTotal = Object.values(prices).reduce((s, v) => {
+          const n = Number(v);
+          return Number.isNaN(n) ? s : s + n;
+        }, 0);
+        return sum + contractTotal;
+      }, 0);
+      const nearestDays = relatedContracts.reduce((min, c) => {
+        const d = daysLeft(getEndDate(c));
+        if (d == null) return min;
+        if (min == null) return d;
+        return Math.min(min, d);
+      }, null);
+      const latestContract = relatedContracts
+        .slice()
+        .sort((a, b) => new Date(getEndDate(b) || 0) - new Date(getEndDate(a) || 0))[0];
+      const lastRenewalStatus = latestContract ? getRenewalStatus(latestContract) : "-";
+
+      return { customer, createdAt, relatedContracts, nearestDays, teams, owners, totalScopeAmount, lastRenewalStatus };
+    });
+  }, [customers, contracts]);
+
+  const expiringIn60 = useMemo(() => {
+    return contracts
+      .filter((c) => {
+        const d = daysLeft(getEndDate(c));
+        return d != null && d >= 0 && d <= 60;
+      })
+      .sort((a, b) => daysLeft(getEndDate(a)) - daysLeft(getEndDate(b)));
+  }, [contracts]);
+
+  const openRenewalStatusModal = (contract) => {
+    setRenewalModalContract(contract);
+    setRenewalStatusDraft(getRenewalStatus(contract));
+  };
+
+  const saveRenewalStatus = async () => {
+    if (!renewalModalContract) return;
+    try {
+      let nextStartDate = getStartDate(renewalModalContract);
+      let nextEndDate = getEndDate(renewalModalContract);
+
+      if (renewalStatusDraft === "Yenilendi") {
+        const baseEndDate = getEndDate(renewalModalContract) || formatDateISO(new Date());
+        nextStartDate = addDays(baseEndDate, 1);
+        nextEndDate = renewalModalContract.duration === "6ay"
+          ? addMonths(nextStartDate, 6)
+          : addYears(nextStartDate, 1);
+      }
+
+      const payload = {
+        name: renewalModalContract.name,
+        duration: renewalModalContract.duration,
+        scope: renewalModalContract.scope || [],
+        scopePrices: renewalModalContract.scopePrices || renewalModalContract.scope_prices || {},
+        team: renewalModalContract.team,
+        owner: renewalModalContract.owner,
+        startDate: nextStartDate,
+        endDate: nextEndDate,
+        renewalStatus: renewalStatusDraft
+      };
+      const { data } = await updateContract(renewalModalContract.id, payload);
+      setContracts(prev => prev.map(c => c.id === renewalModalContract.id ? data : c));
+      setRenewalModalContract(null);
+    } catch (e) {
+      alert(e?.response?.data?.error || "Durum güncellenemedi");
+    }
+  };
+
+  const openNotesModal = async (customer) => {
+    setNotesModalCustomer(customer);
+    setNoteDraft("");
+    setNotesLoading(true);
+    try {
+      const { data } = await listCustomerNotes(customer.id);
+      setCustomerNotes(data || []);
+    } catch (e) {
+      setCustomerNotes([]);
+      alert("Müşteri notları yüklenemedi");
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const saveCustomerNoteHistory = async () => {
+    if (!notesModalCustomer || !noteDraft.trim()) return;
+    setNotesSaving(true);
+    try {
+      const { data } = await addCustomerNote(notesModalCustomer.id, noteDraft.trim());
+      setCustomerNotes((prev) => [data, ...prev]);
+      setNoteDraft("");
+    } catch (e) {
+      alert(e?.response?.data?.error || "Not kaydedilemedi");
+    } finally {
+      setNotesSaving(false);
+    }
+  };
+
   const soon30 = useMemo(()=> contracts.filter(c => {
-    const d=daysLeft(c.endDate); return d!=null && d<=30;
+    const d=daysLeft(getEndDate(c)); return d!=null && d<=30;
   }), [contracts]);
 
   const customersWithRevenue = useMemo(() => {
@@ -551,7 +712,11 @@ export default function ContractApp({ user, setUser }) {
   }, [customers, revenueHistory]);
 
   const soon60 = useMemo(()=> contracts.filter(c => {
-    const d=daysLeft(c.endDate); return d!=null && d>30 && d<=60;
+    const d=daysLeft(getEndDate(c)); return d!=null && d>30 && d<=60;
+  }), [contracts]);
+
+  const expired = useMemo(()=> contracts.filter(c => {
+    const d=daysLeft(getEndDate(c)); return d!=null && d<=0;
   }), [contracts]);
 
   return (
@@ -565,17 +730,11 @@ export default function ContractApp({ user, setUser }) {
           <button className={`tab ${tab==="new"?"active":""}`} onClick={()=>setTab("new")}>
             ➕ Yeni Kayıt
           </button>
-          <button className={`tab ${tab==="list"?"active":""}`} onClick={()=>setTab("list")}>
-            📄 Sözleşmeler
-          </button>
-          <button className={`tab ${tab==="customers"?"active":""}`} onClick={()=>setTab("customers")}>
-            🏢 Müşteriler
+          <button className={`tab ${tab==="contracts"?"active":""}`} onClick={()=>setTab("contracts")}>
+            📋 Sözleşmeler
           </button>
           <button className={`tab ${tab==="reports"?"active":""}`} onClick={()=>setTab("reports")}>
             📈 Raporlar
-          </button>
-          <button className={`tab ${tab==="revenue"?"active":""}`} onClick={()=>setTab("revenue")}>
-            💰 Sözleşme Geçmişi
           </button>
           <button className="logout-btn" onClick={doLogout}>
             🚪 Çıkış
@@ -618,13 +777,40 @@ export default function ContractApp({ user, setUser }) {
                       className={`chip ${on?"on":""}`}
                       onClick={()=> setForm(f=>{
                         const on2 = f.scope.includes(opt);
-                        return {...f, scope: on2 ? f.scope.filter(x=>x!==opt) : [...f.scope,opt]};
+                        const nextScope = on2 ? f.scope.filter(x=>x!==opt) : [...f.scope,opt];
+                        const nextPrices = { ...(f.scopePrices || {}) };
+                        if (on2) delete nextPrices[opt];
+                        return {...f, scope: nextScope, scopePrices: nextPrices};
                       })}
                     >{opt}</button>
                   );
                 })}
               </div>
             </div>
+
+            {form.scope.length > 0 && (
+              <div className="grid two">
+                {form.scope.map(scopeName => (
+                  <label className="field" key={scopeName}>
+                    <span className="label">💰 {scopeName} Fiyatı (TL)</span>
+                    <input
+                      className="interactive"
+                      type="text"
+                      inputMode="numeric"
+                      value={formatMoneyInput(form.scopePrices?.[scopeName] ?? "")}
+                      onChange={(e) => setForm(f => ({
+                        ...f,
+                        scopePrices: {
+                          ...(f.scopePrices || {}),
+                          [scopeName]: normalizeMoneyInput(e.target.value)
+                        }
+                      }))}
+                      placeholder="0"
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
 
             <div className="grid two">
               <label className="field">
@@ -647,19 +833,29 @@ export default function ContractApp({ user, setUser }) {
             <div className="grid two">
               <label className="field">
                 <span className="label">📅 Başlangıç Tarihi</span>
-                <input 
-                  className="interactive"
-                  type="date" 
-                  value={form.startDate} 
-                  onChange={e=>setForm({...form,startDate:e.target.value})}
-                />
+                <div className="date-field-shell" onClick={openStartDatePicker}>
+                  <input
+                    className="interactive"
+                    type="text"
+                    readOnly
+                    placeholder="GG.AA.YYYY"
+                    value={formatDateTR(form.startDate)}
+                  />
+                  <input
+                    ref={startDatePickerRef}
+                    type="date"
+                    className="date-picker-native"
+                    value={form.startDate}
+                    onChange={e=>setForm({...form,startDate:e.target.value})}
+                  />
+                </div>
               </label>
               <label className="field">
                 <span className="label">📅 Bitiş Tarihi</span>
                 <input 
-                  className="glass"
-                  type="date" 
-                  value={form.endDate} 
+                  className="interactive"
+                  type="text"
+                  value={formatDateTR(form.endDate)}
                   readOnly
                   style={{opacity: 0.8}}
                 />
@@ -669,7 +865,9 @@ export default function ContractApp({ user, setUser }) {
             <div className="right">
               <button 
                 className="btn glow-on-hover" 
-                onClick={()=>setForm({name:"",duration:"",scope:[],team:"",owner:"",startDate:"",endDate:""})}
+                onClick={()=>{
+                  setForm({name:"",duration:"",scope:[],scopePrices:{},team:"",owner:"",startDate:"",endDate:""});
+                }}
               >
                 🗑️ Temizle
               </button>
@@ -680,7 +878,70 @@ export default function ContractApp({ user, setUser }) {
           </section>
         )}
 
-        {tab==="list" && (
+        {tab==="contracts" && (
+          <>
+            <section className="card space-y glass float">
+              <h2 className="subtitle gradient-text">📋 Müşteri Detay Listesi</h2>
+              {customerRows.length === 0 ? (
+                <div className="muted">Kayıtlı müşteri yok</div>
+              ) : (
+                <div className="customer-list-compact">
+                  <div className="customer-list-head">
+                    <span>Müşteri</span>
+                    <span>Durum</span>
+                    <span>Sözleşme</span>
+                    <span>Takım / Sahip</span>
+                    <span>Toplam Kapsam</span>
+                    <span>Son Durum</span>
+                    <span>En Yakın Bitiş</span>
+                    <span>Notlar</span>
+                  </div>
+                  {customerRows.map(({ customer, createdAt, relatedContracts, nearestDays, teams, owners, totalScopeAmount, lastRenewalStatus }) => (
+                    <div key={customer.id} className="customer-list-row">
+                      <span>{customerStatusLamp(customer.status)} {customer.name}</span>
+                      <span className={`pill ${customer.status === "Aktif" ? "success" : "danger"}`}>{customer.status}</span>
+                      <span>{relatedContracts.length} adet</span>
+                      <span title={`Takım: ${teams.length ? teams.join(", ") : "-"} | Sahip: ${owners.length ? owners.join(", ") : "-"}`}>
+                        {teams.length ? teams.join(", ") : "-"} / {owners.length ? owners.join(", ") : "-"}
+                      </span>
+                      <span>{totalScopeAmount > 0 ? `${formatMoney(totalScopeAmount)} TL` : "-"}</span>
+                      <span>{lastRenewalStatus}</span>
+                      <span>
+                        {nearestDays == null ? "Bitiş tarihi yok" : `${nearestDays} gün`} • {createdAt ? new Date(createdAt).toLocaleDateString('tr-TR') : "-"}
+                      </span>
+                      <span>
+                        <button className="btn glow-on-hover" onClick={() => openNotesModal(customer)}>
+                          Notlar
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="card space-y glass float">
+              <h2 className="subtitle gradient-text">⏰ 60 Gün İçinde Bitenler (Manuel Durum)</h2>
+              {expiringIn60.length === 0 ? (
+                <div className="muted">Önümüzdeki 60 gün içinde bitecek sözleşme yok</div>
+              ) : (
+                expiringIn60.map((c) => (
+                  <div key={c.id} className="row-pill">
+                    <span>{c.name}</span>
+                    <span className="muted">{formatDateTR(getEndDate(c))}</span>
+                    <span className="pill warning">{daysLeft(getEndDate(c))} gün</span>
+                    <span className="pill">{getRenewalStatus(c)}</span>
+                    <button className="btn glow-on-hover" onClick={() => openRenewalStatusModal(c)}>
+                      Durum Güncelle
+                    </button>
+                  </div>
+                ))
+              )}
+            </section>
+          </>
+        )}
+
+        {tab==="reports" && (
           <>
             <div className="grid two">
               <div className="card glass float">
@@ -694,7 +955,7 @@ export default function ContractApp({ user, setUser }) {
                   soon30.map(c=>(
                     <div key={c.id} className="row-pill">
                       <span>{c.name}</span>
-                      <span className="pill critical">{daysLeft(c.endDate)} gün</span>
+                      <span className="pill critical">{daysLeft(getEndDate(c))} gün</span>
                     </div>
                   ))
                 )}
@@ -710,325 +971,29 @@ export default function ContractApp({ user, setUser }) {
                   soon60.map(c=>(
                     <div key={c.id} className="row-pill">
                       <span>{c.name}</span>
-                      <span className="pill warning">{daysLeft(c.endDate)} gün</span>
+                      <span className="pill warning">{daysLeft(getEndDate(c))} gün</span>
                     </div>
                   ))
                 )}
               </div>
             </div>
 
-            <section className="card glass">
-              <div className="table-wrap">
-                <div className="table-header-badge">
-                  SÖZLEŞME BİLGİLERİ
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Ad</th><th>Süre</th><th>Kapsam</th><th>Takım</th><th>Sahip</th><th>Başlangıç</th><th>Bitiş</th><th className="right">İşlem</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {contracts.sort((a, b) => {
-                      if (!a.endDate) return 1;
-                      if (!b.endDate) return -1;
-                      return new Date(a.endDate) - new Date(b.endDate);
-                    }).map(c=>(
-                      <tr key={c.id}>
-                        <td>
-                          {editingContract === c.id ? (
-                            <input 
-                              className="interactive"
-                              value={contractEditData.name || ''}
-                              onChange={(e) => setContractEditData({...contractEditData, name: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                              autoFocus
-                            />
-                          ) : (
-                            c.name
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <select 
-                              className="interactive"
-                              value={contractEditData.duration || '6ay'}
-                              onChange={(e) => setContractEditData({...contractEditData, duration: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                            >
-                              <option value="6ay">6 Ay</option>
-                              <option value="1yil">1 Yıl</option>
-                            </select>
-                          ) : (
-                            c.duration==="6ay"?"6 Ay":"1 Yıl"
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <div className="chips" style={{margin: 0}}>
-                              {SCOPE_OPTIONS.map(opt=>{
-                                const on = Array.isArray(contractEditData.scope) && contractEditData.scope.includes(opt);
-                                return (
-                                  <button key={opt}
-                                    className={`chip ${on?"on":""}`}
-                                    style={{fontSize: '11px', padding: '4px 8px'}}
-                                    onClick={()=> setContractEditData(f=>{
-                                      const currentScope = Array.isArray(f.scope) ? f.scope : [];
-                                      const on2 = currentScope.includes(opt);
-                                      return {...f, scope: on2 ? currentScope.filter(x=>x!==opt) : [...currentScope,opt]};
-                                    })}
-                                  >{opt}</button>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            Array.isArray(c.scope)&&c.scope.length?c.scope.join(", "):"—"
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <select 
-                              className="interactive"
-                              value={contractEditData.team || ''}
-                              onChange={(e) => setContractEditData({...contractEditData, team: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                            >
-                              <option value="">Seçin</option>
-                              {TEAM_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}
-                            </select>
-                          ) : (
-                            c.team
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <select 
-                              className="interactive"
-                              value={contractEditData.owner || ''}
-                              onChange={(e) => setContractEditData({...contractEditData, owner: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                            >
-                              <option value="">Seçin</option>
-                              {OWNER_OPTIONS.map(o=><option key={o} value={o}>{o}</option>)}
-                            </select>
-                          ) : (
-                            c.owner
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <input 
-                              className="interactive"
-                              type="date"
-                              value={contractEditData.startDate || ''}
-                              onChange={(e) => setContractEditData({...contractEditData, startDate: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                            />
-                          ) : (
-                            c.startDate ? new Date(c.startDate).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(c.startDate).getFullYear().toString().slice(-2) : '-'
-                          )}
-                        </td>
-                        <td>
-                          {editingContract === c.id ? (
-                            <input 
-                              className="interactive"
-                              type="date"
-                              value={contractEditData.endDate || ''}
-                              onChange={(e) => setContractEditData({...contractEditData, endDate: e.target.value})}
-                              style={{width: '100%', margin: 0}}
-                            />
-                          ) : (
-                            c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(c.endDate).getFullYear().toString().slice(-2) : '-'
-                          )}
-                        </td>
-                        <td className="right">
-                          {editingContract === c.id ? (
-                            <>
-                              <button 
-                                className="btn primary" 
-                                onClick={() => saveContractEdit(c.id)}
-                                style={{marginRight: '8px'}}
-                              >
-                                💾 Kaydet
-                              </button>
-                              <button 
-                                className="btn" 
-                                onClick={cancelContractEdit}
-                              >
-                                ❌ İptal
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button 
-                                className="btn glow-on-hover" 
-                                onClick={() => startContractEdit(c)}
-                                style={{marginRight: '8px'}}
-                              >
-                                ✏️ Düzenle
-                              </button>
-                              <button className="btn danger ghost" onClick={()=>deleteContract(c.id)}>🗑️ Sil</button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                    {contracts.length===0 && (
-                      <tr><td colSpan={8} className="muted center">Kayıt yok</td></tr>
-                    )}
-                  </tbody>
-                </table>
+            <div className="card glass float" style={{marginTop: '1rem'}}>
+              <div className="alert-header">
+                <div className="badge" style={{background: '#dc2626'}}>❌ SÜRESİ GEÇMİŞ</div>
               </div>
-            </section>
-          </>
-        )}
-
-        {tab==="customers" && (
-          <section className="card space-y glass float">
-
-
-            <div className="grid two">
-              <label className="field">
-                <span className="label">🏢 Müşteri Adı</span>
-                <input 
-                  className="interactive"
-                  value={custName} 
-                  onChange={e=>setCustName(e.target.value)} 
-                  placeholder="Örn. Viennalife"
-                />
-              </label>
-              <label className="field">
-                <span className="label">🟢 Durum</span>
-                <select className="interactive" value={custStatus} onChange={e=>setCustStatus(e.target.value)}>
-                  <option>Aktif</option>
-                  <option>Pasif</option>
-                </select>
-              </label>
+              {expired.length===0 ? (
+                <div className="muted">Kayıt yok</div>
+              ) : (
+                expired.map(c=>(
+                  <div key={c.id} className="row-pill">
+                    <span>{c.name}</span>
+                    <span className="pill" style={{background: '#dc2626', color: 'white'}}>{Math.abs(daysLeft(getEndDate(c)))} gün önce</span>
+                  </div>
+                ))
+              )}
             </div>
 
-            <div className="right">
-              <button 
-                className="btn" 
-                onClick={syncExistingCustomers}
-                style={{marginRight: '8px'}}
-              >
-                🔄 Senkronize Et
-              </button>
-              <button 
-                className="btn export-btn" 
-                onClick={exportToExcel}
-                style={{marginRight: '8px'}}
-              >
-                <svg className="export-icon" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-                Excel İndir
-              </button>
-              <button 
-                className="btn glow-on-hover" 
-                onClick={exportToGoogleCalendar}
-                style={{marginRight: '8px'}}
-              >
-                📅 Google Takvim
-              </button>
-              <button 
-                className="btn glow-on-hover" 
-                onClick={()=>{setCustName("");setCustStatus("Aktif");}}
-              >
-                🗑️ Temizle
-              </button>
-              <button className="btn primary glow-on-hover" onClick={addCust}>
-                ➕ Ekle
-              </button>
-            </div>
-
-            <div className="table-wrap">
-              <table>
-                <thead><tr><th>Müşteri</th><th>Durum</th><th className="right">İşlem</th></tr></thead>
-                <tbody>
-                  {customers.map(m=>(
-                    <tr key={m.id}>
-                      <td>
-                        {editingCustomer === m.id ? (
-                          <input 
-                            className="interactive"
-                            value={editData.name || ''}
-                            onChange={(e) => setEditData({...editData, name: e.target.value})}
-                            style={{width: '100%', margin: 0}}
-                            autoFocus
-                          />
-                        ) : (
-                          <span 
-                            className="customer-name-clickable"
-                            onClick={() => openCustomerDetail(m)}
-                          >
-                            {m.name}
-                          </span>
-                        )}
-                      </td>
-                      <td>
-                        {editingCustomer === m.id ? (
-                          <select 
-                            className="interactive"
-                            value={editData.status || 'Aktif'}
-                            onChange={(e) => setEditData({...editData, status: e.target.value})}
-                            style={{width: '100%', margin: 0}}
-                          >
-                            <option>Aktif</option>
-                            <option>Pasif</option>
-                          </select>
-                        ) : (
-                          <span className={`status ${m.status==="Aktif"?"ok":"no"}`}>{m.status}</span>
-                        )}
-                      </td>
-                      <td className="right">
-                        {editingCustomer === m.id ? (
-                          <>
-                            <button 
-                              className="btn primary" 
-                              onClick={() => saveEdit(m.id)}
-                              style={{marginRight: '8px'}}
-                            >
-                              💾 Kaydet
-                            </button>
-                            <button 
-                              className="btn" 
-                              onClick={cancelEdit}
-                            >
-                              ❌ İptal
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button 
-                              className="btn glow-on-hover" 
-                              onClick={() => startEdit(m)}
-                              style={{marginRight: '8px'}}
-                            >
-                              ✏️ Düzenle
-                            </button>
-                            <button 
-                              className="btn danger ghost" 
-                              onClick={() => deleteCust(m.id)}
-                            >
-                              🗑️ Sil
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {customers.length===0 && (
-                    <tr><td colSpan={3} className="muted center">Kayıt yok</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
-
-        {tab==="reports" && (
-          <>
             <section className="card space-y glass float">
               <div className="quarter-summary">
                 <div className="total-contracts">
@@ -1052,7 +1017,7 @@ export default function ContractApp({ user, setUser }) {
                           {quarterContracts.map(c => (
                             <div key={c.id} className="quarter-contract-item-permanent">
                               <span>{c.name}</span>
-                              <span className="quarter-date">{c.endDate ? new Date(c.endDate).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(c.endDate).getFullYear().toString().slice(-2) : '-'}</span>
+                              <span className="quarter-date">{getEndDate(c) ? new Date(getEndDate(c)).toLocaleDateString('tr-TR', {month: 'short'}) + "'" + new Date(getEndDate(c)).getFullYear().toString().slice(-2) : '-'}</span>
                             </div>
                           ))}
                         </div>
@@ -1122,216 +1087,88 @@ export default function ContractApp({ user, setUser }) {
           </>
         )}
 
-
-
-        {tab==="revenue" && (
-          <>
-            <section className="card space-y glass float">
-              <div className="text-center">
-                <h2 className="subtitle gradient-text">💰 Müşteri Sözleşme Geçmişi</h2>
-              </div>
-
-              <div className="grid two">
-                <label className="field">
-                  <span className="label">🏢 Müşteri Seçin</span>
-                  <select className="interactive" value={revenueForm.customerId} onChange={e=>setRevenueForm({...revenueForm, customerId: e.target.value})}>
-                    <option value="">Müşteri Seçin</option>
-                    {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </label>
-                <label className="field">
-                  <span className="label">📅 Yıl</span>
-                  <input 
-                    className="interactive"
-                    type="number" 
-                    value={revenueForm.year}
-                    onChange={e=>setRevenueForm({...revenueForm, year: e.target.value})}
-                    placeholder="Örn: 2024"
-                    style={{fontSize: '16px', padding: '12px'}}
-                  />
-                </label>
-              </div>
-
-              <div className="grid two">
-                <label className="field">
-                  <span className="label">💰 Tutar</span>
-                  <input 
-                    className="interactive"
-                    type="number" 
-                    value={revenueForm.amount}
-                    onChange={e=>setRevenueForm({...revenueForm, amount: e.target.value})}
-                    placeholder="Örn: 150000"
-                    step="1000"
-                  />
-                </label>
-                <label className="field">
-                  <span className="label">💵 Para Birimi</span>
-                  <select className="interactive" value={revenueForm.currency} onChange={e=>setRevenueForm({...revenueForm, currency: e.target.value})}>
-                    <option value="TL">TL</option>
-                    <option value="USD">USD</option>
-                  </select>
-                </label>
-              </div>
-
-              <div className="right">
-                <button 
-                  className="btn glow-on-hover" 
-                  onClick={()=>setRevenueForm({customerId: '', year: new Date().getFullYear(), amount: '', currency: 'TL'})}
-                >
-                  🗑️ Temizle
-                </button>
-                <button className="btn primary glow-on-hover" onClick={addRevenueRecord}>
-                  💾 Kaydet
-                </button>
-              </div>
-            </section>
-
-            <section className="card glass">
-              <div className="table-header-badge">
-                📈 MÜŞTERİ SÖZLEŞME ANALİZİ
-              </div>
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Müşteri</th><th>Son Yıl</th><th>Büyüme</th><th>Detay</th><th>Düzenle</th><th>İşlem</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customersWithRevenue
-                      .sort((a, b) => {
-                        // Aktif müşteriler üstte, pasif müşteriler altta
-                        if (a.status === 'Aktif' && b.status === 'Pasif') return -1;
-                        if (a.status === 'Pasif' && b.status === 'Aktif') return 1;
-                        return 0;
-                      })
-                      .map(customer => (
-                      <tr key={customer.id} style={{
-                        opacity: customer.status === 'Pasif' ? 0.6 : 1,
-                        background: customer.status === 'Pasif' ? 'rgba(239,68,68,0.05)' : 'transparent'
-                      }}>
-                        <td style={{
-                          fontWeight: '600',
-                          color: customer.status === 'Pasif' ? 'var(--muted)' : 'var(--txt)'
-                        }}>
-                          {customer.name}
-                        </td>
-
-                        <td style={{
-                          color: customer.status === 'Pasif' ? 'var(--muted)' : 'var(--txt)'
-                        }}>
-                          {editingMainRevenue === customer.id ? (
-                            <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                              <input 
-                                className="interactive"
-                                type="number"
-                                value={mainRevenueEditData.amount || ''}
-                                onChange={(e) => setMainRevenueEditData({...mainRevenueEditData, amount: e.target.value})}
-                                style={{width: '80px', margin: 0, padding: '4px 8px', fontSize: '12px'}}
-                                step="1000"
-                              />
-                              <select 
-                                className="interactive"
-                                value={mainRevenueEditData.currency || 'TL'}
-                                onChange={(e) => setMainRevenueEditData({...mainRevenueEditData, currency: e.target.value})}
-                                style={{width: '60px', margin: 0, padding: '4px 8px', fontSize: '12px'}}
-                              >
-                                <option value="TL">TL</option>
-                                <option value="USD">USD</option>
-                              </select>
-                            </div>
-                          ) : (
-                            `${customer.lastYearAmount.toLocaleString('tr-TR')} ${customer.lastYearCurrency || 'TL'}`
-                          )}
-                        </td>
-                        <td>
-                          {customer.growth !== null ? (
-                            <span className={`pill ${customer.growth >= 0 ? 'success' : 'danger'}`} style={{
-                              opacity: customer.status === 'Pasif' ? 0.5 : 1
-                            }}>
-                              {customer.growth >= 0 ? '↑' : '↓'} {Math.abs(customer.growth).toFixed(1)}%
-                            </span>
-                          ) : (
-                            <span className="muted">-</span>
-                          )}
-                        </td>
-                        <td>
-                          <button 
-                            className="btn glow-on-hover" 
-                            onClick={() => setSelectedRevenueCustomer(customer)}
-                            style={{
-                              padding: '6px 12px', 
-                              fontSize: '12px',
-                              opacity: customer.status === 'Pasif' ? 0.7 : 1
-                            }}
-                          >
-                            📈 Detay
-                          </button>
-                        </td>
-                        <td>
-                          {customer.revenue.length > 0 && (
-                            editingMainRevenue === customer.id ? (
-                              <div style={{display: 'flex', gap: '4px'}}>
-                                <button 
-                                  className="btn primary" 
-                                  onClick={saveMainRevenueEdit}
-                                  style={{padding: '6px 12px', fontSize: '12px'}}
-                                >
-                                  ✓ Kaydet
-                                </button>
-                                <button 
-                                  className="btn" 
-                                  onClick={cancelMainRevenueEdit}
-                                  style={{padding: '6px 12px', fontSize: '12px'}}
-                                >
-                                  ✕ İptal
-                                </button>
-                              </div>
-                            ) : (
-                              <button 
-                                className="btn glow-on-hover" 
-                                onClick={() => startMainRevenueEdit(customer.id)}
-                                style={{
-                                  padding: '6px 12px', 
-                                  fontSize: '12px',
-                                  opacity: customer.status === 'Pasif' ? 0.7 : 1
-                                }}
-                              >
-                                ✏️ Düzenle
-                              </button>
-                            )
-                          )}
-                        </td>
-                        <td>
-                          <button 
-                            className="btn danger ghost" 
-                            onClick={() => {
-                              const customerRecords = revenueHistory.filter(r => r.customerId === customer.id);
-                              if (customerRecords.length > 0 && confirm(`${customer.name} için tüm kayıtları silmek istiyor musunuz?`)) {
-                                setRevenueHistory(prev => prev.filter(r => r.customerId !== customer.id));
-                              }
-                            }}
-                            style={{
-                              padding: '6px 12px', 
-                              fontSize: '12px',
-                              opacity: customer.status === 'Pasif' ? 0.7 : 1
-                            }}
-                          >
-                            🗑️ Sil
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {customersWithRevenue.filter(c => c.revenue.length > 0).length === 0 && (
-                      <tr><td colSpan={6} className="muted center">Henüz sözleşme kaydı yok</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </>
-        )}
       </main>
+
+      {/* Gelir Detay Popup */}
+      {renewalModalContract && (
+        <div className="modal-overlay" onClick={() => setRenewalModalContract(null)}>
+          <div className="customer-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📝 Durum Güncelle: {renewalModalContract.name}</h2>
+              <button className="close-btn" onClick={() => setRenewalModalContract(null)}>✕</button>
+            </div>
+            <div className="space-y">
+              <label className="field">
+                <span className="label">Yenileme Durumu</span>
+                <select
+                  className="interactive"
+                  value={renewalStatusDraft}
+                  onChange={(e) => setRenewalStatusDraft(e.target.value)}
+                >
+                  {RENEWAL_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="right">
+                <button className="btn glow-on-hover" onClick={() => setRenewalModalContract(null)}>Vazgeç</button>
+                <button className="btn primary glow-on-hover" onClick={saveRenewalStatus}>Kaydet</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gelir Detay Popup */}
+      {notesModalCustomer && (
+        <div className="modal-overlay" onClick={() => setNotesModalCustomer(null)}>
+          <div className="customer-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🗒️ {notesModalCustomer.name} - Not Geçmişi</h2>
+              <button className="close-btn" onClick={() => setNotesModalCustomer(null)}>✕</button>
+            </div>
+
+            <div className="space-y">
+              <label className="field">
+                <span className="label">Yeni Not</span>
+                <textarea
+                  className="interactive note-textarea"
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  placeholder="Müşteri için not girin..."
+                />
+              </label>
+              <div className="right">
+                <button
+                  className="btn primary glow-on-hover"
+                  onClick={saveCustomerNoteHistory}
+                  disabled={notesSaving}
+                >
+                  {notesSaving ? "Kaydediliyor..." : "Not Ekle"}
+                </button>
+              </div>
+
+              <div className="notes-history">
+                {notesLoading ? (
+                  <div className="muted">Notlar yükleniyor...</div>
+                ) : customerNotes.length === 0 ? (
+                  <div className="muted">Henüz not yok</div>
+                ) : (
+                  customerNotes.map((note) => (
+                    <div key={note.id} className="note-item">
+                      <div className="note-item-meta">
+                        <span>{note.created_by_email || "Kullanıcı"}</span>
+                        <span>{new Date(note.created_at).toLocaleString('tr-TR')}</span>
+                      </div>
+                      <div>{note.note}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Gelir Detay Popup */}
       {selectedRevenueCustomer && (
@@ -1475,7 +1312,7 @@ export default function ContractApp({ user, setUser }) {
         <div className="modal-overlay" onClick={closeCustomerDetail}>
           <div className="customer-detail-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>🏢 {selectedCustomer.name}</h2>
+              <h2>{customerStatusLamp(selectedCustomer.status)} {selectedCustomer.name}</h2>
               <button className="close-btn" onClick={closeCustomerDetail}>✕</button>
             </div>
             
@@ -1488,7 +1325,7 @@ export default function ContractApp({ user, setUser }) {
               </div>
               <div className="info-item">
                 <span className="info-label">📅 Kayıt Tarihi:</span>
-                <span>{selectedCustomer.createdAt ? new Date(selectedCustomer.createdAt).toLocaleDateString('tr-TR') : '-'}</span>
+                <span>{(selectedCustomer.createdAt || selectedCustomer.created_at) ? new Date(selectedCustomer.createdAt || selectedCustomer.created_at).toLocaleDateString('tr-TR') : '-'}</span>
               </div>
             </div>
 
@@ -1506,7 +1343,7 @@ export default function ContractApp({ user, setUser }) {
                         <span className="detail-item">💼 {contract.team}</span>
                         <span className="detail-item">👤 {contract.owner}</span>
                         <span className="detail-item">⏰ {contract.duration === '6ay' ? '6 Ay' : '1 Yıl'}</span>
-                        <span className="detail-item">🏁 {contract.endDate ? new Date(contract.endDate).toLocaleDateString('tr-TR') : '-'}</span>
+                        <span className="detail-item">🏁 {getEndDate(contract) ? new Date(getEndDate(contract)).toLocaleDateString('tr-TR') : '-'}</span>
                       </div>
                       {Array.isArray(contract.scope) && contract.scope.length > 0 && (
                         <div className="contract-scope">

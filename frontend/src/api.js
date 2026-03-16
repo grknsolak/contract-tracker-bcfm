@@ -19,6 +19,8 @@ export const addCustomer = (name, status) => api.post('/api/customers', { name, 
 export const updateCustomer = (id, name, status) => api.put(`/api/customers/${id}`, { name, status });
 export const removeCustomer = (id) => api.delete(`/api/customers/${id}`);
 export const syncCustomers = () => api.post('/api/customers/sync');
+export const listCustomerNotes = (customerId) => api.get(`/api/customers/${customerId}/notes`);
+export const addCustomerNote = (customerId, note) => api.post(`/api/customers/${customerId}/notes`, { note });
 
 export const listRevenue = () => api.get('/api/revenue-history');
 export const addRevenue = (data) => api.post('/api/revenue-history', data);
