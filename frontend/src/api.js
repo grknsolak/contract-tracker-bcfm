@@ -26,3 +26,6 @@ export const listRevenue = () => api.get('/api/revenue-history');
 export const addRevenue = (data) => api.post('/api/revenue-history', data);
 export const updateRevenue = (id, data) => api.put(`/api/revenue-history/${id}`, data);
 export const removeRevenue = (id) => api.delete(`/api/revenue-history/${id}`);
+
+export const getFxLatest = (base = 'USD', symbols = 'TRY') =>
+  api.get('/api/fx/latest', { params: { base, symbols } });

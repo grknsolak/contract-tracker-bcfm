@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import ContractDetails from "./pages/ContractDetails";
 import Alerts from "./pages/Alerts";
+import Segmentation from "./pages/Segmentation";
 import { contractsSeed, activitySeed } from "./data/sampleData";
 import { useHashRoute } from "./hooks/useHashRoute";
 
@@ -35,6 +36,8 @@ export default function App() {
 
   if (route.name === "customers") {
     content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} />;
+  } else if (route.name === "segmentation") {
+    content = <Segmentation contracts={contracts} />;
   } else if (route.name === "alerts") {
     content = <Alerts contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "contracts") {

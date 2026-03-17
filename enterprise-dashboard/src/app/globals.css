@@ -3,37 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --background: 220 20% 99%;
-  --foreground: 222 47% 11%;
+  --background: 220 25% 98%;
+  --foreground: 222 30% 18%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 221 83% 53%;
+  --card-foreground: 222 30% 18%;
+  --primary: 221 70% 50%;
   --primary-foreground: 210 40% 98%;
-  --muted: 210 40% 96%;
+  --muted: 210 24% 94%;
   --muted-foreground: 215 16% 47%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
-  --success: 142 71% 45%;
-  --warning: 38 92% 50%;
-  --danger: 0 84% 60%;
-}
-
-.dark {
-  --background: 222 47% 8%;
-  --foreground: 210 40% 98%;
-  --card: 222 40% 12%;
-  --card-foreground: 210 40% 98%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 222 47% 11%;
-  --muted: 223 28% 18%;
-  --muted-foreground: 215 20% 65%;
-  --border: 223 22% 22%;
-  --input: 223 22% 22%;
-  --ring: 217 91% 60%;
-  --success: 142 71% 45%;
-  --warning: 38 92% 50%;
-  --danger: 0 84% 60%;
+  --border: 214 32% 90%;
+  --input: 214 32% 90%;
+  --ring: 221 70% 50%;
+  --success: 142 50% 40%;
+  --warning: 36 90% 45%;
+  --danger: 0 70% 50%;
 }
 
 @layer base {
@@ -44,5 +27,13 @@
   html,
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-manrope), system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-serif {
+    font-family: var(--font-serif), "Source Serif 4", serif;
   }
 }

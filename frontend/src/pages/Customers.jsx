@@ -6,17 +6,29 @@ import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatCurrency } from "../utils/date";
 import { getStageMeta, renewalTone } from "../utils/status";
 
+const scopeOptions = [
+  "DaaS (Fix)",
+  "7/24 Support",
+  "Outsource",
+  "Man/Day (Fix)",
+  "DaaS (T&M)",
+  "Man/Day (T&M)",
+  "Other",
+];
+
 const emptyForm = {
   customerName: "",
   contractName: "",
-  contractType: "",
   owner: "",
   startDate: "",
   endDate: "",
   stage: "Draft",
   renewalStatus: "On Track",
   value: "",
+  currency: "USD",
   notes: "",
+  scopes: [],
+  otherScopeText: "",
 };
 
 export default function Customers({ contracts, setContracts, onNavigate, route }) {
@@ -44,7 +56,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       const matchesSearch =
         contract.customerName.toLowerCase().includes(normalized) ||
         contract.contractName.toLowerCase().includes(normalized) ||
-        contract.contractType.toLowerCase().includes(normalized) ||
+        (contract.contractType || "").toLowerCase().includes(normalized) ||
         contract.owner.toLowerCase().includes(normalized);
       const matchesStage = stageFilter === "All" || contract.stage === stageFilter;
       return matchesSearch && matchesStage;
@@ -86,7 +98,13 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
 
   const openEdit = (contract) => {
     setEditingId(contract.id);
-    setFormState({ ...contract, value: contract.value ?? "" });
+    setFormState({
+      ...contract,
+      value: contract.value ?? "",
+      currency: contract.currency || "USD",
+      scopes: contract.scopes || [],
+      otherScopeText: contract.otherScopeText || "",
+    });
     setModalOpen(true);
   };
 
@@ -179,6 +197,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
             <div>Start</div>
             <div>End</div>
             <div>Remaining days</div>
+            <div>Value</div>
+            <div>Scopes</div>
             <div>Stage</div>
             <div>Renewal</div>
             <div>Actions</div>
@@ -205,6 +225,18 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                     <div>{formatDate(contract.endDate)}</div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
                       {remaining < 0 ? "Expired" : `${remaining} days`}
+                    </div>
+                    <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                    <div className="scope-tags">
+                      {(contract.scopes || []).length === 0 ? (
+                        <span className="muted">-</span>
+                      ) : (
+                        (contract.scopes || []).map((scope) => (
+                          <span key={scope} className="tag">
+                            {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
+                          </span>
+                        ))
+                      )}
                     </div>
                     <div>
                       <Badge tone={meta.tone}>{meta.label}</Badge>
@@ -258,11 +290,34 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               />
             </div>
             <div className="field">
-              <label>Contract type</label>
-              <input
-                value={formState.contractType}
-                onChange={(event) => setFormState({ ...formState, contractType: event.target.value })}
-              />
+              <label>Service scopes</label>
+              <div className="chips">
+                {scopeOptions.map((scope) => {
+                  const on = formState.scopes.includes(scope);
+                  return (
+                    <button
+                      key={scope}
+                      type="button"
+                      className={`chip ${on ? "on" : ""}`}
+                      onClick={() => {
+                        const nextScopes = on
+                          ? formState.scopes.filter((item) => item !== scope)
+                          : [...formState.scopes, scope];
+                        setFormState({ ...formState, scopes: nextScopes });
+                      }}
+                    >
+                      {scope}
+                    </button>
+                  );
+                })}
+              </div>
+              {formState.scopes.includes("Other") && (
+                <input
+                  value={formState.otherScopeText}
+                  onChange={(event) => setFormState({ ...formState, otherScopeText: event.target.value })}
+                  placeholder="Other scope details"
+                />
+              )}
             </div>
             <div className="field">
               <label>Owner</label>
@@ -324,6 +379,16 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               />
             </div>
             <div className="field">
+              <label>Currency</label>
+              <select
+                value={formState.currency}
+                onChange={(event) => setFormState({ ...formState, currency: event.target.value })}
+              >
+                <option value="USD">USD</option>
+                <option value="TL">TL</option>
+              </select>
+            </div>
+            <div className="field">
               <label>Notes</label>
               <textarea
                 rows="3"
@@ -337,7 +402,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               <div className="preview-title">Stage preview</div>
               <Badge tone={getStageMeta(formState.stage).tone}>{formState.stage}</Badge>
               <div className="preview-meta">Remaining: {daysUntil(formState.endDate) ?? "-"} days</div>
-              <div className="preview-meta">Value: {formatCurrency(formState.value)}</div>
+              <div className="preview-meta">Value: {formatCurrency(formState.value, formState.currency)}</div>
             </div>
           </div>
         </Modal>

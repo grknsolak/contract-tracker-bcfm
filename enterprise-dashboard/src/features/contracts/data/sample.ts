@@ -1,0 +1,103 @@
+import type { ContractRecord } from "./types";
+
+export const sampleContracts: ContractRecord[] = [
+  {
+    id: "ct-1001",
+    name: "Northwind Logistics",
+    contractName: "Enterprise Support",
+    startDate: "2024-03-01",
+    durationType: "1y",
+    endDate: "2025-03-01",
+    stage: "Active",
+    renewalStatus: "On Track",
+    scopes: ["7/24 Support", "DaaS (Fix)", "Outsource"],
+    notes: "Quarterly reviews scheduled. SLA compliance strong.",
+    createdAt: "2024-02-01",
+    updatedAt: "2024-06-20"
+  },
+  {
+    id: "ct-1002",
+    name: "Harbor Health",
+    contractName: "Data Security Renewal",
+    startDate: "2023-12-15",
+    durationType: "1y",
+    endDate: "2024-12-15",
+    stage: "Renewal Upcoming",
+    renewalStatus: "Negotiation",
+    scopes: ["DaaS (T&M)", "Man/Day (T&M)"],
+    notes: "Renewal proposal shared; legal review pending.",
+    createdAt: "2023-11-05",
+    updatedAt: "2024-11-01"
+  },
+  {
+    id: "ct-1003",
+    name: "Aurora Retail Group",
+    contractName: "POS Modernization",
+    startDate: "2024-06-10",
+    durationType: "3y",
+    endDate: "2027-06-10",
+    stage: "Active",
+    renewalStatus: "On Track",
+    scopes: ["Outsource", "Man/Day (Fix)"],
+    notes: "Deployment complete. Monitoring adoption metrics.",
+    createdAt: "2024-04-01",
+    updatedAt: "2024-07-01"
+  },
+  {
+    id: "ct-1004",
+    name: "Pioneer Energy",
+    contractName: "Infrastructure Hosting",
+    startDate: "2023-08-01",
+    durationType: "1y",
+    endDate: "2024-08-01",
+    stage: "Expired",
+    renewalStatus: "Lost",
+    scopes: ["DaaS (Fix)", "7/24 Support"],
+    notes: "Contract expired. Customer moved to internal hosting.",
+    createdAt: "2023-07-01",
+    updatedAt: "2024-08-02"
+  },
+  {
+    id: "ct-1005",
+    name: "Brightline Media",
+    contractName: "Analytics Platform",
+    startDate: "2024-09-01",
+    durationType: "6m",
+    endDate: "2025-03-01",
+    stage: "Signed",
+    renewalStatus: "On Track",
+    scopes: ["DaaS (Fix)", "Other"],
+    otherScopeText: "Custom reporting add-on",
+    notes: "Kickoff scheduled with leadership team.",
+    createdAt: "2024-07-18",
+    updatedAt: "2024-08-20"
+  },
+  {
+    id: "ct-1006",
+    name: "Atlas Manufacturing",
+    contractName: "Lifecycle Automation",
+    startDate: "2024-02-01",
+    durationType: "1y",
+    endDate: "2025-02-01",
+    stage: "Active",
+    renewalStatus: "On Track",
+    scopes: ["Man/Day (Fix)", "7/24 Support"],
+    notes: "Steering committee in place. KPI dashboards shared.",
+    createdAt: "2024-01-12",
+    updatedAt: "2024-03-10"
+  },
+  {
+    id: "ct-1007",
+    name: "Evergreen Finance",
+    contractName: "Risk Platform",
+    startDate: "2024-11-01",
+    durationType: "3y",
+    endDate: "2027-11-01",
+    stage: "Approval Pending",
+    renewalStatus: "On Track",
+    scopes: ["DaaS (T&M)", "Man/Day (T&M)", "7/24 Support"],
+    notes: "Security review in progress. Final approval next week.",
+    createdAt: "2024-09-12",
+    updatedAt: "2024-10-24"
+  }
+];

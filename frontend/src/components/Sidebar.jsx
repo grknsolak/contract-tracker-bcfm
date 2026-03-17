@@ -3,6 +3,7 @@ import React from "react";
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "◼" },
   { id: "customers", label: "Customers", icon: "◻" },
+  { id: "segmentation", label: "Segmentation", icon: "◈" },
   { id: "alerts", label: "Alerts", icon: "◆" },
 ];
 

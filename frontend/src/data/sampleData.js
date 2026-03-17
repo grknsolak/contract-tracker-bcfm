@@ -21,6 +21,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 240000,
     notes: "Quarterly business reviews scheduled. Ops team happy with SLA compliance.",
+    currency: "USD",
+    scopes: ["7/24 Support", "DaaS (Fix)", "Outsource"],
+    otherScopeText: "",
     history: [
       { date: "2024-01-12", label: "Draft created" },
       { date: "2024-01-22", label: "Under review" },
@@ -41,6 +44,9 @@ export const contractsSeed = [
     renewalStatus: "Negotiation",
     value: 180000,
     notes: "Renewal proposal shared. Awaiting updated terms from legal.",
+    currency: "USD",
+    scopes: ["DaaS (T&M)", "Man/Day (T&M)"],
+    otherScopeText: "",
     history: [
       { date: "2023-11-05", label: "Draft created" },
       { date: "2023-11-18", label: "Under review" },
@@ -61,6 +67,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 320000,
     notes: "Deployment phase complete. Monitoring post-launch metrics.",
+    currency: "USD",
+    scopes: ["Outsource", "Man/Day (Fix)"],
+    otherScopeText: "",
     history: [
       { date: "2024-04-01", label: "Draft created" },
       { date: "2024-04-15", label: "Under review" },
@@ -81,6 +90,9 @@ export const contractsSeed = [
     renewalStatus: "Lost",
     value: 150000,
     notes: "Contract expired. Customer moved to internal hosting.",
+    currency: "USD",
+    scopes: ["DaaS (Fix)", "7/24 Support"],
+    otherScopeText: "",
     history: [
       { date: "2023-06-12", label: "Draft created" },
       { date: "2023-07-01", label: "Under review" },
@@ -101,6 +113,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 98000,
     notes: "Kickoff call scheduled for next week.",
+    currency: "TL",
+    scopes: ["DaaS (Fix)", "Other"],
+    otherScopeText: "Custom reporting",
     history: [
       { date: "2024-07-18", label: "Draft created" },
       { date: "2024-08-02", label: "Under review" },
@@ -120,6 +135,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 210000,
     notes: "Monthly steering committee in place. KPI dashboard shared.",
+    currency: "USD",
+    scopes: ["Man/Day (Fix)", "7/24 Support"],
+    otherScopeText: "",
     history: [
       { date: "2023-12-15", label: "Draft created" },
       { date: "2024-01-05", label: "Under review" },
@@ -140,6 +158,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 265000,
     notes: "Security review in progress. Final signatures expected next week.",
+    currency: "USD",
+    scopes: ["DaaS (T&M)", "Man/Day (T&M)", "7/24 Support"],
+    otherScopeText: "",
     history: [
       { date: "2024-09-12", label: "Draft created" },
       { date: "2024-10-02", label: "Under review" },
@@ -158,6 +179,9 @@ export const contractsSeed = [
     renewalStatus: "Needs Attention",
     value: 120000,
     notes: "Renewal window open. Usage growth supports upsell.",
+    currency: "USD",
+    scopes: ["Outsource", "DaaS (Fix)"],
+    otherScopeText: "",
     history: [
       { date: "2024-03-15", label: "Draft created" },
       { date: "2024-04-02", label: "Under review" },
@@ -178,6 +202,9 @@ export const contractsSeed = [
     renewalStatus: "Pending",
     value: 175000,
     notes: "Awaiting RFP response for extension.",
+    currency: "TL",
+    scopes: ["Man/Day (Fix)", "Other"],
+    otherScopeText: "Legacy support",
     history: [
       { date: "2023-11-01", label: "Draft created" },
       { date: "2023-11-18", label: "Under review" },
@@ -198,6 +225,9 @@ export const contractsSeed = [
     renewalStatus: "On Track",
     value: 45000,
     notes: "Procurement reviewing SOW. Expect approval by month end.",
+    currency: "USD",
+    scopes: ["DaaS (T&M)"],
+    otherScopeText: "",
     history: [
       { date: "2024-09-01", label: "Draft created" },
       { date: "2024-09-15", label: "Under review" },

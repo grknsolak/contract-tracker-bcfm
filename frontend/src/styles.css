@@ -334,6 +334,96 @@ a {
 .status-fill.tone-info { background: rgba(99, 144, 255, 0.75); }
 .status-fill.tone-neutral { background: rgba(122, 133, 153, 0.6); }
 
+.pie-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.pie-chart {
+  margin: 0 auto;
+}
+
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.legend-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.legend-meta {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 1.2fr 3fr 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.bar-label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1d4ed8, #22c55e);
+}
+
+.bar-value {
+  font-size: 12px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.top-tier {
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0));
+}
+
+.tag.risk {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+}
+
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -458,14 +548,19 @@ textarea {
 .table-head,
 .table-row {
   display: grid;
-  grid-template-columns: 1.4fr 1.2fr 0.9fr 0.9fr 0.9fr 0.9fr 0.9fr 1fr;
+  grid-template-columns: 1.4fr 1.2fr 0.9fr 0.9fr 0.9fr 1fr 1.2fr 0.9fr 0.9fr 1fr;
   gap: 12px;
   align-items: center;
 }
 
 .table-compact .table-head,
 .table-compact .table-row {
-  grid-template-columns: 1.4fr 1.2fr 1fr 0.9fr 0.9fr;
+  grid-template-columns: 1.4fr 1.2fr 1fr 1fr 1.2fr 0.9fr 0.9fr;
+}
+
+.segmentation-table .table-head,
+.segmentation-table .table-row {
+  grid-template-columns: 1.4fr 1.2fr 0.7fr 1fr 1fr 0.9fr 1.4fr;
 }
 
 .table-head {
@@ -813,6 +908,10 @@ textarea {
   }
 
   .split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pie-layout {
     grid-template-columns: 1fr;
   }
 

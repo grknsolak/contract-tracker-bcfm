@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
+import PieChart from "../components/PieChart";
 import EmptyState from "../components/EmptyState";
-import { daysUntil, formatDate } from "../utils/date";
+import { daysUntil, formatDate, formatCurrency } from "../utils/date";
 import { getStageMeta } from "../utils/status";
 
 export default function Dashboard({ contracts, activity, onNavigate }) {
@@ -42,6 +43,24 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
     }, {});
   }, [contracts]);
 
+  const stageColors = {
+    Draft: "#94a3b8",
+    "Under Review": "#60a5fa",
+    "Approval Pending": "#f59e0b",
+    Signed: "#6366f1",
+    Active: "#10b981",
+    "Renewal Upcoming": "#f59e0b",
+    Expired: "#ef4444",
+  };
+
+  const pieData = useMemo(() => {
+    return Object.entries(stageCounts).map(([stage, count]) => ({
+      label: stage,
+      value: count,
+      color: stageColors[stage] || "#cbd5f5",
+    }));
+  }, [stageCounts]);
+
   return (
     <div className="page">
       <div className="page-grid">
@@ -74,22 +93,23 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
 
       <div className="split-grid">
         <Card title="Contract status distribution" subtitle="Portfolio overview">
-          <div className="status-distribution">
-            {Object.entries(stageCounts).map(([stage, count]) => {
-              const meta = getStageMeta(stage);
-              const percent = Math.round((count / contracts.length) * 100);
-              return (
-                <div key={stage} className="status-row">
-                  <div className="status-row-label">
-                    <Badge tone={meta.tone}>{stage}</Badge>
-                    <span>{count}</span>
+          <div className="pie-layout">
+            <PieChart data={pieData} size={220} innerRadius={70} />
+            <div className="pie-legend">
+              {Object.entries(stageCounts).map(([stage, count]) => {
+                const meta = getStageMeta(stage);
+                return (
+                  <div key={stage} className="legend-item">
+                    <span className="legend-dot" style={{ background: stageColors[stage] || "#cbd5f5" }} />
+                    <div>
+                      <div className="legend-label">{stage}</div>
+                      <div className="legend-meta">{count} contracts</div>
+                    </div>
+                    <Badge tone={meta.tone}>{meta.label}</Badge>
                   </div>
-                  <div className="status-bar">
-                    <div className={`status-fill tone-${meta.tone}`} style={{ width: `${percent}%` }} />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
           <button className="link-button" onClick={() => onNavigate("/alerts")}>
             Review expiring contracts
@@ -141,6 +161,8 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
             <div>Customer</div>
             <div>Contract</div>
             <div>End date</div>
+            <div>Value</div>
+            <div>Scopes</div>
             <div>Stage</div>
             <div>Remaining days</div>
           </div>
@@ -165,10 +187,22 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
                       <div className="muted">Owner: {contract.owner}</div>
                     </div>
                     <div>{contract.contractName}</div>
-                    <div>{formatDate(contract.endDate)}</div>
-                    <div>
-                      <Badge tone={meta.tone}>{meta.label}</Badge>
-                    </div>
+                  <div>{formatDate(contract.endDate)}</div>
+                  <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                  <div className="scope-tags">
+                    {(contract.scopes || []).length === 0 ? (
+                      <span className="muted">-</span>
+                    ) : (
+                      (contract.scopes || []).map((scope) => (
+                        <span key={scope} className="tag">
+                          {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                  <div>
+                    <Badge tone={meta.tone}>{meta.label}</Badge>
+                  </div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
                       {remaining < 0 ? "Expired" : `${remaining} days`}
                     </div>

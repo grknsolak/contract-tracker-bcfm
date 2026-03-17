@@ -14,6 +14,9 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 const FRONT_ORIGIN = process.env.FRONT_ORIGIN || "http://localhost:8080";
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
+const FX_API_BASE = "https://api.frankfurter.dev/v1/latest";
+const FX_CACHE_TTL_MS = 10 * 60 * 1000;
+const fxCache = new Map();
 
 // PostgreSQL connection configuration
 const dbConfig = {
@@ -167,6 +170,29 @@ function auth(req, res, next) {
 
 // ---- health
 app.get("/api/health", (req, res) => res.json({ ok: true }));
+
+// ---- fx rates (no auth)
+app.get("/api/fx/latest", async (req, res) => {
+  const base = String(req.query.base || "USD").toUpperCase();
+  const symbols = String(req.query.symbols || "TRY").toUpperCase();
+  const cacheKey = `${base}_${symbols}`;
+  const cached = fxCache.get(cacheKey);
+  const now = Date.now();
+
+  if (cached && now - cached.ts < FX_CACHE_TTL_MS) {
+    return res.json({ ok: true, ...cached.data, cached: true });
+  }
+
+  try {
+    const { data } = await axios.get(FX_API_BASE, { params: { base, symbols } });
+    const payload = { ...data, fetchedAt: new Date().toISOString() };
+    fxCache.set(cacheKey, { ts: now, data: payload });
+    return res.json({ ok: true, ...payload, cached: false });
+  } catch (error) {
+    console.error("FX fetch error:", error?.message || error);
+    return res.status(502).json({ ok: false, error: "FX rate fetch failed" });
+  }
+});
 
 
 // ---- auth

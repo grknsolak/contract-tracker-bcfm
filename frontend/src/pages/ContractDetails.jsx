@@ -58,7 +58,7 @@ export default function ContractDetails({ contract, onNavigate }) {
           </div>
           <div className="detail-row">
             <span>Contract value</span>
-            <strong>{formatCurrency(contract.value)}</strong>
+            <strong>{formatCurrency(contract.value, contract.currency)}</strong>
           </div>
         </Card>
 
@@ -80,6 +80,20 @@ export default function ContractDetails({ contract, onNavigate }) {
           <div className="detail-row">
             <span>Stage</span>
             <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
+          </div>
+        </Card>
+
+        <Card title="Service scopes" subtitle="Included coverage">
+          <div className="scope-tags">
+            {(contract.scopes || []).length === 0 ? (
+              <span className="muted">No scopes selected.</span>
+            ) : (
+              (contract.scopes || []).map((scope) => (
+                <span key={scope} className="tag">
+                  {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
+                </span>
+              ))
+            )}
           </div>
         </Card>
 

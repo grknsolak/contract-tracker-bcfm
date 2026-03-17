@@ -24,11 +24,12 @@ export function isExpired(iso) {
   return typeof days === "number" && days < 0;
 }
 
-export function formatCurrency(value) {
+export function formatCurrency(value, currency = "USD") {
   if (value == null || Number.isNaN(Number(value))) return "-";
+  const normalized = currency === "TL" ? "TRY" : currency;
   return Number(value).toLocaleString("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: normalized,
     maximumFractionDigits: 0,
   });
 }

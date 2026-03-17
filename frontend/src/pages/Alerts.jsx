@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
-import { daysUntil, formatDate } from "../utils/date";
+import { daysUntil, formatDate, formatCurrency } from "../utils/date";
 import { getStageMeta } from "../utils/status";
 
 function Section({ title, description, items, onNavigate }) {
@@ -20,6 +20,18 @@ function Section({ title, description, items, onNavigate }) {
                 <div>
                   <div className="primary-text">{contract.customerName}</div>
                   <div className="muted">{contract.contractName}</div>
+                  <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                  <div className="scope-tags">
+                    {(contract.scopes || []).length === 0 ? (
+                      <span className="muted">-</span>
+                    ) : (
+                      (contract.scopes || []).map((scope) => (
+                        <span key={scope} className="tag">
+                          {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
+                        </span>
+                      ))
+                    )}
+                  </div>
                 </div>
                 <div className="alert-meta">
                   <div>{formatDate(contract.endDate)}</div>
