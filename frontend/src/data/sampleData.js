@@ -22,6 +22,7 @@ export const contractsSeed = [
     value: 240000,
     notes: "Quarterly business reviews scheduled. Ops team happy with SLA compliance.",
     currency: "USD",
+    team: "Team A",
     scopes: ["7/24 Support", "DaaS (Fix)", "Outsource"],
     otherScopeText: "",
     history: [
@@ -45,6 +46,7 @@ export const contractsSeed = [
     value: 180000,
     notes: "Renewal proposal shared. Awaiting updated terms from legal.",
     currency: "USD",
+    team: "Team B",
     scopes: ["DaaS (T&M)", "Man/Day (T&M)"],
     otherScopeText: "",
     history: [
@@ -68,6 +70,7 @@ export const contractsSeed = [
     value: 320000,
     notes: "Deployment phase complete. Monitoring post-launch metrics.",
     currency: "USD",
+    team: "Atlas",
     scopes: ["Outsource", "Man/Day (Fix)"],
     otherScopeText: "",
     history: [
@@ -91,6 +94,7 @@ export const contractsSeed = [
     value: 150000,
     notes: "Contract expired. Customer moved to internal hosting.",
     currency: "USD",
+    team: "Apex",
     scopes: ["DaaS (Fix)", "7/24 Support"],
     otherScopeText: "",
     history: [
@@ -114,6 +118,7 @@ export const contractsSeed = [
     value: 98000,
     notes: "Kickoff call scheduled for next week.",
     currency: "TL",
+    team: "Solid",
     scopes: ["DaaS (Fix)", "Other"],
     otherScopeText: "Custom reporting",
     history: [
@@ -136,6 +141,7 @@ export const contractsSeed = [
     value: 210000,
     notes: "Monthly steering committee in place. KPI dashboard shared.",
     currency: "USD",
+    team: "Mando",
     scopes: ["Man/Day (Fix)", "7/24 Support"],
     otherScopeText: "",
     history: [
@@ -159,6 +165,7 @@ export const contractsSeed = [
     value: 265000,
     notes: "Security review in progress. Final signatures expected next week.",
     currency: "USD",
+    team: "Atlas",
     scopes: ["DaaS (T&M)", "Man/Day (T&M)", "7/24 Support"],
     otherScopeText: "",
     history: [
@@ -180,6 +187,7 @@ export const contractsSeed = [
     value: 120000,
     notes: "Renewal window open. Usage growth supports upsell.",
     currency: "USD",
+    team: "Team A",
     scopes: ["Outsource", "DaaS (Fix)"],
     otherScopeText: "",
     history: [
@@ -203,6 +211,7 @@ export const contractsSeed = [
     value: 175000,
     notes: "Awaiting RFP response for extension.",
     currency: "TL",
+    team: "Team B",
     scopes: ["Man/Day (Fix)", "Other"],
     otherScopeText: "Legacy support",
     history: [
@@ -226,6 +235,7 @@ export const contractsSeed = [
     value: 45000,
     notes: "Procurement reviewing SOW. Expect approval by month end.",
     currency: "USD",
+    team: "Apex",
     scopes: ["DaaS (T&M)"],
     otherScopeText: "",
     history: [

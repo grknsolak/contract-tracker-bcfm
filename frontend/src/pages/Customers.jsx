@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
@@ -16,10 +16,40 @@ const scopeOptions = [
   "Other",
 ];
 
+const durationOptions = [
+  { value: "6m", label: "6 Months", months: 6 },
+  { value: "1y", label: "1 Year", months: 12 },
+  { value: "3y", label: "3 Years", months: 36 },
+];
+
+function addDuration(startDate, durationType) {
+  if (!startDate || !durationType) return "";
+  const option = durationOptions.find((item) => item.value === durationType);
+  if (!option) return "";
+  const date = new Date(startDate);
+  if (Number.isNaN(date.getTime())) return "";
+  date.setMonth(date.getMonth() + option.months);
+  return date.toISOString().slice(0, 10);
+}
+
+function inferDurationType(startDate, endDate) {
+  if (!startDate || !endDate) return "";
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
+  const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  if (months === 6) return "6m";
+  if (months === 12) return "1y";
+  if (months === 36) return "3y";
+  return "";
+}
+
 const emptyForm = {
   customerName: "",
   contractName: "",
   owner: "",
+  team: "",
+  durationType: "",
   startDate: "",
   endDate: "",
   stage: "Draft",
@@ -34,12 +64,22 @@ const emptyForm = {
 export default function Customers({ contracts, setContracts, onNavigate, route }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("remaining");
-  const [sortDir, setSortDir] = useState("asc");
+  const [sortBy, setSortBy] = useState("recent");
+  const [sortDir, setSortDir] = useState("desc");
   const [formState, setFormState] = useState(emptyForm);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const teamOptions = ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"];
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+    if (!formState.startDate || !formState.durationType) return;
+    const nextEndDate = addDuration(formState.startDate, formState.durationType);
+    if (nextEndDate && nextEndDate !== formState.endDate) {
+      setFormState((prev) => ({ ...prev, endDate: nextEndDate }));
+    }
+  }, [formState.startDate, formState.durationType, formState.endDate, isModalOpen]);
 
   React.useEffect(() => {
     const editId = route?.query?.edit;
@@ -66,6 +106,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       let valueA;
       let valueB;
       switch (sortBy) {
+        case "recent":
+          valueA = new Date(a.createdAt || 0).getTime() || 0;
+          valueB = new Date(b.createdAt || 0).getTime() || 0;
+          break;
         case "customer":
           valueA = a.customerName;
           valueB = b.customerName;
@@ -102,6 +146,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       ...contract,
       value: contract.value ?? "",
       currency: contract.currency || "USD",
+      team: contract.team || "",
+      durationType: contract.durationType || inferDurationType(contract.startDate, contract.endDate),
       scopes: contract.scopes || [],
       otherScopeText: contract.otherScopeText || "",
     });
@@ -122,12 +168,18 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
 
     if (editingId) {
       setContracts((prev) =>
-        prev.map((contract) => (contract.id === editingId ? { ...contract, ...formState } : contract))
+        prev.map((contract) =>
+          contract.id === editingId
+            ? { ...contract, ...formState, updatedAt: new Date().toISOString() }
+            : contract
+        )
       );
     } else {
       const newContract = {
         ...formState,
         id: `ct-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         history: [
           { date: formState.startDate, label: "Draft created" },
           { date: formState.startDate, label: formState.stage },
@@ -172,6 +224,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           <div className="field">
             <label>Sort by</label>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+              <option value="recent">Newest first</option>
               <option value="remaining">Remaining days</option>
               <option value="endDate">End date</option>
               <option value="customer">Customer name</option>
@@ -194,6 +247,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           <div className="table-head">
             <div>Customer</div>
             <div>Contract</div>
+            <div>Team</div>
             <div>Start</div>
             <div>End</div>
             <div>Remaining days</div>
@@ -221,6 +275,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                       <div className="muted">Owner: {contract.owner}</div>
                     </div>
                     <div>{contract.contractName}</div>
+                    <div>{contract.team || "-"}</div>
                     <div>{formatDate(contract.startDate)}</div>
                     <div>{formatDate(contract.endDate)}</div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
@@ -263,7 +318,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       {isModalOpen && (
         <Modal
           title={editingId ? "Edit contract" : "Create contract"}
-          description="Keep contract stage and dates current to track renewals accurately."
+          description="Capture contract scope, team ownership, and duration in one place."
           onClose={closeModal}
           footer={
             <div className="modal-actions">
@@ -290,24 +345,52 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               />
             </div>
             <div className="field">
+              <label>Contract duration *</label>
+              <select
+                value={formState.durationType}
+                onChange={(event) => setFormState({ ...formState, durationType: event.target.value })}
+              >
+                <option value="">Select duration</option>
+                {durationOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label>Owner</label>
+              <input
+                value={formState.owner}
+                onChange={(event) => setFormState({ ...formState, owner: event.target.value })}
+              />
+            </div>
+            <div className="field field-span-2">
               <label>Service scopes</label>
-              <div className="chips">
+              <div className="scope-selector-grid">
                 {scopeOptions.map((scope) => {
                   const on = formState.scopes.includes(scope);
                   return (
-                    <button
+                    <label
                       key={scope}
-                      type="button"
-                      className={`chip ${on ? "on" : ""}`}
-                      onClick={() => {
-                        const nextScopes = on
-                          ? formState.scopes.filter((item) => item !== scope)
-                          : [...formState.scopes, scope];
-                        setFormState({ ...formState, scopes: nextScopes });
-                      }}
+                      className={`scope-option ${on ? "selected" : ""}`}
                     >
-                      {scope}
-                    </button>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() => {
+                          const nextScopes = on
+                            ? formState.scopes.filter((item) => item !== scope)
+                            : [...formState.scopes, scope];
+                          setFormState({
+                            ...formState,
+                            scopes: nextScopes,
+                            otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText,
+                          });
+                        }}
+                      />
+                      <span>{scope}</span>
+                    </label>
                   );
                 })}
               </div>
@@ -320,11 +403,18 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               )}
             </div>
             <div className="field">
-              <label>Owner</label>
-              <input
-                value={formState.owner}
-                onChange={(event) => setFormState({ ...formState, owner: event.target.value })}
-              />
+              <label>Team</label>
+              <select
+                value={formState.team}
+                onChange={(event) => setFormState({ ...formState, team: event.target.value })}
+              >
+                <option value="">Select team</option>
+                {teamOptions.map((team) => (
+                  <option key={team} value={team}>
+                    {team}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <label>Start date *</label>
@@ -335,11 +425,12 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               />
             </div>
             <div className="field">
-              <label>End date *</label>
+              <label>End date (automatic) *</label>
               <input
                 type="date"
                 value={formState.endDate}
                 onChange={(event) => setFormState({ ...formState, endDate: event.target.value })}
+                readOnly={Boolean(formState.startDate && formState.durationType)}
               />
             </div>
             <div className="field">
@@ -388,21 +479,13 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                 <option value="TL">TL</option>
               </select>
             </div>
-            <div className="field">
+            <div className="field field-span-2">
               <label>Notes</label>
               <textarea
-                rows="3"
+                rows="4"
                 value={formState.notes}
                 onChange={(event) => setFormState({ ...formState, notes: event.target.value })}
               />
-            </div>
-          </div>
-          <div className="form-preview">
-            <div className="preview-card">
-              <div className="preview-title">Stage preview</div>
-              <Badge tone={getStageMeta(formState.stage).tone}>{formState.stage}</Badge>
-              <div className="preview-meta">Remaining: {daysUntil(formState.endDate) ?? "-"} days</div>
-              <div className="preview-meta">Value: {formatCurrency(formState.value, formState.currency)}</div>
             </div>
           </div>
         </Modal>

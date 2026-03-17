@@ -49,6 +49,10 @@ export default function ContractDetails({ contract, onNavigate }) {
             <strong>{contract.customerName}</strong>
           </div>
           <div className="detail-row">
+            <span>Team</span>
+            <strong>{contract.team || "-"}</strong>
+          </div>
+          <div className="detail-row">
             <span>Owner</span>
             <strong>{contract.owner}</strong>
           </div>

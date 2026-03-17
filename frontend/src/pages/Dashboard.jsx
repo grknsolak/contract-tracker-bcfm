@@ -1,40 +1,69 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import PieChart from "../components/PieChart";
 import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatCurrency } from "../utils/date";
-import { getStageMeta } from "../utils/status";
+import { getStageMeta, renewalTone } from "../utils/status";
 
-export default function Dashboard({ contracts, activity, onNavigate }) {
-  const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("All");
+const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
 
+function getQuarter(dateValue) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.floor(date.getMonth() / 3);
+}
+
+function getQuarterSummary(contracts) {
+  const buckets = quarterLabels.map((label, index) => ({
+    label,
+    index,
+    contracts: [],
+  }));
+
+  contracts.forEach((contract) => {
+    const quarterIndex = getQuarter(contract.endDate);
+    if (quarterIndex == null) return;
+    buckets[quarterIndex].contracts.push(contract);
+  });
+
+  return buckets.map((bucket) => ({
+    ...bucket,
+    contracts: bucket.contracts.sort((a, b) => new Date(a.endDate) - new Date(b.endDate)),
+  }));
+}
+
+export default function Dashboard({ contracts, onNavigate }) {
   const metrics = useMemo(() => {
-    const totalCustomers = new Set(contracts.map((c) => c.customerName)).size;
-    const activeContracts = contracts.filter((c) => c.stage === "Active").length;
-    const next30 = contracts.filter((c) => {
-      const days = daysUntil(c.endDate);
+    const activeCustomers = new Set(
+      contracts
+        .filter((contract) => daysUntil(contract.endDate) >= 0)
+        .map((contract) => contract.customerName)
+    ).size;
+
+    const churnCustomers = new Set(
+      contracts
+        .filter(
+          (contract) =>
+            daysUntil(contract.endDate) < 0 || contract.renewalStatus === "Lost" || contract.stage === "Expired"
+        )
+        .map((contract) => contract.customerName)
+    ).size;
+
+    const next30 = contracts.filter((contract) => {
+      const days = daysUntil(contract.endDate);
       return typeof days === "number" && days >= 0 && days <= 30;
     }).length;
-    const next60 = contracts.filter((c) => {
-      const days = daysUntil(c.endDate);
+
+    const next60 = contracts.filter((contract) => {
+      const days = daysUntil(contract.endDate);
       return typeof days === "number" && days >= 31 && days <= 60;
     }).length;
-    const expired = contracts.filter((c) => daysUntil(c.endDate) < 0).length;
-    return { totalCustomers, activeContracts, next30, next60, expired };
-  }, [contracts]);
 
-  const filteredContracts = useMemo(() => {
-    return contracts.filter((contract) => {
-      const matchesSearch =
-        contract.customerName.toLowerCase().includes(search.toLowerCase()) ||
-        contract.contractName.toLowerCase().includes(search.toLowerCase()) ||
-        contract.owner.toLowerCase().includes(search.toLowerCase());
-      const matchesStage = stageFilter === "All" || contract.stage === stageFilter;
-      return matchesSearch && matchesStage;
-    });
-  }, [contracts, search, stageFilter]);
+    const expired = contracts.filter((contract) => daysUntil(contract.endDate) < 0).length;
+
+    return { activeCustomers, churnCustomers, next30, next60, expired };
+  }, [contracts]);
 
   const stageCounts = useMemo(() => {
     return contracts.reduce((acc, contract) => {
@@ -61,38 +90,69 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
     }));
   }, [stageCounts]);
 
+  const riskContracts = useMemo(() => {
+    return contracts
+      .filter((contract) => {
+        const days = daysUntil(contract.endDate);
+        return typeof days === "number" && days <= 60;
+      })
+      .sort((a, b) => {
+        const aDays = daysUntil(a.endDate) ?? 99999;
+        const bDays = daysUntil(b.endDate) ?? 99999;
+        return aDays - bDays;
+      })
+      .slice(0, 6);
+  }, [contracts]);
+
+  const quarterSummary = useMemo(() => getQuarterSummary(contracts), [contracts]);
+
+  const statCards = [
+    {
+      label: "🟢 Active customers",
+      value: metrics.activeCustomers,
+      meta: "Healthy customer base",
+      tone: "",
+    },
+    {
+      label: "⚫ Churn count",
+      value: metrics.churnCustomers,
+      meta: "Lost or expired customers",
+      tone: "",
+    },
+    {
+      label: "🟡 Expiring in 30 days",
+      value: metrics.next30,
+      meta: "Immediate attention",
+      tone: "emphasis",
+    },
+    {
+      label: "🟠 Expiring in 60 days",
+      value: metrics.next60,
+      meta: "Upcoming renewal focus",
+      tone: "",
+    },
+    {
+      label: "🔴 Expired contracts",
+      value: metrics.expired,
+      meta: "Critical follow-up needed",
+      tone: "danger",
+    },
+  ];
+
   return (
     <div className="page">
       <div className="page-grid">
-        <Card className="stat-card">
-          <div className="stat-label">Total customers</div>
-          <div className="stat-value">{metrics.totalCustomers}</div>
-          <div className="stat-meta">Across all regions</div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-label">Active contracts</div>
-          <div className="stat-value">{metrics.activeContracts}</div>
-          <div className="stat-meta">Currently delivering</div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-label">Expiring in 30 days</div>
-          <div className="stat-value emphasis">{metrics.next30}</div>
-          <div className="stat-meta">Immediate renewals</div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-label">Expiring in 60 days</div>
-          <div className="stat-value">{metrics.next60}</div>
-          <div className="stat-meta">Upcoming attention</div>
-        </Card>
-        <Card className="stat-card">
-          <div className="stat-label">Expired contracts</div>
-          <div className="stat-value danger">{metrics.expired}</div>
-          <div className="stat-meta">Require follow-up</div>
-        </Card>
+        {statCards.map((item) => (
+          <Card key={item.label} className="stat-card executive-stat">
+            <div className="stat-label">{item.label}</div>
+            <div className={`stat-value ${item.tone}`.trim()}>{item.value}</div>
+            <div className="stat-meta">{item.meta}</div>
+          </Card>
+        ))}
       </div>
 
       <div className="split-grid">
-        <Card title="Contract status distribution" subtitle="Portfolio overview">
+        <Card title="Contract status distribution" subtitle="Overall portfolio health">
           <div className="pie-layout">
             <PieChart data={pieData} size={220} innerRadius={70} />
             <div className="pie-legend">
@@ -111,106 +171,74 @@ export default function Dashboard({ contracts, activity, onNavigate }) {
               })}
             </div>
           </div>
-          <button className="link-button" onClick={() => onNavigate("/alerts")}>
-            Review expiring contracts
-          </button>
         </Card>
 
-        <Card title="Recent activity" subtitle="Latest updates">
-          <div className="activity-list">
-            {activity.map((item) => (
-              <div key={item.id} className="activity-item">
-                <div>
-                  <div className="activity-title">{item.title}</div>
-                  <div className="activity-meta">{item.meta}</div>
-                </div>
-                <div className="activity-time">{item.time}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      <Card title="Quick filters" subtitle="Find what needs attention">
-        <div className="filters">
-          <div className="field">
-            <label>Search</label>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by customer, contract, or owner"
-            />
-          </div>
-          <div className="field">
-            <label>Stage</label>
-            <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}>
-              <option value="All">All stages</option>
-              <option value="Draft">Draft</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Approval Pending">Approval Pending</option>
-              <option value="Signed">Signed</option>
-              <option value="Active">Active</option>
-              <option value="Renewal Upcoming">Renewal Upcoming</option>
-              <option value="Expired">Expired</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="table table-compact">
-          <div className="table-head">
-            <div>Customer</div>
-            <div>Contract</div>
-            <div>End date</div>
-            <div>Value</div>
-            <div>Scopes</div>
-            <div>Stage</div>
-            <div>Remaining days</div>
-          </div>
-          <div className="table-body">
-            {filteredContracts.length === 0 ? (
-              <EmptyState
-                title="No contracts found"
-                description="Try adjusting your filters to locate a contract."
-              />
-            ) : (
-              filteredContracts.slice(0, 5).map((contract) => {
-                const meta = getStageMeta(contract.stage);
+        <Card title="Critical contracts" subtitle="What needs discussion now">
+          {riskContracts.length === 0 ? (
+            <EmptyState title="Nothing critical" description="No contracts are expiring in the next 60 days." />
+          ) : (
+            <div className="priority-list">
+              {riskContracts.map((contract) => {
                 const remaining = daysUntil(contract.endDate);
+                const isCritical = remaining < 0;
+                const isUrgent = remaining >= 0 && remaining <= 30;
                 return (
-                  <div
+                  <button
                     key={contract.id}
-                    className="table-row clickable"
+                    className="priority-item"
                     onClick={() => onNavigate(`/contracts/${contract.id}`)}
                   >
                     <div>
-                      <div className="primary-text">{contract.customerName}</div>
-                      <div className="muted">Owner: {contract.owner}</div>
+                      <div className="priority-title">{contract.customerName}</div>
+                      <div className="priority-meta">
+                        {contract.contractName} · {formatCurrency(contract.value, contract.currency)}
+                      </div>
                     </div>
-                    <div>{contract.contractName}</div>
-                  <div>{formatDate(contract.endDate)}</div>
-                  <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
-                  <div className="scope-tags">
-                    {(contract.scopes || []).length === 0 ? (
-                      <span className="muted">-</span>
-                    ) : (
-                      (contract.scopes || []).map((scope) => (
-                        <span key={scope} className="tag">
-                          {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
-                        </span>
-                      ))
-                    )}
-                  </div>
-                  <div>
-                    <Badge tone={meta.tone}>{meta.label}</Badge>
-                  </div>
-                    <div className={remaining < 0 ? "text-danger" : ""}>
-                      {remaining < 0 ? "Expired" : `${remaining} days`}
+                    <div className="priority-badges">
+                      <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>
+                        {contract.renewalStatus}
+                      </Badge>
+                      <Badge tone={isCritical ? "danger" : isUrgent ? "warning" : "info"}>
+                        {isCritical ? "Critical" : isUrgent ? "Needs Attention" : "Upcoming"}
+                      </Badge>
                     </div>
-                  </div>
+                  </button>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="Quarterly contract view" subtitle="Customers grouped by contract start quarter">
+        <div className="quarter-grid">
+          {quarterSummary.map((quarter) => (
+            <div key={quarter.label} className="quarter-card">
+              <div className="quarter-head">
+                <div>
+                  <div className="quarter-title">{quarter.label}</div>
+                  <div className="quarter-meta">{quarter.contracts.length} contracts</div>
+                </div>
+              </div>
+
+              {quarter.contracts.length === 0 ? (
+                <div className="quarter-empty">No contracts in this quarter.</div>
+              ) : (
+                <div className="quarter-list">
+                  {quarter.contracts.slice(0, 6).map((contract) => (
+                    <button
+                      key={contract.id}
+                      className="quarter-item quarter-item-minimal"
+                      onClick={() => onNavigate(`/contracts/${contract.id}`)}
+                    >
+                      <span className="primary-text">{contract.customerName}</span>
+                      <span className="muted">{formatDate(contract.startDate)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </Card>
     </div>
