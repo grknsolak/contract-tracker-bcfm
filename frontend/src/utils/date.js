@@ -9,6 +9,29 @@ export function formatDate(iso) {
   });
 }
 
+export function formatMonthYear(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+  });
+}
+
+export function formatDateTime(iso) {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function daysUntil(iso) {
   if (!iso) return null;
   const end = new Date(iso);

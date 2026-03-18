@@ -3,7 +3,7 @@ import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import EmptyState from "../components/EmptyState";
-import { daysUntil, formatDate, formatCurrency } from "../utils/date";
+import { daysUntil, formatDate, formatMonthYear, formatCurrency } from "../utils/date";
 import { getStageMeta, renewalTone } from "../utils/status";
 
 const scopeOptions = [
@@ -276,8 +276,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                     </div>
                     <div>{contract.contractName}</div>
                     <div>{contract.team || "-"}</div>
-                    <div>{formatDate(contract.startDate)}</div>
-                    <div>{formatDate(contract.endDate)}</div>
+                    <div>{formatMonthYear(contract.startDate)}</div>
+                    <div>{formatMonthYear(contract.endDate)}</div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
                       {remaining < 0 ? "Expired" : `${remaining} days`}
                     </div>

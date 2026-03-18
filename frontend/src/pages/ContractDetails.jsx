@@ -1,12 +1,47 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
-import Timeline from "../components/Timeline";
-import { daysUntil, formatDate, formatCurrency } from "../utils/date";
+import ProcessStepper from "../components/ProcessStepper";
+import ContractGrowthChart from "../components/ContractGrowthChart";
+import { daysUntil, formatDate, formatCurrency, formatDateTime } from "../utils/date";
+import { getContractOperationalMetrics } from "../utils/contractMetrics";
 import { getStageMeta, renewalTone } from "../utils/status";
 
-export default function ContractDetails({ contract, onNavigate }) {
+export default function ContractDetails({ contract, setContracts, onNavigate }) {
+  const [commentText, setCommentText] = useState("");
+  const stageFlow = useMemo(() => {
+    const stages = [
+      "Draft",
+      "Under Review",
+      "Approval Pending",
+      "Signed",
+      "Active",
+      "Renewal Upcoming",
+      "Expired",
+    ];
+
+    const findHistoryEntry = (stage) => {
+      const normalizedStage = stage.toLowerCase();
+      return (contract.history || []).find((item) => {
+        const label = (item.label || "").toLowerCase();
+        if (normalizedStage === "draft") return label.includes("draft");
+        if (normalizedStage === "active") return label.includes("active");
+        return label.includes(normalizedStage);
+      });
+    };
+
+    return stages.map((stage) => {
+      const entry = findHistoryEntry(stage);
+      return {
+        id: stage,
+        name: stage,
+        date: entry?.date ? formatDate(entry.date) : "",
+        updatedBy: entry?.actor || contract.owner || "Team",
+      };
+    });
+  }, [contract.history, contract.owner]);
+
   if (!contract) {
     return (
       <EmptyState
@@ -19,6 +54,40 @@ export default function ContractDetails({ contract, onNavigate }) {
 
   const stageMeta = getStageMeta(contract.stage);
   const remaining = daysUntil(contract.endDate);
+  const operationalMetrics = getContractOperationalMetrics(contract);
+  const comments = useMemo(
+    () =>
+      [...(contract.comments || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [contract.comments]
+  );
+
+  const handleAddComment = () => {
+    const text = commentText.trim();
+    if (!text) return;
+
+    const newComment = {
+      id: `cmt-${Date.now()}`,
+      author: contract.owner || "Team",
+      createdAt: new Date().toISOString(),
+      text,
+    };
+
+    setContracts((prev) =>
+      prev.map((item) =>
+        item.id === contract.id
+          ? {
+              ...item,
+              comments: [newComment, ...(item.comments || [])],
+              history: [
+                ...(item.history || []),
+                { date: newComment.createdAt, label: "Comment added" },
+              ],
+            }
+          : item
+      )
+    );
+    setCommentText("");
+  };
 
   return (
     <div className="page">
@@ -111,33 +180,89 @@ export default function ContractDetails({ contract, onNavigate }) {
         </Card>
       </div>
 
+      <Card title="Stage progress" subtitle="Current phase visibility">
+        <ProcessStepper currentStep={contract.stage} steps={stageFlow} />
+      </Card>
+
       <div className="details-grid">
-        <Card title="Status timeline" subtitle="History of key milestones">
-          <Timeline items={contract.history || []} />
-        </Card>
-        <Card title="Stage progress" subtitle="Current phase visibility">
-          <div className="stage-steps">
-            {[
-              "Draft",
-              "Under Review",
-              "Approval Pending",
-              "Signed",
-              "Active",
-              "Renewal Upcoming",
-              "Expired",
-            ].map((stage) => {
-              const meta = getStageMeta(stage);
-              const isCurrent = stage === contract.stage;
-              return (
-                <div key={stage} className={`stage-step ${isCurrent ? "current" : ""}`}>
-                  <div className={`stage-dot tone-${meta.tone}`} />
-                  <div>
-                    <div className="stage-title">{stage}</div>
-                    <div className="stage-caption">{isCurrent ? "Current stage" : ""}</div>
+        <Card title="History & comments" subtitle="Track customer discussions and internal notes">
+          <div className="comment-composer">
+            <textarea
+              rows={4}
+              value={commentText}
+              onChange={(event) => setCommentText(event.target.value)}
+              placeholder="Add a clear update, decision note, or customer meeting summary..."
+            />
+            <div className="comment-composer-actions">
+              <span className="muted">Comments appear immediately in this customer history.</span>
+              <button className="btn btn-primary" onClick={handleAddComment}>
+                Add comment
+              </button>
+            </div>
+          </div>
+
+          {comments.length === 0 ? (
+            <p className="muted">No comment history yet.</p>
+          ) : (
+            <div className="comment-feed">
+              {comments.map((comment) => (
+                <div key={comment.id} className="comment-card">
+                  <div className="comment-card-head">
+                    <div>
+                      <div className="comment-author">{comment.author}</div>
+                      <div className="comment-time">{formatDateTime(comment.createdAt)}</div>
+                    </div>
+                    <Badge tone="info">History</Badge>
                   </div>
+                  <div className="comment-body">{comment.text}</div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card title="Action tracker" subtitle="Outstanding contract actions">
+          {operationalMetrics.overdueActions.length === 0 ? (
+            <p className="muted">No delayed actions recorded.</p>
+          ) : (
+            <div className="action-list">
+              {operationalMetrics.overdueActions.map((action) => (
+                <div key={action.id} className="action-item">
+                  <div>
+                    <div className="primary-text">{action.title}</div>
+                    <div className="muted">Due {formatDate(action.dueDate)}</div>
+                  </div>
+                  <Badge tone="danger">Delayed</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card title="Contract growth" subtitle="Track contract value movement over time">
+        <ContractGrowthChart contract={contract} />
+      </Card>
+
+      <div className="details-grid">
+        <Card title="Operational metrics" subtitle="Commercial efficiency view">
+          <div className="detail-row">
+            <span>Average renewal time</span>
+            <strong>{operationalMetrics.renewalDays != null ? `${operationalMetrics.renewalDays} days` : "-"}</strong>
+          </div>
+          <div className="detail-row">
+            <span>Sales cycle time</span>
+            <strong>{operationalMetrics.salesCycleDays != null ? `${operationalMetrics.salesCycleDays} days` : "-"}</strong>
+          </div>
+          <div className="detail-row">
+            <span>Contract closure time</span>
+            <strong>{operationalMetrics.closureDays != null ? `${operationalMetrics.closureDays} days` : "-"}</strong>
+          </div>
+          <div className="detail-row">
+            <span>Delayed actions</span>
+            <strong className={operationalMetrics.overdueActions.length ? "text-danger" : ""}>
+              {operationalMetrics.overdueActions.length}
+            </strong>
           </div>
         </Card>
       </div>

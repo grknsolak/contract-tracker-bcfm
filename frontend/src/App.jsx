@@ -6,6 +6,7 @@ import Customers from "./pages/Customers";
 import ContractDetails from "./pages/ContractDetails";
 import Alerts from "./pages/Alerts";
 import Segmentation from "./pages/Segmentation";
+import RevenueDashboard from "./pages/RevenueDashboard";
 import { contractsSeed, activitySeed } from "./data/sampleData";
 import { useHashRoute } from "./hooks/useHashRoute";
 
@@ -36,13 +37,15 @@ export default function App() {
 
   if (route.name === "customers") {
     content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} />;
+  } else if (route.name === "revenue") {
+    content = <RevenueDashboard contracts={contracts} />;
   } else if (route.name === "segmentation") {
     content = <Segmentation contracts={contracts} />;
   } else if (route.name === "alerts") {
     content = <Alerts contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "contracts") {
     const contract = contracts.find((item) => item.id === route.id);
-    content = <ContractDetails contract={contract} onNavigate={navigate} />;
+    content = <ContractDetails contract={contract} setContracts={setContracts} onNavigate={navigate} />;
   } else {
     content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} />;
   }

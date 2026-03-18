@@ -3,6 +3,7 @@ import React from "react";
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: "◼" },
   { id: "customers", label: "Customers", icon: "◻" },
+  { id: "revenue", label: "MRR / NRR", icon: "◉" },
   { id: "segmentation", label: "Segmentation", icon: "◈" },
   { id: "alerts", label: "Alerts", icon: "◆" },
 ];
@@ -31,15 +32,6 @@ export default function Sidebar({ route, onNavigate }) {
           </button>
         ))}
       </nav>
-      <div className="sidebar-footer">
-        <div className="sidebar-card">
-          <div className="sidebar-card-title">Renewal Watch</div>
-          <p className="sidebar-card-text">
-            3 contracts need review this week. Prioritize renewals and approvals.
-          </p>
-          <button className="btn btn-light" onClick={() => onNavigate("/alerts")}>View alerts</button>
-        </div>
-      </div>
     </aside>
   );
 }

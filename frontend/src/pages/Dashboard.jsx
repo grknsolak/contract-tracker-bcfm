@@ -4,6 +4,7 @@ import Badge from "../components/Badge";
 import PieChart from "../components/PieChart";
 import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatCurrency } from "../utils/date";
+import { getPortfolioOperationalMetrics } from "../utils/contractMetrics";
 import { getStageMeta, renewalTone } from "../utils/status";
 
 const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
@@ -34,10 +35,16 @@ function getQuarterSummary(contracts) {
 }
 
 export default function Dashboard({ contracts, onNavigate }) {
+  const totalCustomers = useMemo(() => new Set(contracts.map((contract) => contract.customerName)).size, [contracts]);
+
   const metrics = useMemo(() => {
     const activeCustomers = new Set(
       contracts
-        .filter((contract) => daysUntil(contract.endDate) >= 0)
+        .filter(
+          (contract) =>
+            contract.stage !== "Expired" &&
+            contract.renewalStatus !== "Lost"
+        )
         .map((contract) => contract.customerName)
     ).size;
 
@@ -64,6 +71,7 @@ export default function Dashboard({ contracts, onNavigate }) {
 
     return { activeCustomers, churnCustomers, next30, next60, expired };
   }, [contracts]);
+  const operationalMetrics = useMemo(() => getPortfolioOperationalMetrics(contracts), [contracts]);
 
   const stageCounts = useMemo(() => {
     return contracts.reduce((acc, contract) => {
@@ -89,6 +97,7 @@ export default function Dashboard({ contracts, onNavigate }) {
       color: stageColors[stage] || "#cbd5f5",
     }));
   }, [stageCounts]);
+  const totalContracts = contracts.length;
 
   const riskContracts = useMemo(() => {
     return contracts
@@ -120,21 +129,21 @@ export default function Dashboard({ contracts, onNavigate }) {
       tone: "",
     },
     {
-      label: "🟡 Expiring in 30 days",
+      label: "🚨 Expiring in 30 days",
       value: metrics.next30,
-      meta: "Immediate attention",
+      meta: "Immediate action required",
       tone: "emphasis",
     },
     {
-      label: "🟠 Expiring in 60 days",
+      label: "⚠️ Expiring in 60 days",
       value: metrics.next60,
-      meta: "Upcoming renewal focus",
+      meta: "Prepare renewal plan",
       tone: "",
     },
     {
-      label: "🔴 Expired contracts",
+      label: "⛔ Expired contracts",
       value: metrics.expired,
-      meta: "Critical follow-up needed",
+      meta: "Critical escalation needed",
       tone: "danger",
     },
   ];
@@ -151,21 +160,65 @@ export default function Dashboard({ contracts, onNavigate }) {
         ))}
       </div>
 
+      <div className="page-grid page-grid-operational">
+        <Card className="stat-card operational-stat">
+          <div className="stat-label">Average renewal time</div>
+          <div className="stat-value">
+            {operationalMetrics.averageRenewalDays != null ? `${operationalMetrics.averageRenewalDays}d` : "-"}
+          </div>
+          <div className="stat-meta">From renewal start to final decision</div>
+        </Card>
+        <Card className="stat-card operational-stat">
+          <div className="stat-label">Sales cycle time</div>
+          <div className="stat-value">
+            {operationalMetrics.averageSalesCycleDays != null ? `${operationalMetrics.averageSalesCycleDays}d` : "-"}
+          </div>
+          <div className="stat-meta">Draft created to signed</div>
+        </Card>
+        <Card className="stat-card operational-stat">
+          <div className="stat-label">Contract closure time</div>
+          <div className="stat-value">
+            {operationalMetrics.averageClosureDays != null ? `${operationalMetrics.averageClosureDays}d` : "-"}
+          </div>
+          <div className="stat-meta">Draft created to active go-live</div>
+        </Card>
+        <Card className="stat-card operational-stat">
+          <div className="stat-label">Delayed actions</div>
+          <div className={`stat-value ${operationalMetrics.overdueActionsCount ? "danger" : ""}`.trim()}>
+            {operationalMetrics.overdueActionsCount}
+          </div>
+          <div className="stat-meta">Open actions past due date</div>
+        </Card>
+      </div>
+
       <div className="split-grid">
         <Card title="Contract status distribution" subtitle="Overall portfolio health">
           <div className="pie-layout">
-            <PieChart data={pieData} size={220} innerRadius={70} />
+            <PieChart
+              data={pieData}
+              size={220}
+              innerRadius={70}
+              centerValue={totalContracts}
+              centerLabel={`${totalCustomers} customers`}
+              showPercentages
+            />
             <div className="pie-legend">
               {Object.entries(stageCounts).map(([stage, count]) => {
                 const meta = getStageMeta(stage);
+                const percentage = totalContracts ? Math.round((count / totalContracts) * 100) : 0;
                 return (
                   <div key={stage} className="legend-item">
                     <span className="legend-dot" style={{ background: stageColors[stage] || "#cbd5f5" }} />
-                    <div>
+                    <div className="legend-copy">
                       <div className="legend-label">{stage}</div>
-                      <div className="legend-meta">{count} contracts</div>
+                      <div className="legend-meta">
+                        {count} contracts · {percentage}%
+                      </div>
                     </div>
-                    <Badge tone={meta.tone}>{meta.label}</Badge>
+                    <div className="legend-stats">
+                      <div className="legend-percent">{percentage}%</div>
+                      <Badge tone={meta.tone}>{meta.label}</Badge>
+                    </div>
                   </div>
                 );
               })}
