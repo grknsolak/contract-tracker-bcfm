@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { formatCurrency } from "../utils/date";
+import { useResponsiveContainer } from "../hooks/useResponsiveContainer";
 
 function buildSmoothPath(points) {
   if (!points.length) return "";
@@ -36,6 +37,8 @@ export default function RevenueStackedChart({
   mode = "total",
 }) {
   const [expanded, setExpanded] = useState(false);
+  const { ref: totalChartRef, size: totalChartSize } = useResponsiveContainer();
+  const { ref: donutChartRef } = useResponsiveContainer();
   const legendItems = Array.from(
     new Map(data.flatMap((item) => item.segments || []).map((segment) => [segment.label, segment])).values()
   );
@@ -105,11 +108,11 @@ export default function RevenueStackedChart({
     if (mode !== "total" || !data.length) return null;
 
     const pointCount = data.length;
-    const width = Math.max(760, pointCount * 86);
-    const height = 280;
-    const paddingX = 44;
-    const paddingTop = 42;
-    const paddingBottom = 56;
+    const width = Math.max(totalChartSize.width || 0, 320);
+    const height = Math.max(totalChartSize.height || width * 0.42, width * 0.42);
+    const paddingX = width * 0.05;
+    const paddingTop = height * 0.12;
+    const paddingBottom = height * 0.14;
     const max = Math.max(...data.map((item) => item.total || 0), 0);
     const min = 0;
     const range = Math.max(max - min, 1);
@@ -128,15 +131,16 @@ export default function RevenueStackedChart({
     const compact = pointCount >= 10;
     const dense = pointCount >= 14;
     return { width, height, points, path, areaPath, max, maxPoint, minPoint, lastPoint, compact, dense };
-  }, [data, mode]);
+  }, [data, mode, totalChartSize.height, totalChartSize.width]);
 
   if (!data.length) return null;
 
   const renderTotalChart = (isExpanded = false) => (
-    <div className={`revenue-trend-chart-wrap ${isExpanded ? "expanded" : ""}`}>
+    <div ref={totalChartRef} className={`revenue-trend-chart-wrap ${isExpanded ? "expanded" : ""}`}>
       <svg
         viewBox={`0 0 ${totalChart.width} ${totalChart.height}`}
         className="revenue-trend-chart"
+        preserveAspectRatio="xMinYMin meet"
         role="img"
         aria-label={title}
       >
@@ -156,9 +160,9 @@ export default function RevenueStackedChart({
           return (
             <line
               key={ratio}
-              x1="44"
+              x1={totalChart.width * 0.05}
               y1={y}
-              x2={totalChart.width - 44}
+              x2={totalChart.width * 0.95}
               y2={y}
               className="revenue-trend-grid"
             />
@@ -175,16 +179,16 @@ export default function RevenueStackedChart({
         {totalChart.points.map((point, index) => (
           <g key={point.label}>
             <rect
-              x={point.x - (totalChart.compact ? 30 : 36)}
-              y={point.y - (index % 2 === 0 ? (totalChart.compact ? 34 : 38) : (totalChart.compact ? 46 : 54))}
-              width={totalChart.compact ? 60 : 72}
-              height={totalChart.compact ? 20 : 22}
+              x={point.x - (totalChart.compact ? totalChart.width * 0.038 : totalChart.width * 0.045)}
+              y={point.y - (index % 2 === 0 ? totalChart.height * 0.12 : totalChart.height * 0.17)}
+              width={totalChart.compact ? totalChart.width * 0.076 : totalChart.width * 0.09}
+              height={totalChart.compact ? totalChart.height * 0.07 : totalChart.height * 0.078}
               rx="11"
               className="revenue-total-pill"
             />
             <text
               x={point.x}
-              y={point.y - (index % 2 === 0 ? (totalChart.compact ? 21 : 24) : (totalChart.compact ? 33 : 40))}
+              y={point.y - (index % 2 === 0 ? totalChart.height * 0.075 : totalChart.height * 0.125)}
               textAnchor="middle"
               className={`revenue-total-label ${totalChart.compact ? "compact" : ""}`}
             >
@@ -196,7 +200,7 @@ export default function RevenueStackedChart({
             <circle cx={point.x} cy={point.y} r={totalChart.compact ? "6" : "7"} className="revenue-point" />
             <text
               x={point.x}
-              y={totalChart.height - 18}
+              y={totalChart.height - totalChart.height * 0.04}
               textAnchor="middle"
               className={`revenue-axis-label ${totalChart.dense ? "compact" : ""}`}
             >
@@ -249,7 +253,7 @@ export default function RevenueStackedChart({
 
       {mode === "scopes" ? (
         <div className="revenue-donut-layout">
-          <div className="revenue-donut-wrap">
+          <div ref={donutChartRef} className="revenue-donut-wrap">
             <svg viewBox="0 0 360 360" className="revenue-donut-chart" role="img" aria-label={title}>
               {pieData?.arcs.map((arc) => (
                 <g key={arc.label}>

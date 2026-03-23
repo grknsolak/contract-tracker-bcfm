@@ -26,7 +26,7 @@ export function getLifecycleDates(contract) {
     contract.startDate;
   const signedAt =
     contract.signedAt ||
-    findHistoryDate(history, (label) => label.includes("signed"));
+    findHistoryDate(history, (label) => label.includes("signed") || label.includes("signature") || label.includes("sign"));
   const activeAt =
     contract.activeAt ||
     findHistoryDate(history, (label) => label.includes("active"));

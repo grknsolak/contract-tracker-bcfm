@@ -5,7 +5,7 @@ import PieChart from "../components/PieChart";
 import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatCurrency } from "../utils/date";
 import { getPortfolioOperationalMetrics } from "../utils/contractMetrics";
-import { getStageMeta, renewalTone } from "../utils/status";
+import { contractStages, getStageMeta, normalizeStage, renewalTone, stageColors } from "../utils/status";
 
 const quarterLabels = ["Q1", "Q2", "Q3", "Q4"];
 
@@ -42,7 +42,7 @@ export default function Dashboard({ contracts, onNavigate }) {
       contracts
         .filter(
           (contract) =>
-            contract.stage !== "Expired" &&
+            normalizeStage(contract.stage) !== "Expired" &&
             contract.renewalStatus !== "Lost"
         )
         .map((contract) => contract.customerName)
@@ -52,7 +52,7 @@ export default function Dashboard({ contracts, onNavigate }) {
       contracts
         .filter(
           (contract) =>
-            daysUntil(contract.endDate) < 0 || contract.renewalStatus === "Lost" || contract.stage === "Expired"
+            daysUntil(contract.endDate) < 0 || contract.renewalStatus === "Lost" || normalizeStage(contract.stage) === "Expired"
         )
         .map((contract) => contract.customerName)
     ).size;
@@ -67,33 +67,26 @@ export default function Dashboard({ contracts, onNavigate }) {
       return typeof days === "number" && days >= 31 && days <= 60;
     }).length;
 
-    const expired = contracts.filter((contract) => daysUntil(contract.endDate) < 0).length;
+    const churned = contracts.filter((contract) => daysUntil(contract.endDate) < 0).length;
 
-    return { activeCustomers, churnCustomers, next30, next60, expired };
+    return { activeCustomers, churnCustomers, next30, next60, churned };
   }, [contracts]);
   const operationalMetrics = useMemo(() => getPortfolioOperationalMetrics(contracts), [contracts]);
 
   const stageCounts = useMemo(() => {
     return contracts.reduce((acc, contract) => {
-      acc[contract.stage] = (acc[contract.stage] || 0) + 1;
+      const stage = normalizeStage(contract.stage);
+      acc[stage] = (acc[stage] || 0) + 1;
       return acc;
     }, {});
   }, [contracts]);
 
-  const stageColors = {
-    Draft: "#94a3b8",
-    "Under Review": "#60a5fa",
-    "Approval Pending": "#f59e0b",
-    Signed: "#6366f1",
-    Active: "#10b981",
-    "Renewal Upcoming": "#f59e0b",
-    Expired: "#ef4444",
-  };
-
   const pieData = useMemo(() => {
-    return Object.entries(stageCounts).map(([stage, count]) => ({
+    return contractStages
+      .filter((stage) => stageCounts[stage])
+      .map((stage) => ({
       label: stage,
-      value: count,
+      value: stageCounts[stage],
       color: stageColors[stage] || "#cbd5f5",
     }));
   }, [stageCounts]);
@@ -125,7 +118,7 @@ export default function Dashboard({ contracts, onNavigate }) {
     {
       label: "⚫ Churn count",
       value: metrics.churnCustomers,
-      meta: "Lost or expired customers",
+      meta: "Lost customers",
       tone: "",
     },
     {
@@ -141,9 +134,9 @@ export default function Dashboard({ contracts, onNavigate }) {
       tone: "",
     },
     {
-      label: "⛔ Expired contracts",
-      value: metrics.expired,
-      meta: "Critical escalation needed",
+      label: "⛔ Churned customers",
+      value: metrics.churned,
+      meta: "Customers already lost",
       tone: "danger",
     },
   ];
@@ -173,14 +166,14 @@ export default function Dashboard({ contracts, onNavigate }) {
           <div className="stat-value">
             {operationalMetrics.averageSalesCycleDays != null ? `${operationalMetrics.averageSalesCycleDays}d` : "-"}
           </div>
-          <div className="stat-meta">Draft created to signed</div>
+          <div className="stat-meta">NDA / draft to signature</div>
         </Card>
         <Card className="stat-card operational-stat">
           <div className="stat-label">Contract closure time</div>
           <div className="stat-value">
             {operationalMetrics.averageClosureDays != null ? `${operationalMetrics.averageClosureDays}d` : "-"}
           </div>
-          <div className="stat-meta">Draft created to active go-live</div>
+          <div className="stat-meta">NDA to active go-live</div>
         </Card>
         <Card className="stat-card operational-stat">
           <div className="stat-label">Delayed actions</div>
@@ -196,14 +189,15 @@ export default function Dashboard({ contracts, onNavigate }) {
           <div className="pie-layout">
             <PieChart
               data={pieData}
-              size={220}
-              innerRadius={70}
+              size={200}
+              innerRadius={52}
               centerValue={totalContracts}
               centerLabel={`${totalCustomers} customers`}
               showPercentages
             />
             <div className="pie-legend">
-              {Object.entries(stageCounts).map(([stage, count]) => {
+              {contractStages.filter((stage) => stageCounts[stage]).map((stage) => {
+                const count = stageCounts[stage];
                 const meta = getStageMeta(stage);
                 const percentage = totalContracts ? Math.round((count / totalContracts) * 100) : 0;
                 return (

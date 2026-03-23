@@ -3,7 +3,7 @@ import Card from "../components/Card";
 import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatCurrency } from "../utils/date";
-import { getStageMeta } from "../utils/status";
+import { contractStages, getStageMeta, normalizeStage } from "../utils/status";
 
 function Section({ title, description, items, onNavigate }) {
   return (
@@ -18,7 +18,13 @@ function Section({ title, description, items, onNavigate }) {
             return (
               <div key={contract.id} className="alert-item">
                 <div>
-                  <div className="primary-text">{contract.customerName}</div>
+                  <button
+                    type="button"
+                    className="link-button primary-link"
+                    onClick={() => onNavigate(`/contracts/${contract.id}`)}
+                  >
+                    {contract.customerName}
+                  </button>
                   <div className="muted">{contract.contractName}</div>
                   <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
                   <div className="scope-tags">
@@ -36,7 +42,7 @@ function Section({ title, description, items, onNavigate }) {
                 <div className="alert-meta">
                   <div>{formatDate(contract.endDate)}</div>
                   <div className={remaining < 0 ? "text-danger" : ""}>
-                    {remaining < 0 ? "Expired" : `${remaining} days left`}
+                    {remaining < 0 ? "Churn" : `${remaining} days left`}
                   </div>
                 </div>
                 <Badge tone={meta.tone}>{meta.label}</Badge>
@@ -65,7 +71,7 @@ export default function Alerts({ contracts, onNavigate }) {
         contract.customerName.toLowerCase().includes(search.toLowerCase()) ||
         contract.contractName.toLowerCase().includes(search.toLowerCase());
       const matchesType = typeFilter === "All" || contract.contractType === typeFilter;
-      const matchesStage = stageFilter === "All" || contract.stage === stageFilter;
+      const matchesStage = stageFilter === "All" || normalizeStage(contract.stage) === stageFilter;
       const withinStart = startDate ? new Date(contract.endDate) >= new Date(startDate) : true;
       const withinEnd = endDate ? new Date(contract.endDate) <= new Date(endDate) : true;
       return matchesSearch && matchesType && matchesStage && withinStart && withinEnd;
@@ -80,13 +86,13 @@ export default function Alerts({ contracts, onNavigate }) {
     const days = daysUntil(c.endDate);
     return typeof days === "number" && days >= 31 && days <= 60;
   });
-  const expired = filtered.filter((c) => daysUntil(c.endDate) < 0);
+  const churned = filtered.filter((c) => daysUntil(c.endDate) < 0);
 
   const types = Array.from(new Set(contracts.map((c) => c.contractType))).filter(Boolean);
 
   return (
     <div className="page">
-      <Card title="Expiration tracking" subtitle="Monitor 30/60-day windows and expired contracts">
+      <Card title="Expiration tracking" subtitle="Monitor 30/60-day windows and churn risk">
         <div className="filters">
           <div className="field">
             <label>Search customer</label>
@@ -107,13 +113,11 @@ export default function Alerts({ contracts, onNavigate }) {
             <label>Stage</label>
             <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}>
               <option value="All">All stages</option>
-              <option value="Draft">Draft</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Approval Pending">Approval Pending</option>
-              <option value="Signed">Signed</option>
-              <option value="Active">Active</option>
-              <option value="Renewal Upcoming">Renewal Upcoming</option>
-              <option value="Expired">Expired</option>
+              {contractStages.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
             </select>
           </div>
           <div className="field">
@@ -141,9 +145,9 @@ export default function Alerts({ contracts, onNavigate }) {
           onNavigate={onNavigate}
         />
         <Section
-          title="Expired contracts"
+          title="Churned customers"
           description="Follow up with owners and account leads"
-          items={expired}
+          items={churned}
           onNavigate={onNavigate}
         />
       </div>

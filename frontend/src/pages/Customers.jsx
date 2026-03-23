@@ -4,7 +4,16 @@ import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import EmptyState from "../components/EmptyState";
 import { daysUntil, formatDate, formatMonthYear, formatCurrency } from "../utils/date";
-import { getStageMeta, renewalTone } from "../utils/status";
+import { calculateScopeTotal, getContractBudgetSummary, getRenewalRates, getScopePrices } from "../utils/pricing";
+import {
+  contractStages,
+  getStageMeta,
+  initialContractStages,
+  isRenewalContract,
+  normalizeStage,
+  renewalContractStages,
+  renewalTone,
+} from "../utils/status";
 
 const scopeOptions = [
   "DaaS (Fix)",
@@ -44,6 +53,10 @@ function inferDurationType(startDate, endDate) {
   return "";
 }
 
+function getCurrencyPlaceholder(currency) {
+  return currency === "TL" ? "TL" : "$";
+}
+
 const emptyForm = {
   customerName: "",
   contractName: "",
@@ -52,12 +65,14 @@ const emptyForm = {
   durationType: "",
   startDate: "",
   endDate: "",
-  stage: "Draft",
+  stage: "NDA",
   renewalStatus: "On Track",
   value: "",
   currency: "USD",
   notes: "",
   scopes: [],
+  scopePrices: {},
+  renewalRates: {},
   otherScopeText: "",
 };
 
@@ -71,6 +86,25 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
   const [editingId, setEditingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const teamOptions = ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"];
+
+  const getStageOptionsForForm = (draft) => {
+    const normalizedCustomer = String(draft.customerName || "").trim().toLowerCase();
+    const hasPreviousContract = contracts.some(
+      (contract) => contract.id !== editingId && contract.customerName.trim().toLowerCase() === normalizedCustomer
+    );
+
+    if (hasPreviousContract || isRenewalContract(draft)) {
+      return renewalContractStages;
+    }
+
+    return initialContractStages;
+  };
+
+  const isRenewalFlowForForm = (draft) => getStageOptionsForForm(draft) === renewalContractStages;
+
+  useEffect(() => {
+    setSearch(route?.query?.q || "");
+  }, [route?.query?.q]);
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -90,6 +124,14 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
     }
   }, [route, contracts]);
 
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const nextStageOptions = getStageOptionsForForm(formState);
+    if (!nextStageOptions.includes(formState.stage)) {
+      setFormState((prev) => ({ ...prev, stage: nextStageOptions[0] }));
+    }
+  }, [formState, isModalOpen]);
+
   const filtered = useMemo(() => {
     const normalized = search.toLowerCase();
     const list = contracts.filter((contract) => {
@@ -98,7 +140,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
         contract.contractName.toLowerCase().includes(normalized) ||
         (contract.contractType || "").toLowerCase().includes(normalized) ||
         contract.owner.toLowerCase().includes(normalized);
-      const matchesStage = stageFilter === "All" || contract.stage === stageFilter;
+      const matchesStage = stageFilter === "All" || normalizeStage(contract.stage) === stageFilter;
       return matchesSearch && matchesStage;
     });
 
@@ -148,7 +190,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       currency: contract.currency || "USD",
       team: contract.team || "",
       durationType: contract.durationType || inferDurationType(contract.startDate, contract.endDate),
+      stage: normalizeStage(contract.stage),
       scopes: contract.scopes || [],
+      scopePrices: getScopePrices(contract),
+      renewalRates: getRenewalRates(contract),
       otherScopeText: contract.otherScopeText || "",
     });
     setModalOpen(true);
@@ -166,30 +211,58 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       return;
     }
 
+    const missingScopePrice = formState.scopes.find((scope) => {
+      const price = formState.scopePrices?.[scope];
+      return price === "" || price == null || Number(price) <= 0;
+    });
+
+    if (missingScopePrice) {
+      alert(`Please enter a budget for ${missingScopePrice}.`);
+      return;
+    }
+
+    const totalValue = calculateScopeTotal(formState.scopePrices);
+
     if (editingId) {
       setContracts((prev) =>
         prev.map((contract) =>
           contract.id === editingId
-            ? { ...contract, ...formState, updatedAt: new Date().toISOString() }
+            ? { ...contract, ...formState, value: totalValue, updatedAt: new Date().toISOString() }
             : contract
         )
       );
     } else {
+      const stageOptions = getStageOptionsForForm(formState);
+      const normalizedStage = stageOptions.includes(formState.stage) ? formState.stage : stageOptions[0];
+      const isRenewalFlow = stageOptions === renewalContractStages;
       const newContract = {
         ...formState,
+        stage: normalizedStage,
+        value: totalValue,
         id: `ct-${Date.now()}`,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        history: [
-          { date: formState.startDate, label: "Draft created" },
-          { date: formState.startDate, label: formState.stage },
-        ],
+        history:
+          isRenewalFlow
+            ? [{ date: formState.startDate, label: normalizedStage }]
+            : normalizedStage === "NDA"
+            ? [{ date: formState.startDate, label: "NDA completed" }]
+            : [
+                { date: formState.startDate, label: "NDA completed" },
+                { date: formState.startDate, label: normalizedStage },
+              ],
       };
       setContracts((prev) => [newContract, ...prev]);
     }
 
     closeModal();
   };
+
+  const stageOptions = getStageOptionsForForm(formState);
+  const isRenewalFlow = isRenewalFlowForForm(formState);
+  const scopeBudgetTotal = calculateScopeTotal(formState.scopePrices);
+  const renewalBudgetSummary = getContractBudgetSummary(formState);
+  const currencyPlaceholder = getCurrencyPlaceholder(formState.currency);
 
   const handleDelete = (id) => {
     setContracts((prev) => prev.filter((contract) => contract.id !== id));
@@ -212,13 +285,11 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
             <label>Stage</label>
             <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}>
               <option value="All">All stages</option>
-              <option value="Draft">Draft</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Approval Pending">Approval Pending</option>
-              <option value="Signed">Signed</option>
-              <option value="Active">Active</option>
-              <option value="Renewal Upcoming">Renewal Upcoming</option>
-              <option value="Expired">Expired</option>
+              {contractStages.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}
+                </option>
+              ))}
             </select>
           </div>
           <div className="field">
@@ -268,6 +339,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               filtered.map((contract) => {
                 const meta = getStageMeta(contract.stage);
                 const remaining = daysUntil(contract.endDate);
+                const budgetSummary = getContractBudgetSummary(contract);
                 return (
                   <div key={contract.id} className="table-row">
                     <div className="clickable" onClick={() => onNavigate(`/contracts/${contract.id}`)}>
@@ -279,9 +351,17 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                     <div>{formatMonthYear(contract.startDate)}</div>
                     <div>{formatMonthYear(contract.endDate)}</div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
-                      {remaining < 0 ? "Expired" : `${remaining} days`}
+                      {remaining < 0 ? "Churn" : `${remaining} days`}
                     </div>
-                    <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                    <div>
+                      <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                      {budgetSummary.deltaTotal !== 0 ? (
+                        <div className={budgetSummary.deltaTotal > 0 ? "text-success" : "text-danger"}>
+                          Renewal {budgetSummary.deltaTotal > 0 ? "+" : ""}
+                          {formatCurrency(budgetSummary.deltaTotal, contract.currency)}
+                        </div>
+                      ) : null}
+                    </div>
                     <div className="scope-tags">
                       {(contract.scopes || []).length === 0 ? (
                         <span className="muted">-</span>
@@ -382,9 +462,20 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                           const nextScopes = on
                             ? formState.scopes.filter((item) => item !== scope)
                             : [...formState.scopes, scope];
+                          const nextPrices = { ...(formState.scopePrices || {}) };
+                          const nextRates = { ...(formState.renewalRates || {}) };
+                          if (on) {
+                            delete nextPrices[scope];
+                            delete nextRates[scope];
+                          } else if (nextPrices[scope] == null) {
+                            nextPrices[scope] = "";
+                            nextRates[scope] = 0;
+                          }
                           setFormState({
                             ...formState,
                             scopes: nextScopes,
+                            scopePrices: nextPrices,
+                            renewalRates: nextRates,
                             otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText,
                           });
                         }}
@@ -402,6 +493,54 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                 />
               )}
             </div>
+            {formState.scopes.length > 0 && (
+              <div className="field field-span-2">
+                <label>Scope budgets ({formState.currency})</label>
+                <div className="form-grid">
+                  {formState.scopes.map((scope) => (
+                    <React.Fragment key={scope}>
+                      <div className="field">
+                        <label>{scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope}</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formState.scopePrices?.[scope] ?? ""}
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              scopePrices: {
+                                ...(prev.scopePrices || {}),
+                                [scope]: event.target.value,
+                              },
+                            }))
+                          }
+                          placeholder={currencyPlaceholder}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>{`${scope} renewal %`}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={formState.renewalRates?.[scope] ?? 0}
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              renewalRates: {
+                                ...(prev.renewalRates || {}),
+                                [scope]: event.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="%"
+                        />
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="field">
               <label>Team</label>
               <select
@@ -438,16 +577,12 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               <select
                 value={formState.stage}
                 onChange={(event) => setFormState({ ...formState, stage: event.target.value })}
-              >
-                <option>Draft</option>
-                <option>Under Review</option>
-                <option>Approval Pending</option>
-                <option>Signed</option>
-                <option>Active</option>
-                <option>Renewal Upcoming</option>
-                <option>Expired</option>
-              </select>
-            </div>
+            >
+              {stageOptions.map((stage) => (
+                <option key={stage}>{stage}</option>
+              ))}
+            </select>
+          </div>
             <div className="field">
               <label>Renewal status</label>
               <select
@@ -461,12 +596,28 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                 <option>Lost</option>
               </select>
             </div>
+            <div className="field field-span-2">
+              <label>Flow</label>
+              <div className="muted">
+                {isRenewalFlow
+                  ? "Renewal flow detected. NDA is skipped and the process starts from the active contract."
+                  : "Initial contract flow. NDA is required before draft and legal review."}
+              </div>
+            </div>
             <div className="field">
-              <label>Contract value</label>
+              <label>Total contract value ({formState.currency})</label>
               <input
-                value={formState.value}
-                onChange={(event) => setFormState({ ...formState, value: event.target.value })}
-                placeholder="$"
+                value={scopeBudgetTotal || formState.value || ""}
+                readOnly
+                placeholder={currencyPlaceholder}
+              />
+            </div>
+            <div className="field">
+              <label>Renewed total ({formState.currency})</label>
+              <input
+                value={renewalBudgetSummary.renewedTotal || ""}
+                readOnly
+                placeholder={currencyPlaceholder}
               />
             </div>
             <div className="field">

@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { formatCurrency, formatDate } from "../utils/date";
+import { buildScopeBudgetRows } from "../utils/pricing";
+import { useResponsiveContainer } from "../hooks/useResponsiveContainer";
 
 const SERIES_COLORS = ["#2563eb", "#1c9c63", "#f59e0b", "#7c3aed", "#ef4444"];
 
@@ -40,6 +42,21 @@ function normalizeSeries(contract) {
     });
   }
 
+  const scopedBudgets = buildScopeBudgetRows(contract);
+  if (scopedBudgets.length) {
+    const start = new Date(contract.startDate || new Date());
+    const renewalDate = new Date(contract.renewalStartedAt || contract.endDate || new Date());
+    return scopedBudgets.map((row, index) => ({
+      name: row.scope,
+      color: SERIES_COLORS[index % SERIES_COLORS.length],
+      history: [
+        { date: new Date(start.getFullYear(), start.getMonth() - 3, 1).toISOString(), value: Math.round(row.baseAmount * 0.9), trend: getTrend(Math.round(row.baseAmount * 0.9), row.baseAmount * 0.82) },
+        { date: new Date(start.getFullYear(), start.getMonth(), 1).toISOString(), value: row.baseAmount, trend: getTrend(row.baseAmount, Math.round(row.baseAmount * 0.9)) },
+        { date: renewalDate.toISOString(), value: row.renewedAmount, trend: getTrend(row.renewedAmount, row.baseAmount) },
+      ],
+    }));
+  }
+
   return [
     {
       name: "Total contract",
@@ -54,39 +71,55 @@ function normalizeSeries(contract) {
 
 export default function ContractGrowthChart({ contract }) {
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  const { ref: chartRef, size: chartSize } = useResponsiveContainer();
 
   const series = useMemo(() => normalizeSeries(contract), [contract]);
 
   const chart = useMemo(() => {
     if (!series.length) return null;
-    const width = 680;
-    const height = 240;
-    const paddingX = 42;
-    const paddingTop = 24;
-    const paddingBottom = 32;
+    const width = Math.max(chartSize.width || 0, 320);
+    const height = Math.max(chartSize.height || width * 0.44, width * 0.44);
+    const paddingLeft = width * 0.025;
+    const paddingRight = width * 0.09;
+    const paddingTop = height * 0.1;
+    const paddingBottom = height * 0.14;
 
     const allPoints = series.flatMap((item) => item.history);
-    const min = Math.min(...allPoints.map((item) => item.value));
-    const max = Math.max(...allPoints.map((item) => item.value));
-    const range = Math.max(max - min, 1);
     const allDates = Array.from(new Set(allPoints.map((item) => item.date))).sort(
       (a, b) => new Date(a).getTime() - new Date(b).getTime()
     );
 
-    const mappedSeries = series.map((item) => {
+    const mappedSeries = series.map((item, seriesIndex) => {
+      const bandHeight = (height - paddingTop - paddingBottom) / Math.max(series.length, 1);
+      const bandTop = paddingTop + seriesIndex * bandHeight;
+      const innerBandPadding = Math.max(12, bandHeight * 0.16);
+      const usableBandHeight = Math.max(bandHeight - innerBandPadding * 2, 24);
+      const seriesValues = item.history.map((point) => point.value);
+      const seriesMin = Math.min(...seriesValues);
+      const seriesMax = Math.max(...seriesValues);
+      const seriesRange = Math.max(seriesMax - seriesMin, 1);
+
       const points = item.history.map((point) => {
         const index = allDates.indexOf(point.date);
-        const x = paddingX + (index * (width - paddingX * 2)) / Math.max(allDates.length - 1, 1);
-        const y = paddingTop + ((max - point.value) / range) * (height - paddingTop - paddingBottom);
+        const x = paddingLeft + (index * (width - paddingLeft - paddingRight)) / Math.max(allDates.length - 1, 1);
+        const normalized = seriesRange === 1 ? 0.5 : (seriesMax - point.value) / seriesRange;
+        const y = bandTop + innerBandPadding + normalized * usableBandHeight;
         return { ...point, x, y, seriesName: item.name, color: item.color };
       });
 
       const path = points.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`).join(" ");
-      return { ...item, points, path, latest: points[points.length - 1] || null };
+      return {
+        ...item,
+        points,
+        path,
+        latest: points[points.length - 1] || null,
+        bandTop,
+        bandBottom: bandTop + bandHeight,
+      };
     });
 
-    return { width, height, series: mappedSeries, max, dates: allDates };
-  }, [series]);
+    return { width, height, series: mappedSeries, dates: allDates, paddingLeft, paddingRight };
+  }, [chartSize.height, chartSize.width, series]);
 
   const currentTotal = useMemo(
     () =>
@@ -122,31 +155,44 @@ export default function ContractGrowthChart({ contract }) {
         })}
       </div>
 
-      <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="growth-chart" role="img" aria-label="Contract growth chart">
-        {[0.2, 0.4, 0.6, 0.8].map((ratio) => {
-          const y = 28 + (chart.height - 28 - 36) * ratio;
-          return <line key={ratio} x1="42" y1={y} x2={chart.width - 42} y2={y} className="growth-grid-line" />;
-        })}
+      <div ref={chartRef} className="growth-chart-shell">
+      <svg
+        viewBox={`0 0 ${chart.width} ${chart.height}`}
+        className="growth-chart"
+        preserveAspectRatio="xMinYMin meet"
+        role="img"
+        aria-label="Contract growth chart"
+      >
+        {chart.series.map((seriesItem) => (
+          <line
+            key={`${seriesItem.name}-guide`}
+            x1={chart.paddingLeft}
+            y1={seriesItem.bandBottom - 12}
+            x2={chart.width - chart.paddingRight}
+            y2={seriesItem.bandBottom - 12}
+            className="growth-grid-line"
+          />
+        ))}
 
         {chart.series.map((seriesItem) => (
           <g key={seriesItem.name}>
-            <path d={seriesItem.path} fill="none" stroke={seriesItem.color} strokeWidth="4" strokeLinecap="round" />
+            <path d={seriesItem.path} fill="none" stroke={seriesItem.color} strokeWidth="3" strokeLinecap="round" />
             {seriesItem.points.map((point) => (
               <g
                 key={`${seriesItem.name}-${point.date}`}
                 onMouseEnter={() => setHoveredPoint(point)}
                 onMouseLeave={() => setHoveredPoint(null)}
               >
-                <circle cx={point.x} cy={point.y} r="6" fill="#ffffff" stroke={seriesItem.color} strokeWidth="3" />
+                <circle cx={point.x} cy={point.y} r="5" fill="#ffffff" stroke={seriesItem.color} strokeWidth="3" />
             <rect
-              x={point.x - 32}
-              y={point.y - 32}
-              width="64"
-              height="22"
-              rx="12"
+              x={point.x - 36}
+              y={point.y - 36}
+              width="72"
+              height="26"
+              rx="13"
               className={`growth-point-badge tone-${point.trend.tone}`}
             />
-            <text x={point.x} y={point.y - 17} textAnchor="middle" className="growth-point-badge-text">
+            <text x={point.x} y={point.y - 19} textAnchor="middle" className="growth-point-badge-text">
               {point.trend.icon} {point.trend.percent}%
             </text>
           </g>
@@ -168,7 +214,9 @@ export default function ContractGrowthChart({ contract }) {
         ))}
 
         {chart.dates.map((date, index) => {
-          const x = 42 + (index * (chart.width - 84)) / Math.max(chart.dates.length - 1, 1);
+          const x =
+            chart.paddingLeft +
+            (index * (chart.width - chart.paddingLeft - chart.paddingRight)) / Math.max(chart.dates.length - 1, 1);
           return (
             <text key={date} x={x} y={chart.height - 10} textAnchor="middle" className="growth-axis-label">
               {formatDate(date)}
@@ -210,6 +258,7 @@ export default function ContractGrowthChart({ contract }) {
           </g>
         ) : null}
       </svg>
+      </div>
 
       <div className="growth-legend">
         {chart.series.map((item) => {

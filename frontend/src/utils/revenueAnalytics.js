@@ -1,3 +1,5 @@
+import { buildScopeBudgetRows, getScopePrices } from "./pricing";
+
 export const MRR_SCOPES = ["DaaS (Fix)", "7/24 Support", "Man/Day (Fix)", "Outsource"];
 export const NRR_SCOPES = ["DaaS (T&M)", "Man/Day (T&M)", "Other"];
 
@@ -33,22 +35,38 @@ function buildFallbackScopeHistory(contract) {
   const scopes = (contract.scopes || []).filter(Boolean);
   if (!scopes.length || !contract.value) return [];
 
-  const totalValue = Number(contract.value || 0);
-  const perScope = Math.round(totalValue / scopes.length);
   const baseDate = new Date(contract.startDate || Date.now());
   if (Number.isNaN(baseDate.getTime())) return [];
+  const renewalDate = new Date(contract.renewalStartedAt || contract.endDate || Date.now());
+  const hasValidRenewalDate = !Number.isNaN(renewalDate.getTime());
+  const scopePrices = getScopePrices(contract);
+  const budgetRows = buildScopeBudgetRows(contract);
 
   return scopes.map((scope, scopeIndex) => ({
     name: scope,
     color: SCOPE_COLORS[scope],
-    history: [-3, -2, -1, 0].map((offset, index) => {
+    history: (() => {
+      const row = budgetRows.find((item) => item.scope === scope);
+      const baseAmount = row?.baseAmount || Number(scopePrices[scope] || 0) || Math.round(Number(contract.value || 0) / scopes.length);
+      const renewedAmount = row?.renewedAmount || baseAmount;
+      const baseHistory = [-3, -2, -1, 0].map((offset, index) => {
       const date = new Date(baseDate.getFullYear(), baseDate.getMonth() + offset, 1);
       const multiplier = [0.84, 0.92, 1, 1][index];
       return {
         date: date.toISOString(),
-        value: Math.round(perScope * multiplier),
+          value: Math.round(baseAmount * multiplier),
       };
-    }),
+      });
+
+      if (hasValidRenewalDate && renewedAmount !== baseAmount) {
+        baseHistory.push({
+          date: renewalDate.toISOString(),
+          value: renewedAmount,
+        });
+      }
+
+      return baseHistory;
+    })(),
   }));
 }
 

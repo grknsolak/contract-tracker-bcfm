@@ -129,56 +129,59 @@ export default function RevenueDashboard({ contracts }) {
           </div>
 
           {rangePreset === "custom" ? (
-            <div className="custom-range-panel field-span-2 revenue-custom-range-panel">
-              <div className="month-panel">
-                <div className="month-panel-head">
-                  <span className="month-panel-label">Start month</span>
-                  <strong>{formatMonthDisplay(manualRange.startKey || effectiveRange.startKey)}</strong>
-                </div>
-                <div className="month-grid">
-                  {availableMonths.map((month) => {
-                    const isDisabled = (manualRange.endKey || defaultEndKey) && month.key > (manualRange.endKey || defaultEndKey);
-                    return (
-                      <button
-                        key={`start-${month.key}`}
-                        type="button"
-                        disabled={isDisabled}
-                        className={`month-chip ${(manualRange.startKey || effectiveRange.startKey) === month.key ? "active" : ""}`}
-                        onClick={() => {
-                          setRangePreset("custom");
-                          setManualRange((current) => ({ ...current, startKey: month.key }));
-                        }}
-                      >
+            <div className="revenue-custom-inline">
+              <div className="revenue-custom-field">
+                <span className="revenue-filter-label">Start month</span>
+                <select
+                  className="revenue-month-select"
+                  value={manualRange.startKey || effectiveRange.startKey}
+                  onChange={(event) => {
+                    setRangePreset("custom");
+                    setManualRange((current) => ({ ...current, startKey: event.target.value }));
+                  }}
+                >
+                  {availableMonths
+                    .filter((month) => !(manualRange.endKey || defaultEndKey) || month.key <= (manualRange.endKey || defaultEndKey))
+                    .map((month) => (
+                      <option key={`start-${month.key}`} value={month.key}>
                         {formatMonthDisplay(month.key)}
-                      </button>
-                    );
-                  })}
-                </div>
+                      </option>
+                    ))}
+                </select>
               </div>
-              <div className="month-panel">
-                <div className="month-panel-head">
-                  <span className="month-panel-label">End month</span>
-                  <strong>{formatMonthDisplay(manualRange.endKey || defaultEndKey)}</strong>
-                </div>
-                <div className="month-grid">
-                  {availableMonths.map((month) => {
-                    const minStart = manualRange.startKey || availableMonths[0]?.key || "";
-                    const isDisabled = month.key < minStart;
-                    return (
-                      <button
-                        key={`end-${month.key}`}
-                        type="button"
-                        disabled={isDisabled}
-                        className={`month-chip ${(manualRange.endKey || defaultEndKey) === month.key ? "active" : ""}`}
-                        onClick={() => {
-                          setRangePreset("custom");
-                          setManualRange((current) => ({ ...current, endKey: month.key }));
-                        }}
-                      >
+
+              <div className="revenue-custom-divider" aria-hidden>
+                →
+              </div>
+
+              <div className="revenue-custom-field">
+                <span className="revenue-filter-label">End month</span>
+                <select
+                  className="revenue-month-select"
+                  value={manualRange.endKey || defaultEndKey}
+                  onChange={(event) => {
+                    setRangePreset("custom");
+                    setManualRange((current) => ({ ...current, endKey: event.target.value }));
+                  }}
+                >
+                  {availableMonths
+                    .filter((month) => month.key >= (manualRange.startKey || availableMonths[0]?.key || ""))
+                    .map((month) => (
+                      <option key={`end-${month.key}`} value={month.key}>
                         {formatMonthDisplay(month.key)}
-                      </button>
-                    );
-                  })}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="revenue-custom-summary">
+                <span className="revenue-filter-label">Range summary</span>
+                <div className="revenue-custom-summary-value">
+                  {formatMonthDisplay(manualRange.startKey || effectiveRange.startKey)} → {formatMonthDisplay(manualRange.endKey || defaultEndKey)}
+                </div>
+                <div className="revenue-range-meta">
+                  <span>{analytics.months.length} months</span>
+                  <span>{teamFilter === "All" ? "All teams" : teamFilter}</span>
                 </div>
               </div>
             </div>
