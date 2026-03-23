@@ -110,46 +110,78 @@ export default function Dashboard({ contracts, onNavigate }) {
 
   const statCards = [
     {
-      label: "🟢 Active customers",
+      label: "Active customers",
       value: metrics.activeCustomers,
       meta: "Healthy customer base",
-      tone: "",
+      variant: "success",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      ),
     },
     {
-      label: "⚫ Churn count",
+      label: "Churn risk",
       value: metrics.churnCustomers,
-      meta: "Lost customers",
-      tone: "",
+      meta: "Customers at risk",
+      variant: "neutral",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      ),
     },
     {
-      label: "🚨 Expiring in 30 days",
+      label: "Expiring in 30 days",
       value: metrics.next30,
       meta: "Immediate action required",
-      tone: "emphasis",
+      variant: "danger",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      ),
     },
     {
-      label: "⚠️ Expiring in 60 days",
+      label: "Expiring in 60 days",
       value: metrics.next60,
       meta: "Prepare renewal plan",
-      tone: "",
+      variant: "warning",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+        </svg>
+      ),
     },
     {
-      label: "⛔ Churned customers",
+      label: "Churned contracts",
       value: metrics.churned,
-      meta: "Customers already lost",
-      tone: "danger",
+      meta: "Already expired",
+      variant: "danger-dark",
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      ),
     },
   ];
 
   return (
     <div className="page">
-      <div className="page-grid">
-        {statCards.map((item) => (
-          <Card key={item.label} className="stat-card executive-stat">
-            <div className="stat-label">{item.label}</div>
-            <div className={`stat-value ${item.tone}`.trim()}>{item.value}</div>
-            <div className="stat-meta">{item.meta}</div>
-          </Card>
+      <div className="stat-cards-row">
+        {statCards.map((item, i) => (
+          <div key={item.label} className={`kpi-card kpi-${item.variant}`} style={{ animationDelay: `${i * 60}ms` }}>
+            <div className="kpi-icon-wrap">
+              {item.icon}
+            </div>
+            <div className="kpi-body">
+              <div className="kpi-label">{item.label}</div>
+              <div className="kpi-value">{item.value}</div>
+              <div className="kpi-meta">{item.meta}</div>
+            </div>
+          </div>
         ))}
       </div>
 

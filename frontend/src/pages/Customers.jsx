@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import EmptyState from "../components/EmptyState";
+import { toastSuccess, toastError, toastWarning } from "../components/Toast";
 import { daysUntil, formatDate, formatMonthYear, formatCurrency } from "../utils/date";
 import { calculateScopeTotal, getContractBudgetSummary, getRenewalRates, getScopePrices } from "../utils/pricing";
 import {
@@ -29,6 +30,13 @@ const durationOptions = [
   { value: "6m", label: "6 Months", months: 6 },
   { value: "1y", label: "1 Year", months: 12 },
   { value: "3y", label: "3 Years", months: 36 },
+];
+
+const WIZARD_STEPS = [
+  { key: "basics", label: "Basics" },
+  { key: "scopes", label: "Scopes & Pricing" },
+  { key: "details", label: "Details" },
+  { key: "review", label: "Review" },
 ];
 
 function addDuration(startDate, durationType) {
@@ -76,6 +84,31 @@ const emptyForm = {
   otherScopeText: "",
 };
 
+function validateStep(step, formState) {
+  const errors = {};
+  if (step === "basics") {
+    if (!formState.customerName.trim()) errors.customerName = "Customer name is required.";
+    if (!formState.contractName.trim()) errors.contractName = "Contract name is required.";
+    if (!formState.durationType) errors.durationType = "Select a contract duration.";
+    if (!formState.startDate) errors.startDate = "Start date is required.";
+  }
+  if (step === "scopes") {
+    if (formState.scopes.length === 0) errors.scopes = "Select at least one service scope.";
+    for (const scope of formState.scopes) {
+      const price = formState.scopePrices?.[scope];
+      if (price === "" || price == null || Number(price) <= 0) {
+        errors[`scope_${scope}`] = `Enter a valid budget for ${scope}.`;
+      }
+    }
+  }
+  return errors;
+}
+
+function FieldError({ error }) {
+  if (!error) return null;
+  return <div className="field-error-message">{error}</div>;
+}
+
 export default function Customers({ contracts, setContracts, onNavigate, route }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
@@ -85,6 +118,11 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [returnToContract, setReturnToContract] = useState(null);
   const teamOptions = ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"];
 
   const getStageOptionsForForm = (draft) => {
@@ -120,6 +158,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
     if (!editId) return;
     const contract = contracts.find((item) => item.id === editId);
     if (contract) {
+      setReturnToContract(editId);
       openEdit(contract);
     }
   }, [route, contracts]);
@@ -179,6 +218,9 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
   const openNew = () => {
     setEditingId(null);
     setFormState(emptyForm);
+    setFieldErrors({});
+    setWizardStep(0);
+    setReturnToContract(null);
     setModalOpen(true);
   };
 
@@ -196,66 +238,120 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       renewalRates: getRenewalRates(contract),
       otherScopeText: contract.otherScopeText || "",
     });
+    setFieldErrors({});
+    setWizardStep(0);
     setModalOpen(true);
   };
 
   const closeModal = () => {
+    if (returnToContract) {
+      onNavigate(`/contracts/${returnToContract}`);
+      setReturnToContract(null);
+    }
     setModalOpen(false);
     setFormState(emptyForm);
     setEditingId(null);
+    setFieldErrors({});
+    setWizardStep(0);
+  };
+
+  const goToStep = (stepIndex) => {
+    if (stepIndex < wizardStep) {
+      setWizardStep(stepIndex);
+      return;
+    }
+    for (let i = wizardStep; i < stepIndex; i++) {
+      const errors = validateStep(WIZARD_STEPS[i].key, formState);
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setWizardStep(i);
+        return;
+      }
+    }
+    setFieldErrors({});
+    setWizardStep(stepIndex);
+  };
+
+  const handleNext = () => {
+    const currentKey = WIZARD_STEPS[wizardStep].key;
+    const errors = validateStep(currentKey, formState);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
+    setWizardStep((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
+  };
+
+  const handleBack = () => {
+    setFieldErrors({});
+    setWizardStep((prev) => Math.max(prev - 1, 0));
   };
 
   const handleSave = () => {
-    if (!formState.customerName || !formState.contractName || !formState.startDate || !formState.endDate) {
-      alert("Please complete all required fields.");
-      return;
+    for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
+      const errors = validateStep(WIZARD_STEPS[i].key, formState);
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        setWizardStep(i);
+        toastError("Please fix the validation errors before saving.");
+        return;
+      }
     }
 
-    const missingScopePrice = formState.scopes.find((scope) => {
-      const price = formState.scopePrices?.[scope];
-      return price === "" || price == null || Number(price) <= 0;
-    });
-
-    if (missingScopePrice) {
-      alert(`Please enter a budget for ${missingScopePrice}.`);
-      return;
-    }
-
+    setSaving(true);
     const totalValue = calculateScopeTotal(formState.scopePrices);
 
-    if (editingId) {
-      setContracts((prev) =>
-        prev.map((contract) =>
-          contract.id === editingId
-            ? { ...contract, ...formState, value: totalValue, updatedAt: new Date().toISOString() }
-            : contract
-        )
-      );
-    } else {
-      const stageOptions = getStageOptionsForForm(formState);
-      const normalizedStage = stageOptions.includes(formState.stage) ? formState.stage : stageOptions[0];
-      const isRenewalFlow = stageOptions === renewalContractStages;
-      const newContract = {
-        ...formState,
-        stage: normalizedStage,
-        value: totalValue,
-        id: `ct-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        history:
-          isRenewalFlow
-            ? [{ date: formState.startDate, label: normalizedStage }]
-            : normalizedStage === "NDA"
-            ? [{ date: formState.startDate, label: "NDA completed" }]
-            : [
-                { date: formState.startDate, label: "NDA completed" },
-                { date: formState.startDate, label: normalizedStage },
-              ],
-      };
-      setContracts((prev) => [newContract, ...prev]);
-    }
+    try {
+      if (editingId) {
+        setContracts((prev) =>
+          prev.map((contract) =>
+            contract.id === editingId
+              ? { ...contract, ...formState, value: totalValue, updatedAt: new Date().toISOString() }
+              : contract
+          )
+        );
+        toastSuccess(`${formState.contractName} updated successfully.`, "Contract updated");
+      } else {
+        const stageOptions = getStageOptionsForForm(formState);
+        const normalizedStage = stageOptions.includes(formState.stage) ? formState.stage : stageOptions[0];
+        const isRenewalFlow = stageOptions === renewalContractStages;
+        const newContract = {
+          ...formState,
+          stage: normalizedStage,
+          value: totalValue,
+          id: `ct-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          history:
+            isRenewalFlow
+              ? [{ date: formState.startDate, label: normalizedStage }]
+              : normalizedStage === "NDA"
+              ? [{ date: formState.startDate, label: "NDA completed" }]
+              : [
+                  { date: formState.startDate, label: "NDA completed" },
+                  { date: formState.startDate, label: normalizedStage },
+                ],
+        };
+        setContracts((prev) => [newContract, ...prev]);
+        toastSuccess(`${formState.contractName} created successfully.`, "Contract created");
+      }
 
-    closeModal();
+      if (returnToContract) {
+        onNavigate(`/contracts/${returnToContract}`);
+        setReturnToContract(null);
+      }
+
+      setModalOpen(false);
+      setFormState(emptyForm);
+      setEditingId(null);
+      setFieldErrors({});
+      setWizardStep(0);
+    } catch {
+      toastError("An error occurred while saving.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const stageOptions = getStageOptionsForForm(formState);
@@ -265,8 +361,362 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
   const currencyPlaceholder = getCurrencyPlaceholder(formState.currency);
 
   const handleDelete = (id) => {
-    setContracts((prev) => prev.filter((contract) => contract.id !== id));
-    setConfirmDelete(null);
+    setDeleting(id);
+    try {
+      setContracts((prev) => prev.filter((contract) => contract.id !== id));
+      toastSuccess("Contract deleted successfully.", "Deleted");
+    } catch {
+      toastError("Failed to delete contract.");
+    } finally {
+      setConfirmDelete(null);
+      setDeleting(null);
+    }
+  };
+
+  const clearFieldError = useCallback((fieldName) => {
+    setFieldErrors((prev) => {
+      if (!prev[fieldName]) return prev;
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
+  }, []);
+
+  const renderWizardSteps = () => (
+    <div className="wizard-steps">
+      {WIZARD_STEPS.map((step, index) => {
+        const isCompleted = index < wizardStep;
+        const isActive = index === wizardStep;
+        return (
+          <React.Fragment key={step.key}>
+            {index > 0 && <div className={`wizard-connector ${isCompleted ? "completed" : ""}`} />}
+            <button
+              type="button"
+              className={`wizard-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+              onClick={() => goToStep(index)}
+            >
+              <span className="wizard-step-number">{isCompleted ? "✓" : index + 1}</span>
+              {step.label}
+            </button>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+
+  const renderBasicsStep = () => (
+    <div className="form-grid">
+      <div className={`field ${fieldErrors.customerName ? "field-error" : ""}`}>
+        <label>Customer name *</label>
+        <input
+          value={formState.customerName}
+          onChange={(e) => { setFormState({ ...formState, customerName: e.target.value }); clearFieldError("customerName"); }}
+          placeholder="Enter customer name"
+        />
+        <FieldError error={fieldErrors.customerName} />
+      </div>
+      <div className={`field ${fieldErrors.contractName ? "field-error" : ""}`}>
+        <label>Contract name *</label>
+        <input
+          value={formState.contractName}
+          onChange={(e) => { setFormState({ ...formState, contractName: e.target.value }); clearFieldError("contractName"); }}
+          placeholder="Enter contract name"
+        />
+        <FieldError error={fieldErrors.contractName} />
+      </div>
+      <div className={`field ${fieldErrors.durationType ? "field-error" : ""}`}>
+        <label>Contract duration *</label>
+        <select
+          value={formState.durationType}
+          onChange={(e) => { setFormState({ ...formState, durationType: e.target.value }); clearFieldError("durationType"); }}
+        >
+          <option value="">Select duration</option>
+          {durationOptions.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+        <FieldError error={fieldErrors.durationType} />
+      </div>
+      <div className="field">
+        <label>Owner</label>
+        <input
+          value={formState.owner}
+          onChange={(e) => setFormState({ ...formState, owner: e.target.value })}
+          placeholder="Contract owner"
+        />
+      </div>
+      <div className={`field ${fieldErrors.startDate ? "field-error" : ""}`}>
+        <label>Start date *</label>
+        <input
+          type="date"
+          value={formState.startDate}
+          onChange={(e) => { setFormState({ ...formState, startDate: e.target.value }); clearFieldError("startDate"); }}
+        />
+        <FieldError error={fieldErrors.startDate} />
+      </div>
+      <div className="field">
+        <label>End date (automatic)</label>
+        <input
+          type="date"
+          value={formState.endDate}
+          onChange={(e) => setFormState({ ...formState, endDate: e.target.value })}
+          readOnly={Boolean(formState.startDate && formState.durationType)}
+        />
+      </div>
+    </div>
+  );
+
+  const renderScopesStep = () => (
+    <div className="form-grid">
+      <div className={`field field-span-2 ${fieldErrors.scopes ? "field-error" : ""}`}>
+        <label>Service scopes *</label>
+        <div className="scope-selector-grid">
+          {scopeOptions.map((scope) => {
+            const on = formState.scopes.includes(scope);
+            return (
+              <label key={scope} className={`scope-option ${on ? "selected" : ""}`}>
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() => {
+                    const nextScopes = on
+                      ? formState.scopes.filter((item) => item !== scope)
+                      : [...formState.scopes, scope];
+                    const nextPrices = { ...(formState.scopePrices || {}) };
+                    const nextRates = { ...(formState.renewalRates || {}) };
+                    if (on) {
+                      delete nextPrices[scope];
+                      delete nextRates[scope];
+                    } else if (nextPrices[scope] == null) {
+                      nextPrices[scope] = "";
+                      nextRates[scope] = 0;
+                    }
+                    setFormState({
+                      ...formState,
+                      scopes: nextScopes,
+                      scopePrices: nextPrices,
+                      renewalRates: nextRates,
+                      otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText,
+                    });
+                    clearFieldError("scopes");
+                  }}
+                />
+                <span>{scope}</span>
+              </label>
+            );
+          })}
+        </div>
+        <FieldError error={fieldErrors.scopes} />
+        {formState.scopes.includes("Other") && (
+          <input
+            value={formState.otherScopeText}
+            onChange={(e) => setFormState({ ...formState, otherScopeText: e.target.value })}
+            placeholder="Other scope details"
+            style={{ marginTop: 8 }}
+          />
+        )}
+      </div>
+      {formState.scopes.length > 0 && (
+        <div className="field field-span-2">
+          <label>Scope budgets ({formState.currency})</label>
+          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+            <label style={{ fontSize: 13, cursor: "pointer" }}>
+              <input type="radio" value="USD" checked={formState.currency === "USD"} onChange={() => setFormState({ ...formState, currency: "USD" })} /> USD
+            </label>
+            <label style={{ fontSize: 13, cursor: "pointer" }}>
+              <input type="radio" value="TL" checked={formState.currency === "TL"} onChange={() => setFormState({ ...formState, currency: "TL" })} /> TL
+            </label>
+          </div>
+          <div className="form-grid">
+            {formState.scopes.map((scope) => {
+              const errKey = `scope_${scope}`;
+              return (
+                <React.Fragment key={scope}>
+                  <div className={`field ${fieldErrors[errKey] ? "field-error" : ""}`}>
+                    <label>{scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope} budget</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formState.scopePrices?.[scope] ?? ""}
+                      onChange={(e) => {
+                        setFormState((prev) => ({
+                          ...prev,
+                          scopePrices: { ...(prev.scopePrices || {}), [scope]: e.target.value },
+                        }));
+                        clearFieldError(errKey);
+                      }}
+                      placeholder={currencyPlaceholder}
+                    />
+                    <FieldError error={fieldErrors[errKey]} />
+                  </div>
+                  <div className="field">
+                    <label>{scope} renewal %</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formState.renewalRates?.[scope] ?? 0}
+                      onChange={(e) =>
+                        setFormState((prev) => ({
+                          ...prev,
+                          renewalRates: { ...(prev.renewalRates || {}), [scope]: e.target.value },
+                        }))
+                      }
+                      placeholder="%"
+                    />
+                  </div>
+                </React.Fragment>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 12, display: "flex", gap: 16, fontSize: 14 }}>
+            <span><strong>Total:</strong> {formatCurrency(scopeBudgetTotal, formState.currency)}</span>
+            {renewalBudgetSummary.renewedTotal > 0 && (
+              <span><strong>Renewed:</strong> {formatCurrency(renewalBudgetSummary.renewedTotal, formState.currency)}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderDetailsStep = () => (
+    <div className="form-grid">
+      <div className="field">
+        <label>Team</label>
+        <select
+          value={formState.team}
+          onChange={(e) => setFormState({ ...formState, team: e.target.value })}
+        >
+          <option value="">Select team</option>
+          {teamOptions.map((team) => (
+            <option key={team} value={team}>{team}</option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label>Stage</label>
+        <select
+          value={formState.stage}
+          onChange={(e) => setFormState({ ...formState, stage: e.target.value })}
+        >
+          {stageOptions.map((stage) => (
+            <option key={stage}>{stage}</option>
+          ))}
+        </select>
+      </div>
+      <div className="field">
+        <label>Renewal status</label>
+        <select
+          value={formState.renewalStatus}
+          onChange={(e) => setFormState({ ...formState, renewalStatus: e.target.value })}
+        >
+          <option>On Track</option>
+          <option>Negotiation</option>
+          <option>Needs Attention</option>
+          <option>Pending</option>
+          <option>Lost</option>
+        </select>
+      </div>
+      <div className="field field-span-2">
+        <label>Flow</label>
+        <div className="muted" style={{ fontSize: 13 }}>
+          {isRenewalFlow
+            ? "Renewal flow detected. NDA is skipped and the process starts from the active contract."
+            : "Initial contract flow. NDA is required before draft and legal review."}
+        </div>
+      </div>
+      <div className="field field-span-2">
+        <label>Notes</label>
+        <textarea
+          rows="3"
+          value={formState.notes}
+          onChange={(e) => setFormState({ ...formState, notes: e.target.value })}
+          placeholder="Additional notes about this contract..."
+        />
+      </div>
+    </div>
+  );
+
+  const renderReviewStep = () => {
+    const totalValue = calculateScopeTotal(formState.scopePrices);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Customer</div>
+              <div style={{ fontWeight: 700 }}>{formState.customerName}</div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Contract</div>
+              <div style={{ fontWeight: 700 }}>{formState.contractName}</div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Duration</div>
+              <div style={{ fontWeight: 700 }}>
+                {durationOptions.find((d) => d.value === formState.durationType)?.label || formState.durationType}
+              </div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Period</div>
+              <div style={{ fontWeight: 700 }}>{formState.startDate} → {formState.endDate}</div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Owner</div>
+              <div style={{ fontWeight: 700 }}>{formState.owner || "-"}</div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Team</div>
+              <div style={{ fontWeight: 700 }}>{formState.team || "-"}</div>
+            </div>
+          </div>
+        </div>
+
+        <Card title="Scopes & Budget">
+          <div className="scope-breakdown-list">
+            {formState.scopes.map((scope) => {
+              const price = formState.scopePrices?.[scope] || 0;
+              const rate = formState.renewalRates?.[scope] || 0;
+              return (
+                <div key={scope} className="scope-breakdown-item">
+                  <div>
+                    <div style={{ fontWeight: 600 }}>
+                      {scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope}
+                    </div>
+                    {Number(rate) !== 0 && <div className="muted" style={{ fontSize: 12 }}>Renewal: {rate}%</div>}
+                  </div>
+                  <div style={{ fontWeight: 700 }}>{formatCurrency(price, formState.currency)}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 16, fontWeight: 700, fontSize: 15 }}>
+            <span>Total: {formatCurrency(totalValue, formState.currency)}</span>
+          </div>
+        </Card>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Badge tone={getStageMeta(formState.stage).tone}>{formState.stage}</Badge>
+          <Badge tone={renewalTone[formState.renewalStatus] || "neutral"}>{formState.renewalStatus}</Badge>
+          {isRenewalFlow && <Badge tone="info">Renewal flow</Badge>}
+        </div>
+
+        {formState.notes && (
+          <div className="muted" style={{ fontSize: 13, padding: "8px 0" }}>{formState.notes}</div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -286,9 +736,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
             <select value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}>
               <option value="All">All stages</option>
               {contractStages.map((stage) => (
-                <option key={stage} value={stage}>
-                  {stage}
-                </option>
+                <option key={stage} value={stage}>{stage}</option>
               ))}
             </select>
           </div>
@@ -398,247 +846,38 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       {isModalOpen && (
         <Modal
           title={editingId ? "Edit contract" : "Create contract"}
-          description="Capture contract scope, team ownership, and duration in one place."
+          description={`Step ${wizardStep + 1} of ${WIZARD_STEPS.length}: ${WIZARD_STEPS[wizardStep].label}`}
           onClose={closeModal}
           footer={
-            <div className="modal-actions">
-              <button className="btn btn-light" onClick={closeModal}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleSave}>
-                {editingId ? "Save changes" : "Create contract"}
-              </button>
+            <div className="wizard-footer">
+              <div className="wizard-footer-left">
+                {wizardStep > 0 && (
+                  <button className="btn btn-light" onClick={handleBack}>Back</button>
+                )}
+                <button className="btn btn-light" onClick={closeModal}>Cancel</button>
+              </div>
+              {wizardStep < WIZARD_STEPS.length - 1 ? (
+                <button className="btn btn-primary" onClick={handleNext}>
+                  Continue
+                </button>
+              ) : (
+                <button
+                  className={`btn btn-primary ${saving ? "btn-loading-inline" : ""}`}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving && <span className="spinner-sm" />}
+                  {editingId ? "Save changes" : "Create contract"}
+                </button>
+              )}
             </div>
           }
         >
-          <div className="form-grid">
-            <div className="field">
-              <label>Customer name *</label>
-              <input
-                value={formState.customerName}
-                onChange={(event) => setFormState({ ...formState, customerName: event.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Contract name *</label>
-              <input
-                value={formState.contractName}
-                onChange={(event) => setFormState({ ...formState, contractName: event.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>Contract duration *</label>
-              <select
-                value={formState.durationType}
-                onChange={(event) => setFormState({ ...formState, durationType: event.target.value })}
-              >
-                <option value="">Select duration</option>
-                {durationOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Owner</label>
-              <input
-                value={formState.owner}
-                onChange={(event) => setFormState({ ...formState, owner: event.target.value })}
-              />
-            </div>
-            <div className="field field-span-2">
-              <label>Service scopes</label>
-              <div className="scope-selector-grid">
-                {scopeOptions.map((scope) => {
-                  const on = formState.scopes.includes(scope);
-                  return (
-                    <label
-                      key={scope}
-                      className={`scope-option ${on ? "selected" : ""}`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={() => {
-                          const nextScopes = on
-                            ? formState.scopes.filter((item) => item !== scope)
-                            : [...formState.scopes, scope];
-                          const nextPrices = { ...(formState.scopePrices || {}) };
-                          const nextRates = { ...(formState.renewalRates || {}) };
-                          if (on) {
-                            delete nextPrices[scope];
-                            delete nextRates[scope];
-                          } else if (nextPrices[scope] == null) {
-                            nextPrices[scope] = "";
-                            nextRates[scope] = 0;
-                          }
-                          setFormState({
-                            ...formState,
-                            scopes: nextScopes,
-                            scopePrices: nextPrices,
-                            renewalRates: nextRates,
-                            otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText,
-                          });
-                        }}
-                      />
-                      <span>{scope}</span>
-                    </label>
-                  );
-                })}
-              </div>
-              {formState.scopes.includes("Other") && (
-                <input
-                  value={formState.otherScopeText}
-                  onChange={(event) => setFormState({ ...formState, otherScopeText: event.target.value })}
-                  placeholder="Other scope details"
-                />
-              )}
-            </div>
-            {formState.scopes.length > 0 && (
-              <div className="field field-span-2">
-                <label>Scope budgets ({formState.currency})</label>
-                <div className="form-grid">
-                  {formState.scopes.map((scope) => (
-                    <React.Fragment key={scope}>
-                      <div className="field">
-                        <label>{scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={formState.scopePrices?.[scope] ?? ""}
-                          onChange={(event) =>
-                            setFormState((prev) => ({
-                              ...prev,
-                              scopePrices: {
-                                ...(prev.scopePrices || {}),
-                                [scope]: event.target.value,
-                              },
-                            }))
-                          }
-                          placeholder={currencyPlaceholder}
-                        />
-                      </div>
-                      <div className="field">
-                        <label>{`${scope} renewal %`}</label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={formState.renewalRates?.[scope] ?? 0}
-                          onChange={(event) =>
-                            setFormState((prev) => ({
-                              ...prev,
-                              renewalRates: {
-                                ...(prev.renewalRates || {}),
-                                [scope]: event.target.value,
-                              },
-                            }))
-                          }
-                          placeholder="%"
-                        />
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div className="field">
-              <label>Team</label>
-              <select
-                value={formState.team}
-                onChange={(event) => setFormState({ ...formState, team: event.target.value })}
-              >
-                <option value="">Select team</option>
-                {teamOptions.map((team) => (
-                  <option key={team} value={team}>
-                    {team}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <label>Start date *</label>
-              <input
-                type="date"
-                value={formState.startDate}
-                onChange={(event) => setFormState({ ...formState, startDate: event.target.value })}
-              />
-            </div>
-            <div className="field">
-              <label>End date (automatic) *</label>
-              <input
-                type="date"
-                value={formState.endDate}
-                onChange={(event) => setFormState({ ...formState, endDate: event.target.value })}
-                readOnly={Boolean(formState.startDate && formState.durationType)}
-              />
-            </div>
-            <div className="field">
-              <label>Stage</label>
-              <select
-                value={formState.stage}
-                onChange={(event) => setFormState({ ...formState, stage: event.target.value })}
-            >
-              {stageOptions.map((stage) => (
-                <option key={stage}>{stage}</option>
-              ))}
-            </select>
-          </div>
-            <div className="field">
-              <label>Renewal status</label>
-              <select
-                value={formState.renewalStatus}
-                onChange={(event) => setFormState({ ...formState, renewalStatus: event.target.value })}
-              >
-                <option>On Track</option>
-                <option>Negotiation</option>
-                <option>Needs Attention</option>
-                <option>Pending</option>
-                <option>Lost</option>
-              </select>
-            </div>
-            <div className="field field-span-2">
-              <label>Flow</label>
-              <div className="muted">
-                {isRenewalFlow
-                  ? "Renewal flow detected. NDA is skipped and the process starts from the active contract."
-                  : "Initial contract flow. NDA is required before draft and legal review."}
-              </div>
-            </div>
-            <div className="field">
-              <label>Total contract value ({formState.currency})</label>
-              <input
-                value={scopeBudgetTotal || formState.value || ""}
-                readOnly
-                placeholder={currencyPlaceholder}
-              />
-            </div>
-            <div className="field">
-              <label>Renewed total ({formState.currency})</label>
-              <input
-                value={renewalBudgetSummary.renewedTotal || ""}
-                readOnly
-                placeholder={currencyPlaceholder}
-              />
-            </div>
-            <div className="field">
-              <label>Currency</label>
-              <select
-                value={formState.currency}
-                onChange={(event) => setFormState({ ...formState, currency: event.target.value })}
-              >
-                <option value="USD">USD</option>
-                <option value="TL">TL</option>
-              </select>
-            </div>
-            <div className="field field-span-2">
-              <label>Notes</label>
-              <textarea
-                rows="4"
-                value={formState.notes}
-                onChange={(event) => setFormState({ ...formState, notes: event.target.value })}
-              />
-            </div>
-          </div>
+          {renderWizardSteps()}
+          {wizardStep === 0 && renderBasicsStep()}
+          {wizardStep === 1 && renderScopesStep()}
+          {wizardStep === 2 && renderDetailsStep()}
+          {wizardStep === 3 && renderReviewStep()}
         </Modal>
       )}
 
@@ -650,7 +889,12 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           footer={
             <div className="modal-actions">
               <button className="btn btn-light" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button className="btn btn-danger" onClick={() => handleDelete(confirmDelete.id)}>
+              <button
+                className={`btn btn-danger ${deleting ? "btn-loading-inline" : ""}`}
+                onClick={() => handleDelete(confirmDelete.id)}
+                disabled={Boolean(deleting)}
+              >
+                {deleting && <span className="spinner-sm" />}
                 Confirm delete
               </button>
             </div>

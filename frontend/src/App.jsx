@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "./components/Layout";
 import LoadingState from "./components/LoadingState";
+import ToastContainer from "./components/Toast";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import ContractDetails from "./pages/ContractDetails";
@@ -54,8 +55,11 @@ export default function App() {
   }
 
   return (
-    <Layout route={route} onNavigate={navigate} contracts={contracts}>
-      {content}
-    </Layout>
+    <>
+      <ToastContainer />
+      <Layout route={route} onNavigate={navigate} contracts={contracts}>
+        {content}
+      </Layout>
+    </>
   );
 }
