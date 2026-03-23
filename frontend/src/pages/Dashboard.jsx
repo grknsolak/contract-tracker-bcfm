@@ -264,7 +264,7 @@ export default function Dashboard({ contracts, onNavigate }) {
                 return (
                   <button
                     key={contract.id}
-                    className="priority-item"
+                    className={`priority-item ${isCritical ? "is-critical" : isUrgent ? "is-urgent" : "is-upcoming"}`}
                     onClick={() => onNavigate(`/contracts/${contract.id}`)}
                   >
                     <div>
