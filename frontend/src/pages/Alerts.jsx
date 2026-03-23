@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
-import { daysUntil, formatDate, formatCurrency } from "../utils/date";
+import { daysUntil, formatDate, formatCurrency, formatRemainingDays } from "../utils/date";
 import { contractStages, getStageMeta, normalizeStage } from "../utils/status";
 
 function Section({ title, description, items, onNavigate }) {
@@ -42,7 +42,7 @@ function Section({ title, description, items, onNavigate }) {
                 <div className="alert-meta">
                   <div>{formatDate(contract.endDate)}</div>
                   <div className={remaining < 0 ? "text-danger" : ""}>
-                    {remaining < 0 ? "Churn" : `${remaining} days left`}
+                    {formatRemainingDays(remaining)}
                   </div>
                 </div>
                 <Badge tone={meta.tone}>{meta.label}</Badge>

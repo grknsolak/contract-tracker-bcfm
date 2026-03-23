@@ -43,7 +43,7 @@ export default function App() {
   } else if (route.name === "segmentation") {
     content = <Segmentation contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "pipelines") {
-    content = <Pipelines contracts={contracts} onNavigate={navigate} />;
+    content = <Pipelines contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
   } else if (route.name === "alerts") {
     content = <Alerts contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "contracts") {

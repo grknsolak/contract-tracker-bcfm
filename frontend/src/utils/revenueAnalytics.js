@@ -122,11 +122,13 @@ export function buildRevenueAnalytics(contracts, selectedTeam = "All", range = {
   });
 
   const latestMonth = monthRows[monthRows.length - 1] || null;
+  const latestMRRMonth = [...monthRows].reverse().find((row) => row.mrrTotal > 0) || latestMonth;
+  const latestNRRMonth = [...monthRows].reverse().find((row) => row.nrrTotal > 0) || latestMonth;
   const latestYear = latestMonth ? latestMonth.key.slice(0, 4) : null;
 
   const monthly = {
-    mrr: latestMonth?.mrrTotal || 0,
-    nrr: latestMonth?.nrrTotal || 0,
+    mrr: latestMRRMonth?.mrrTotal || 0,
+    nrr: latestNRRMonth?.nrrTotal || 0,
   };
 
   const rangeTotal = {
@@ -172,6 +174,8 @@ export function buildRevenueAnalytics(contracts, selectedTeam = "All", range = {
     allMonths: allMonthRows,
     latestMonthKey: latestMonth?.key || null,
     latestMonthLabel: latestMonth?.label || "-",
+    latestMRRMonthLabel: latestMRRMonth?.label || "-",
+    latestNRRMonthLabel: latestNRRMonth?.label || "-",
     latestYear: latestYear || "-",
     monthly,
     rangeTotal,

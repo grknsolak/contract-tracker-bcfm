@@ -7,7 +7,7 @@ function getStepState(index, currentIndex) {
   return "upcoming";
 }
 
-export default function ProcessStepper({ steps = [], currentStep, onStepClick }) {
+export default function ProcessStepper({ steps = [], currentStep, onStepClick, onStepConfirm }) {
   const currentIndex = steps.findIndex((step) => step.id === currentStep || step.name === currentStep);
 
   return (
@@ -16,6 +16,7 @@ export default function ProcessStepper({ steps = [], currentStep, onStepClick })
         {steps.map((step, index) => {
           const state = getStepState(index, currentIndex);
           const isClickable = typeof onStepClick === "function";
+          const isConfirmable = state === "active" && typeof onStepConfirm === "function";
           const Component = isClickable ? "button" : "div";
 
           return (
@@ -26,9 +27,23 @@ export default function ProcessStepper({ steps = [], currentStep, onStepClick })
                 onClick={isClickable ? () => onStepClick(step, index) : undefined}
                 role="listitem"
               >
-                <div className="process-step-badge">
-                  {state === "completed" ? <span className="process-check">✓</span> : <span>{index + 1}</span>}
-                </div>
+                {isConfirmable ? (
+                  <button
+                    type="button"
+                    className="process-step-badge process-step-badge-button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onStepConfirm(step, index);
+                    }}
+                    aria-label={`Confirm ${step.name}`}
+                  >
+                    <span>{index + 1}</span>
+                  </button>
+                ) : (
+                  <div className="process-step-badge">
+                    {state === "completed" ? <span className="process-check">✓</span> : <span>{index + 1}</span>}
+                  </div>
+                )}
                 <div className="process-step-copy">
                   <div className="process-step-name">{step.name}</div>
                   <div className="process-step-caption">

@@ -3,7 +3,7 @@ import Card from "../components/Card";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import EmptyState from "../components/EmptyState";
-import { daysUntil, formatDate, formatMonthYear, formatCurrency } from "../utils/date";
+import { daysUntil, formatDate, formatMonthYear, formatCurrency, formatRemainingDays } from "../utils/date";
 import { calculateScopeTotal, getContractBudgetSummary, getRenewalRates, getScopePrices } from "../utils/pricing";
 import {
   contractStages,
@@ -12,7 +12,6 @@ import {
   isRenewalContract,
   normalizeStage,
   renewalContractStages,
-  renewalTone,
 } from "../utils/status";
 
 const scopeOptions = [
@@ -79,8 +78,8 @@ const emptyForm = {
 export default function Customers({ contracts, setContracts, onNavigate, route }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
+  const [teamFilter, setTeamFilter] = useState("All");
   const [sortBy, setSortBy] = useState("recent");
-  const [sortDir, setSortDir] = useState("desc");
   const [formState, setFormState] = useState(emptyForm);
   const [isModalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -132,6 +131,15 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
     }
   }, [formState, isModalOpen]);
 
+  const sortDirection = useMemo(() => {
+    if (sortBy === "recent") return "desc";
+    return "asc";
+  }, [sortBy]);
+
+  const availableTeams = useMemo(() => {
+    return ["All", ...Array.from(new Set(contracts.map((contract) => contract.team).filter(Boolean))).sort()];
+  }, [contracts]);
+
   const filtered = useMemo(() => {
     const normalized = search.toLowerCase();
     const list = contracts.filter((contract) => {
@@ -141,7 +149,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
         (contract.contractType || "").toLowerCase().includes(normalized) ||
         contract.owner.toLowerCase().includes(normalized);
       const matchesStage = stageFilter === "All" || normalizeStage(contract.stage) === stageFilter;
-      return matchesSearch && matchesStage;
+      const matchesTeam = teamFilter === "All" || (contract.team || "") === teamFilter;
+      return matchesSearch && matchesStage && matchesTeam;
     });
 
     const sorted = [...list].sort((a, b) => {
@@ -156,25 +165,29 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           valueA = a.customerName;
           valueB = b.customerName;
           break;
+        case "team":
+          valueA = a.team || "Unassigned";
+          valueB = b.team || "Unassigned";
+          break;
         case "endDate":
           valueA = new Date(a.endDate).getTime();
           valueB = new Date(b.endDate).getTime();
           break;
         case "status":
-          valueA = a.stage;
-          valueB = b.stage;
+          valueA = normalizeStage(a.stage);
+          valueB = normalizeStage(b.stage);
           break;
         default:
           valueA = daysUntil(a.endDate) ?? 99999;
           valueB = daysUntil(b.endDate) ?? 99999;
       }
-      if (valueA < valueB) return sortDir === "asc" ? -1 : 1;
-      if (valueA > valueB) return sortDir === "asc" ? 1 : -1;
+      if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+      if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
 
     return sorted;
-  }, [contracts, search, stageFilter, sortBy, sortDir]);
+  }, [contracts, search, stageFilter, teamFilter, sortBy, sortDirection]);
 
   const openNew = () => {
     setEditingId(null);
@@ -272,8 +285,9 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
   return (
     <div className="page">
       <Card title="Customers & contracts" subtitle="Track lifecycle status at a glance">
-        <div className="filters">
-          <div className="field">
+        <div className="customer-toolbar">
+          <div className="customer-toolbar-main">
+            <div className="field">
             <label>Search</label>
             <input
               value={search}
@@ -293,28 +307,38 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
             </select>
           </div>
           <div className="field">
+            <label>Team</label>
+            <select value={teamFilter} onChange={(event) => setTeamFilter(event.target.value)}>
+              {availableTeams.map((team) => (
+                <option key={team} value={team}>
+                  {team}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
             <label>Sort by</label>
             <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
               <option value="recent">Newest first</option>
               <option value="remaining">Remaining days</option>
               <option value="endDate">End date</option>
               <option value="customer">Customer name</option>
+              <option value="team">Team</option>
               <option value="status">Stage</option>
             </select>
           </div>
-          <div className="field">
-            <label>Order</label>
-            <select value={sortDir} onChange={(event) => setSortDir(event.target.value)}>
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
-            </select>
           </div>
-          <div className="filter-actions">
+          <div className="customer-toolbar-side">
+            <div className="customer-toolbar-summary">
+              <span className="customer-toolbar-summary-label">Showing</span>
+              <strong>{filtered.length}</strong>
+              <span className="muted">{teamFilter === "All" ? "all teams" : teamFilter}</span>
+            </div>
             <button className="btn btn-primary" onClick={openNew}>Add customer</button>
           </div>
         </div>
 
-        <div className="table">
+        <div className="table customer-table">
           <div className="table-head">
             <div>Customer</div>
             <div>Contract</div>
@@ -325,7 +349,6 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
             <div>Value</div>
             <div>Scopes</div>
             <div>Stage</div>
-            <div>Renewal</div>
             <div>Actions</div>
           </div>
           <div className="table-body">
@@ -351,7 +374,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                     <div>{formatMonthYear(contract.startDate)}</div>
                     <div>{formatMonthYear(contract.endDate)}</div>
                     <div className={remaining < 0 ? "text-danger" : ""}>
-                      {remaining < 0 ? "Churn" : `${remaining} days`}
+                      {formatRemainingDays(remaining, { remainingSuffix: "days", overdueSuffix: "days overdue" })}
                     </div>
                     <div>
                       <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
@@ -375,11 +398,6 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                     </div>
                     <div>
                       <Badge tone={meta.tone}>{meta.label}</Badge>
-                    </div>
-                    <div>
-                      <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>
-                        {contract.renewalStatus}
-                      </Badge>
                     </div>
                     <div className="row-actions">
                       <button className="btn btn-ghost" onClick={() => openEdit(contract)}>Edit</button>

@@ -4,7 +4,7 @@ import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
 import ProcessStepper from "../components/ProcessStepper";
 import ContractGrowthChart from "../components/ContractGrowthChart";
-import { daysUntil, formatDate, formatCurrency, formatDateTime } from "../utils/date";
+import { daysUntil, formatDate, formatCurrency, formatDateTime, formatRemainingDays } from "../utils/date";
 import { getContractOperationalMetrics } from "../utils/contractMetrics";
 import { buildScopeBudgetRows, getContractBudgetSummary } from "../utils/pricing";
 import { getStageMeta, normalizeStage, renewalTone } from "../utils/status";
@@ -74,7 +74,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
             <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
             <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>{contract.renewalStatus}</Badge>
             <span className={remaining < 0 ? "text-danger" : "muted"}>
-              {remaining < 0 ? "Churn" : `${remaining} days remaining`}
+              {formatRemainingDays(remaining, { remainingSuffix: "days remaining", overdueSuffix: "days overdue" })}
             </span>
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           <div className="detail-row">
             <span>Remaining days</span>
             <strong className={remaining < 0 ? "text-danger" : ""}>
-              {remaining < 0 ? "Churn" : `${remaining} days`}
+              {formatRemainingDays(remaining, { remainingSuffix: "days", overdueSuffix: "days overdue" })}
             </strong>
           </div>
           <div className="detail-row">

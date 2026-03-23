@@ -3,7 +3,8 @@ import { getContractStageFlow, normalizeStage, renewalContractStages } from "./s
 
 export const pipelineStages = renewalContractStages;
 
-export const RENEWAL_PIPELINE_WINDOW_DAYS = 120;
+export const RENEWAL_PIPELINE_WINDOW_DAYS = 0;
+export const ACTIVE_RENEWAL_STAGES = ["Draft", "Legal Review", "Signature", "Renewal Protocol"];
 
 function normalizeLabel(label) {
   return String(label || "").trim().toLowerCase();
@@ -49,13 +50,32 @@ function getStageEntry(contract, stage) {
 export function shouldCreateRenewalPipeline(contract) {
   const remainingDays = daysUntil(contract.endDate);
   if (remainingDays == null) return false;
+  if (contract.renewalCompletedAt) return false;
 
   return (
     remainingDays <= RENEWAL_PIPELINE_WINDOW_DAYS ||
+    Boolean(contract.renewalPipelineStage) ||
     normalizeStage(contract.stage) === "Renewal Protocol" ||
     normalizeStage(contract.stage) === "Expired" ||
     Boolean(contract.renewalStartedAt)
   );
+}
+
+export function getRenewalCurrentStage(contract) {
+  const explicitStage = contract.renewalPipelineStage;
+  if (ACTIVE_RENEWAL_STAGES.includes(explicitStage)) return explicitStage;
+
+  const normalizedStage = normalizeStage(contract.stage);
+  if (ACTIVE_RENEWAL_STAGES.includes(normalizedStage)) return normalizedStage;
+
+  if (shouldCreateRenewalPipeline(contract)) return "Draft";
+  return "Active";
+}
+
+export function getNextRenewalStage(stage) {
+  const currentIndex = ACTIVE_RENEWAL_STAGES.indexOf(stage);
+  if (currentIndex < 0) return ACTIVE_RENEWAL_STAGES[0];
+  return ACTIVE_RENEWAL_STAGES[currentIndex + 1] || null;
 }
 
 export function buildPipelineSteps(contract) {
@@ -74,7 +94,11 @@ export function buildPipelineSteps(contract) {
 
 export function buildRenewalPipelineSteps(contract) {
   return renewalContractStages.map((stage) => {
-    const entry = getStageEntry(contract, stage);
+    const entry =
+      getStageEntry(contract, stage) ||
+      (stage === "Draft" && contract.renewalStartedAt
+        ? { date: contract.renewalStartedAt, actor: contract.owner }
+        : null);
     return {
       id: stage,
       name: stage,
@@ -89,9 +113,7 @@ export function buildRenewalPipelines(contracts = []) {
     .filter(shouldCreateRenewalPipeline)
     .map((contract) => {
       const remainingDays = daysUntil(contract.endDate);
-      const currentStage = pipelineStages.includes(normalizeStage(contract.stage))
-        ? normalizeStage(contract.stage)
-        : "Active";
+      const currentStage = getRenewalCurrentStage(contract);
 
       return {
         id: `pipeline-${contract.id}`,
@@ -108,6 +130,7 @@ export function buildRenewalPipelines(contracts = []) {
         otherScopeText: contract.otherScopeText || "",
         endDate: contract.endDate,
         remainingDays,
+        startedAt: contract.renewalStartedAt || contract.endDate,
         currentStage,
         renewalStatus: contract.renewalStatus,
         notes: contract.notes,
