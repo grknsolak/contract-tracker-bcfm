@@ -42,6 +42,20 @@ export function daysUntil(iso) {
   return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
 }
 
+export function formatRemainingDays(iso, options = {}) {
+  const days = typeof iso === "number" ? iso : daysUntil(iso);
+  if (days == null) return "-";
+
+  const remainingSuffix = options.remainingSuffix || "days left";
+  const overdueSuffix = options.overdueSuffix || "days overdue";
+
+  if (days < 0) {
+    return `${Math.abs(days)} ${overdueSuffix}`;
+  }
+
+  return `${days} ${remainingSuffix}`;
+}
+
 export function isExpired(iso) {
   const days = daysUntil(iso);
   return typeof days === "number" && days < 0;

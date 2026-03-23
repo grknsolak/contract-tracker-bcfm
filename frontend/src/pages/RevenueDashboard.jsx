@@ -76,8 +76,8 @@ export default function RevenueDashboard({ contracts }) {
 
       <Card title="Filters" subtitle="Executive controls for team and reporting window" className="revenue-filter-card">
         <div className="revenue-filter-shell">
-          <div className="revenue-filter-topline">
-            <div className="revenue-filter-block revenue-filter-team">
+          <div className="revenue-filter-compact">
+            <div className="revenue-filter-compact-group revenue-filter-team">
               <div className="revenue-filter-label">Team</div>
               <select className="revenue-team-select" value={teamFilter} onChange={(event) => setTeamFilter(event.target.value)}>
                 {teams.map((team) => (
@@ -88,24 +88,8 @@ export default function RevenueDashboard({ contracts }) {
               </select>
             </div>
 
-            <div className="revenue-filter-block revenue-filter-summary">
-              <div className="revenue-filter-label">Selected window</div>
-              <div className="revenue-range-window">
-                <strong>{formatMonthDisplay(effectiveRange.startKey)}</strong>
-                <span className="revenue-range-arrow">→</span>
-                <strong>{formatMonthDisplay(effectiveRange.endKey)}</strong>
-              </div>
-              <div className="revenue-range-meta">
-                <span>{teamFilter === "All" ? "All teams" : teamFilter}</span>
-                <span>{analytics.months.length} months</span>
-                <span>{rangePreset === "custom" ? "Custom range" : (RANGE_PRESETS.find((item) => item.id === rangePreset)?.label || "Range")}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="revenue-filter-bottomline">
-            <div className="revenue-filter-block revenue-filter-preset-block">
-              <div className="revenue-filter-label">Quick range</div>
+            <div className="revenue-filter-compact-group revenue-filter-ranges">
+              <div className="revenue-filter-label">Range</div>
               <div className="range-chip-row premium-range-chip-row">
                 {RANGE_PRESETS.map((preset) => (
                   <button
@@ -124,6 +108,19 @@ export default function RevenueDashboard({ contracts }) {
                 >
                   Custom
                 </button>
+              </div>
+            </div>
+
+            <div className="revenue-filter-compact-group revenue-filter-summary-simple">
+              <div className="revenue-filter-label">Window</div>
+              <div className="revenue-range-window revenue-range-window-simple">
+                <strong>{formatMonthDisplay(effectiveRange.startKey)}</strong>
+                <span className="revenue-range-arrow">→</span>
+                <strong>{formatMonthDisplay(effectiveRange.endKey)}</strong>
+              </div>
+              <div className="revenue-range-meta">
+                <span>{analytics.months.length} months</span>
+                <span>{teamFilter === "All" ? "All teams" : teamFilter}</span>
               </div>
             </div>
           </div>
@@ -193,12 +190,12 @@ export default function RevenueDashboard({ contracts }) {
         <Card className="stat-card">
           <div className="stat-label">Monthly MRR</div>
           <div className="stat-value">{formatCurrency(analytics.monthly.mrr, "USD")}</div>
-          <div className="stat-meta">Latest month: {analytics.latestMonthLabel}</div>
+          <div className="stat-meta">Latest MRR month: {analytics.latestMRRMonthLabel}</div>
         </Card>
         <Card className="stat-card">
           <div className="stat-label">Monthly NRR</div>
           <div className="stat-value">{formatCurrency(analytics.monthly.nrr, "USD")}</div>
-          <div className="stat-meta">Latest month: {analytics.latestMonthLabel}</div>
+          <div className="stat-meta">Latest NRR month: {analytics.latestNRRMonthLabel}</div>
         </Card>
         <Card className="stat-card">
           <div className="stat-label">Range MRR</div>

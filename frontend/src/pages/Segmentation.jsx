@@ -58,6 +58,8 @@ export default function Segmentation({ contracts, onNavigate }) {
     [filtered]
   );
 
+  const highlightedScopeLabel = selectedScope === "All" ? "All scopes" : selectedScope;
+
   return (
     <div className="page">
       <div className="details-header">
@@ -78,16 +80,28 @@ export default function Segmentation({ contracts, onNavigate }) {
       </div>
 
       <Card title="Scope filter" subtitle="Choose a scope to rank customers">
-        <div className="scope-filter-row">
-          {scopes.map((scope) => (
-            <button
-              key={scope}
-              className={`scope-filter-chip ${selectedScope === scope ? "active" : ""}`}
-              onClick={() => setSelectedScope(scope)}
-            >
-              {scope}
-            </button>
-          ))}
+        <div className="scope-filter-shell">
+          <div className="scope-filter-toolbar">
+            <div className="scope-filter-summary">
+              <span className="scope-filter-summary-label">Selected scope</span>
+              <strong>{highlightedScopeLabel}</strong>
+              <span className="scope-filter-summary-meta">
+                {filtered.length} customers · {formatCurrency(totalValue, "USD")} total
+              </span>
+            </div>
+
+            <div className="scope-filter-row">
+              {scopes.map((scope) => (
+                <button
+                  key={scope}
+                  className={`scope-filter-chip ${selectedScope === scope ? "active" : ""}`}
+                  onClick={() => setSelectedScope(scope)}
+                >
+                  {scope}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -99,16 +113,28 @@ export default function Segmentation({ contracts, onNavigate }) {
           <EmptyState title="No customers found" description="No customer is mapped to this scope yet." />
         ) : (
           <div className="segmentation-block-grid">
-            {filtered.map((contract) => (
+            {filtered.map((contract, index) => (
               <button
                 key={contract.id}
                 type="button"
                 className="segmentation-customer-card"
                 onClick={() => onNavigate(`/contracts/${contract.id}`)}
               >
+                <div className="segmentation-customer-card-top">
+                  <span className="segmentation-rank">#{index + 1}</span>
+                  <span className="segmentation-currency-tag">{contract.currency}</span>
+                </div>
                 <div className="segmentation-customer-name">{contract.customerName}</div>
+                <div className="segmentation-customer-meta">
+                  <span>{contract.contractName}</span>
+                  <span>{contract.team}</span>
+                </div>
                 <div className="segmentation-customer-value">
                   {formatCurrency(contract.value, contract.currency)}
+                </div>
+                <div className="segmentation-customer-foot">
+                  <span>{contract.scopes?.length || 0} scopes</span>
+                  <span>Open contract</span>
                 </div>
               </button>
             ))}
