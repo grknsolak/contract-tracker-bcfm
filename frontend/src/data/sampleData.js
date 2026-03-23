@@ -1,10 +1,10 @@
 export const contractStages = [
+  "NDA",
   "Draft",
-  "Under Review",
-  "Approval Pending",
-  "Signed",
+  "Legal Review",
+  "Signature",
   "Active",
-  "Renewal Upcoming",
+  "Renewal Protocol",
   "Expired",
 ];
 

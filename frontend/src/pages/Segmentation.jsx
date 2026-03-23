@@ -2,9 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import EmptyState from "../components/EmptyState";
-import { formatCurrency, daysUntil } from "../utils/date";
+import { formatCurrency } from "../utils/date";
 import { getFxLatest } from "../api";
-import { getStageMeta, renewalTone } from "../utils/status";
 
 function normalizeUsdValue(contract, rate) {
   const rawValue = Number(contract.value || 0);
@@ -15,7 +14,7 @@ function normalizeUsdValue(contract, rate) {
   return rawValue;
 }
 
-export default function Segmentation({ contracts }) {
+export default function Segmentation({ contracts, onNavigate }) {
   const [fx, setFx] = useState({ rate: null, date: null, loading: true, error: null });
   const [selectedScope, setSelectedScope] = useState("All");
 
@@ -49,7 +48,6 @@ export default function Segmentation({ contracts }) {
       .map((contract) => ({
         ...contract,
         usdValue: normalizeUsdValue(contract, fx.rate),
-        remainingDays: daysUntil(contract.endDate),
       }))
       .sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0))
       .slice(0, 10);
@@ -100,53 +98,20 @@ export default function Segmentation({ contracts }) {
         {filtered.length === 0 ? (
           <EmptyState title="No customers found" description="No customer is mapped to this scope yet." />
         ) : (
-          <div className="table segmentation-table">
-            <div className="table-head">
-              <div>Customer</div>
-              <div>Revenue</div>
-              <div>Team</div>
-              <div>Stage</div>
-              <div>Renewal</div>
-              <div>Remaining</div>
-              <div>Scopes</div>
-            </div>
-            <div className="table-body">
-              {filtered.map((contract, index) => {
-                const stageMeta = getStageMeta(contract.stage);
-                return (
-                  <div key={contract.id} className={`table-row ${index < 3 ? "top-tier" : ""}`}>
-                    <div>
-                      <div className="primary-text">{contract.customerName}</div>
-                      <div className="muted">{contract.contractName}</div>
-                    </div>
-                    <div>{formatCurrency(contract.usdValue, "USD")}</div>
-                    <div>{contract.team || "-"}</div>
-                    <div>
-                      <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
-                    </div>
-                    <div>
-                      <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>
-                        {contract.renewalStatus}
-                      </Badge>
-                    </div>
-                    <div className={contract.remainingDays != null && contract.remainingDays < 0 ? "text-danger" : ""}>
-                      {contract.remainingDays == null
-                        ? "-"
-                        : contract.remainingDays < 0
-                          ? "Expired"
-                          : `${contract.remainingDays} days`}
-                    </div>
-                    <div className="scope-tags">
-                      {(contract.scopes || []).map((scope) => (
-                        <span key={scope} className={`tag ${scope === selectedScope ? "tag-active-scope" : ""}`}>
-                          {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+          <div className="segmentation-block-grid">
+            {filtered.map((contract) => (
+              <button
+                key={contract.id}
+                type="button"
+                className="segmentation-customer-card"
+                onClick={() => onNavigate(`/contracts/${contract.id}`)}
+              >
+                <div className="segmentation-customer-name">{contract.customerName}</div>
+                <div className="segmentation-customer-value">
+                  {formatCurrency(contract.value, contract.currency)}
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </Card>

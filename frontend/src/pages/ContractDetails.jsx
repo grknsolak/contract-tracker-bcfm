@@ -6,42 +6,12 @@ import ProcessStepper from "../components/ProcessStepper";
 import ContractGrowthChart from "../components/ContractGrowthChart";
 import { daysUntil, formatDate, formatCurrency, formatDateTime } from "../utils/date";
 import { getContractOperationalMetrics } from "../utils/contractMetrics";
-import { getStageMeta, renewalTone } from "../utils/status";
+import { buildScopeBudgetRows, getContractBudgetSummary } from "../utils/pricing";
+import { getStageMeta, normalizeStage, renewalTone } from "../utils/status";
+import { buildPipelineSteps } from "../utils/pipelines";
 
 export default function ContractDetails({ contract, setContracts, onNavigate }) {
   const [commentText, setCommentText] = useState("");
-  const stageFlow = useMemo(() => {
-    const stages = [
-      "Draft",
-      "Under Review",
-      "Approval Pending",
-      "Signed",
-      "Active",
-      "Renewal Upcoming",
-      "Expired",
-    ];
-
-    const findHistoryEntry = (stage) => {
-      const normalizedStage = stage.toLowerCase();
-      return (contract.history || []).find((item) => {
-        const label = (item.label || "").toLowerCase();
-        if (normalizedStage === "draft") return label.includes("draft");
-        if (normalizedStage === "active") return label.includes("active");
-        return label.includes(normalizedStage);
-      });
-    };
-
-    return stages.map((stage) => {
-      const entry = findHistoryEntry(stage);
-      return {
-        id: stage,
-        name: stage,
-        date: entry?.date ? formatDate(entry.date) : "",
-        updatedBy: entry?.actor || contract.owner || "Team",
-      };
-    });
-  }, [contract.history, contract.owner]);
-
   if (!contract) {
     return (
       <EmptyState
@@ -52,9 +22,14 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
     );
   }
 
-  const stageMeta = getStageMeta(contract.stage);
+  const stageFlow = useMemo(() => buildPipelineSteps(contract), [contract]);
+
+  const currentStage = normalizeStage(contract.stage);
+  const stageMeta = getStageMeta(currentStage);
   const remaining = daysUntil(contract.endDate);
   const operationalMetrics = getContractOperationalMetrics(contract);
+  const scopeBudgetRows = useMemo(() => buildScopeBudgetRows(contract), [contract]);
+  const budgetSummary = useMemo(() => getContractBudgetSummary(contract), [contract]);
   const comments = useMemo(
     () =>
       [...(contract.comments || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -99,7 +74,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
             <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
             <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>{contract.renewalStatus}</Badge>
             <span className={remaining < 0 ? "text-danger" : "muted"}>
-              {remaining < 0 ? "Expired" : `${remaining} days remaining`}
+              {remaining < 0 ? "Churn" : `${remaining} days remaining`}
             </span>
           </div>
         </div>
@@ -133,6 +108,10 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
             <span>Contract value</span>
             <strong>{formatCurrency(contract.value, contract.currency)}</strong>
           </div>
+          <div className="detail-row">
+            <span>Renewed value</span>
+            <strong>{formatCurrency(budgetSummary.renewedTotal, contract.currency)}</strong>
+          </div>
         </Card>
 
         <Card title="Contract duration" subtitle="Lifecycle overview">
@@ -147,7 +126,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           <div className="detail-row">
             <span>Remaining days</span>
             <strong className={remaining < 0 ? "text-danger" : ""}>
-              {remaining < 0 ? "Expired" : `${remaining} days`}
+              {remaining < 0 ? "Churn" : `${remaining} days`}
             </strong>
           </div>
           <div className="detail-row">
@@ -156,18 +135,29 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           </div>
         </Card>
 
-        <Card title="Service scopes" subtitle="Included coverage">
-          <div className="scope-tags">
-            {(contract.scopes || []).length === 0 ? (
-              <span className="muted">No scopes selected.</span>
-            ) : (
-              (contract.scopes || []).map((scope) => (
-                <span key={scope} className="tag">
-                  {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
-                </span>
-              ))
-            )}
-          </div>
+        <Card title="Service scopes" subtitle="Included coverage and renewal impact">
+          {(contract.scopes || []).length === 0 ? (
+            <span className="muted">No scopes selected.</span>
+          ) : (
+            <div className="scope-breakdown-list">
+              {scopeBudgetRows.map((row) => (
+                <div key={row.scope} className="scope-breakdown-item">
+                  <div>
+                    <div className="primary-text">
+                      {row.scope === "Other" && contract.otherScopeText ? contract.otherScopeText : row.scope}
+                    </div>
+                    <div className="muted">
+                      {formatCurrency(row.baseAmount, contract.currency)} {"->"} {formatCurrency(row.renewedAmount, contract.currency)}
+                    </div>
+                  </div>
+                  <Badge tone={row.renewalRate >= 0 ? "success" : "danger"}>
+                    {row.renewalRate > 0 ? "+" : ""}
+                    {row.renewalRate}%
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         <Card title="Notes" subtitle="Customer context">
@@ -181,7 +171,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
       </div>
 
       <Card title="Stage progress" subtitle="Current phase visibility">
-        <ProcessStepper currentStep={contract.stage} steps={stageFlow} />
+        <ProcessStepper currentStep={currentStage} steps={stageFlow} />
       </Card>
 
       <div className="details-grid">

@@ -6,8 +6,8 @@ export default function Card({ title, subtitle, children, className = "" }) {
       {(title || subtitle) && (
         <header className="card-header">
           <div>
-            {subtitle && <p className="card-subtitle">{subtitle}</p>}
             {title && <h3 className="card-title">{title}</h3>}
+            {subtitle && <p className="card-subtitle">{subtitle}</p>}
           </div>
         </header>
       )}
