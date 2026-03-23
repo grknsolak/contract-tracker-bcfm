@@ -76,7 +76,9 @@ const emptyForm = {
   stage: "NDA",
   renewalStatus: "On Track",
   value: "",
-  currency: "USD",
+  currency: "TL",
+  usdRate: "",
+  valueUsd: "",
   notes: "",
   scopes: [],
   scopePrices: {},
@@ -299,13 +301,17 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
 
     setSaving(true);
     const totalValue = calculateScopeTotal(formState.scopePrices);
+    const usdRate = parseFloat(formState.usdRate);
+    const valueUsd = formState.currency === "TL" && usdRate > 0
+      ? Math.round(totalValue / usdRate)
+      : formState.currency === "USD" ? totalValue : null;
 
     try {
       if (editingId) {
         setContracts((prev) =>
           prev.map((contract) =>
             contract.id === editingId
-              ? { ...contract, ...formState, value: totalValue, updatedAt: new Date().toISOString() }
+              ? { ...contract, ...formState, value: totalValue, valueUsd, updatedAt: new Date().toISOString() }
               : contract
           )
         );
@@ -318,6 +324,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           ...formState,
           stage: normalizedStage,
           value: totalValue,
+          valueUsd,
           id: `ct-${Date.now()}`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -464,16 +471,31 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       <div className={`field field-span-2 ${fieldErrors.scopes ? "field-error" : ""}`}>
         <div className="scope-inline-header">
           <label>Service scopes *</label>
-          {formState.scopes.length > 0 && (
+          <div className="scope-inline-header-right">
             <div className="scope-currency-toggle">
-              {["USD", "TL"].map((cur) => (
+              {["TL", "USD"].map((cur) => (
                 <label key={cur} className={`scope-currency-option ${formState.currency === cur ? "active" : ""}`}>
                   <input type="radio" value={cur} checked={formState.currency === cur} onChange={() => setFormState({ ...formState, currency: cur })} />
                   {cur}
                 </label>
               ))}
             </div>
-          )}
+            {formState.currency === "TL" && formState.scopes.length > 0 && (
+              <div className="usd-rate-wrap">
+                <span className="usd-rate-label">1 USD =</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="usd-rate-input"
+                  value={formState.usdRate}
+                  placeholder="Kur (TL)"
+                  onChange={(e) => setFormState({ ...formState, usdRate: e.target.value })}
+                />
+                <span className="usd-rate-label">TL</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="scope-inline-list">
           {scopeOptions.map((scope) => {
@@ -775,9 +797,12 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                       {remaining < 0 ? "Churn" : `${remaining} days`}
                     </div>
                     <div>
-                      <div className="muted">{formatCurrency(contract.value, contract.currency)}</div>
+                      <div style={{ fontWeight: 600 }}>{formatCurrency(contract.value, contract.currency)}</div>
+                      {contract.currency === "TL" && contract.valueUsd != null && (
+                        <div className="muted" style={{ fontSize: 12 }}>≈ {formatCurrency(contract.valueUsd, "USD")}</div>
+                      )}
                       {budgetSummary.deltaTotal !== 0 ? (
-                        <div className={budgetSummary.deltaTotal > 0 ? "text-success" : "text-danger"}>
+                        <div className={budgetSummary.deltaTotal > 0 ? "text-success" : "text-danger"} style={{ fontSize: 12 }}>
                           Renewal {budgetSummary.deltaTotal > 0 ? "+" : ""}
                           {formatCurrency(budgetSummary.deltaTotal, contract.currency)}
                         </div>

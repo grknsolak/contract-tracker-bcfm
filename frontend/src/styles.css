@@ -3640,3 +3640,42 @@ textarea {
   min-width: 26px;
   text-align: right;
 }
+
+/* ─── USD Rate Input ───────────────────────────────── */
+.scope-inline-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.usd-rate-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.usd-rate-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.usd-rate-input {
+  width: 72px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-family: "DM Sans", system-ui;
+  font-weight: 700;
+  outline: none;
+  color: var(--text);
+  padding: 0;
+}
+
+.text-success { color: var(--success); }
