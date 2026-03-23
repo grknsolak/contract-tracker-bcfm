@@ -846,7 +846,6 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
       {isModalOpen && (
         <Modal
           title={editingId ? "Edit contract" : "Create contract"}
-          description={`Step ${wizardStep + 1} of ${WIZARD_STEPS.length}: ${WIZARD_STEPS[wizardStep].label}`}
           onClose={closeModal}
           footer={
             <div className="wizard-footer">
