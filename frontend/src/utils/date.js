@@ -63,10 +63,12 @@ export function isExpired(iso) {
 
 export function formatCurrency(value, currency = "USD") {
   if (value == null || Number.isNaN(Number(value))) return "-";
-  const normalized = currency === "TL" ? "TRY" : currency;
+  if (currency === "TL") {
+    return "₺" + Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  }
   return Number(value).toLocaleString("en-US", {
     style: "currency",
-    currency: normalized,
+    currency,
     maximumFractionDigits: 0,
   });
 }

@@ -716,7 +716,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
 
   return (
     <div className="page">
-      <Card title="Customers & contracts" subtitle="Track lifecycle status at a glance">
+      <Card>
         <div className="filters">
           <div className="field">
             <label>Search</label>

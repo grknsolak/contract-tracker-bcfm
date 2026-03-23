@@ -3679,3 +3679,230 @@ textarea {
 }
 
 .text-success { color: var(--success); }
+
+/* ══════════════════════════════════════════════════
+   PRO UI ENHANCEMENTS
+   ══════════════════════════════════════════════════ */
+
+/* ─── Dashboard KPI headline cards — per-card accent ── */
+.dashboard-headline-grid .dashboard-headline-card {
+  position: relative;
+  overflow: hidden;
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(1) {
+  border-top: 3px solid var(--info);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(1) .dashboard-headline-button {
+  background: linear-gradient(160deg, rgba(29,113,224,0.05) 0%, transparent 65%);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(1) .dashboard-headline-value {
+  color: var(--info);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(2) {
+  border-top: 3px solid var(--success);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(2) .dashboard-headline-button {
+  background: linear-gradient(160deg, rgba(10,143,92,0.05) 0%, transparent 65%);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(2) .dashboard-headline-value {
+  color: var(--success);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(3) {
+  border-top: 3px solid var(--warning);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(3) .dashboard-headline-button {
+  background: linear-gradient(160deg, rgba(196,122,0,0.05) 0%, transparent 65%);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(3) .dashboard-headline-value {
+  color: var(--warning);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(4) {
+  border-top: 3px solid var(--danger);
+}
+.dashboard-headline-grid .dashboard-headline-card:nth-child(4) .dashboard-headline-button {
+  background: linear-gradient(160deg, rgba(212,32,32,0.04) 0%, transparent 65%);
+}
+
+/* ─── Dashboard headline card button — richer hover ── */
+.dashboard-headline-button:hover {
+  filter: brightness(0.97);
+}
+
+/* ─── Dashboard inline operational KPIs — color accents ── */
+.dashboard-kpi-inline {
+  border-top: 3px solid transparent;
+  transition: var(--transition);
+}
+.dashboard-kpi-inline:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(1) {
+  border-top-color: var(--primary);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(1) strong {
+  color: var(--primary);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(2) {
+  border-top-color: var(--success);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(2) strong {
+  color: var(--success);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(3) {
+  border-top-color: var(--danger);
+}
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(3) .text-danger,
+.dashboard-kpis-inline .dashboard-kpi-inline:nth-child(3) strong:not(:empty) {
+  color: var(--danger);
+}
+
+/* ─── Dashboard KPI label stronger font ── */
+.dashboard-kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.dashboard-kpi-inline strong {
+  font-family: "Bricolage Grotesque", system-ui;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  display: block;
+  margin-top: 2px;
+}
+
+/* ─── Dashboard quarter items — stacked vertical layout ── */
+.dashboard-quarter-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+}
+.dashboard-quarter-item .primary-text {
+  font-size: 12px;
+  font-weight: 600;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-quarter-item .muted {
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+/* ─── Dashboard quarter card head stronger label ── */
+.dashboard-quarter-head strong {
+  font-family: "Bricolage Grotesque", system-ui;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.dashboard-quarter-head .muted {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-3);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+/* ─── Dashboard team summary ── */
+.dashboard-team-row {
+  transition: var(--transition);
+}
+.dashboard-team-row:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-xs);
+}
+.dashboard-team-count {
+  text-align: right;
+  flex-shrink: 0;
+}
+.dashboard-team-count strong {
+  font-family: "Bricolage Grotesque", system-ui;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--primary);
+  display: block;
+  line-height: 1;
+}
+.dashboard-team-count .muted {
+  font-size: 11px;
+}
+
+/* ─── Table — stronger visual hierarchy ── */
+.table-row {
+  transition: background 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.table-head {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+.table-body {
+  gap: 5px;
+}
+
+/* ─── Topbar refinements ── */
+.topbar {
+  border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.page-title {
+  font-size: 19px;
+  font-weight: 800;
+}
+.page-subtitle {
+  font-size: 12.5px;
+}
+
+/* ─── Card hover — disable transform on dashboard cards with lots of content ── */
+.dashboard-main-grid .card:hover,
+.dashboard-headline-card:hover {
+  transform: none;
+}
+
+/* ─── Improved app background dot grid visibility ── */
+.app-content {
+  background-image: radial-gradient(rgba(0,0,0,0.045) 1px, transparent 1px);
+}
+
+/* ─── Sidebar brand mark — stronger glow ── */
+.brand-mark {
+  box-shadow: 0 4px 20px rgba(91, 80, 232, 0.55), 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+/* ─── Buttons — refined ── */
+.btn-primary {
+  box-shadow: 0 2px 8px rgba(91, 80, 232, 0.28);
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 16px rgba(91, 80, 232, 0.38);
+}
+
+/* ─── Search field — subtle inner shadow ── */
+.search-field:focus-within {
+  box-shadow: 0 0 0 3px var(--primary-50), inset 0 1px 3px rgba(0,0,0,0.04);
+}
+
+/* ─── Section headers in Customers page ── */
+.customers-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+/* ─── Muted text refinement ── */
+.muted {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ─── Dashboard hero title — stronger ── */
+.dashboard-title {
+  font-size: 30px;
+  letter-spacing: -0.035em;
+}
