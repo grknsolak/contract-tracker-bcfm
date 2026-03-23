@@ -91,8 +91,6 @@ function validateStep(step, formState) {
     if (!formState.contractName.trim()) errors.contractName = "Contract name is required.";
     if (!formState.durationType) errors.durationType = "Select a contract duration.";
     if (!formState.startDate) errors.startDate = "Start date is required.";
-  }
-  if (step === "scopes") {
     if (formState.scopes.length === 0) errors.scopes = "Select at least one service scope.";
     for (const scope of formState.scopes) {
       const price = formState.scopePrices?.[scope];
@@ -463,114 +461,89 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           readOnly={Boolean(formState.startDate && formState.durationType)}
         />
       </div>
-    </div>
-  );
-
-  const renderScopesStep = () => (
-    <div className="form-grid">
       <div className={`field field-span-2 ${fieldErrors.scopes ? "field-error" : ""}`}>
-        <label>Service scopes *</label>
-        <div className="scope-selector-grid">
+        <div className="scope-inline-header">
+          <label>Service scopes *</label>
+          {formState.scopes.length > 0 && (
+            <div className="scope-currency-toggle">
+              {["USD", "TL"].map((cur) => (
+                <label key={cur} className={`scope-currency-option ${formState.currency === cur ? "active" : ""}`}>
+                  <input type="radio" value={cur} checked={formState.currency === cur} onChange={() => setFormState({ ...formState, currency: cur })} />
+                  {cur}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="scope-inline-list">
           {scopeOptions.map((scope) => {
             const on = formState.scopes.includes(scope);
             return (
-              <label key={scope} className={`scope-option ${on ? "selected" : ""}`}>
-                <input
-                  type="checkbox"
-                  checked={on}
-                  onChange={() => {
-                    const nextScopes = on
-                      ? formState.scopes.filter((item) => item !== scope)
-                      : [...formState.scopes, scope];
-                    const nextPrices = { ...(formState.scopePrices || {}) };
-                    const nextRates = { ...(formState.renewalRates || {}) };
-                    if (on) {
-                      delete nextPrices[scope];
-                      delete nextRates[scope];
-                    } else if (nextPrices[scope] == null) {
-                      nextPrices[scope] = "";
-                      nextRates[scope] = 0;
-                    }
-                    setFormState({
-                      ...formState,
-                      scopes: nextScopes,
-                      scopePrices: nextPrices,
-                      renewalRates: nextRates,
-                      otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText,
-                    });
-                    clearFieldError("scopes");
-                  }}
-                />
-                <span>{scope}</span>
-              </label>
-            );
-          })}
-        </div>
-        <FieldError error={fieldErrors.scopes} />
-        {formState.scopes.includes("Other") && (
-          <input
-            value={formState.otherScopeText}
-            onChange={(e) => setFormState({ ...formState, otherScopeText: e.target.value })}
-            placeholder="Other scope details"
-            style={{ marginTop: 8 }}
-          />
-        )}
-      </div>
-      {formState.scopes.length > 0 && (
-        <div className="field field-span-2">
-          <label>Scope budgets ({formState.currency})</label>
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <label style={{ fontSize: 13, cursor: "pointer" }}>
-              <input type="radio" value="USD" checked={formState.currency === "USD"} onChange={() => setFormState({ ...formState, currency: "USD" })} /> USD
-            </label>
-            <label style={{ fontSize: 13, cursor: "pointer" }}>
-              <input type="radio" value="TL" checked={formState.currency === "TL"} onChange={() => setFormState({ ...formState, currency: "TL" })} /> TL
-            </label>
-          </div>
-          <div className="form-grid">
-            {formState.scopes.map((scope) => {
-              const errKey = `scope_${scope}`;
-              return (
-                <React.Fragment key={scope}>
-                  <div className={`field ${fieldErrors[errKey] ? "field-error" : ""}`}>
-                    <label>{scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope} budget</label>
+              <div key={scope} className={`scope-inline-row ${on ? "active" : ""}`}>
+                <label className="scope-inline-label">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => {
+                      const nextScopes = on ? formState.scopes.filter((s) => s !== scope) : [...formState.scopes, scope];
+                      const nextPrices = { ...(formState.scopePrices || {}) };
+                      const nextRates = { ...(formState.renewalRates || {}) };
+                      if (on) { delete nextPrices[scope]; delete nextRates[scope]; }
+                      else if (nextPrices[scope] == null) { nextPrices[scope] = ""; nextRates[scope] = 0; }
+                      setFormState({ ...formState, scopes: nextScopes, scopePrices: nextPrices, renewalRates: nextRates, otherScopeText: scope === "Other" && on ? "" : formState.otherScopeText });
+                      clearFieldError("scopes");
+                    }}
+                  />
+                  <span className="scope-name">{scope}</span>
+                </label>
+                {on && (
+                  <div className={`scope-inline-price-wrap ${fieldErrors[`scope_${scope}`] ? "field-error" : ""}`}>
+                    <span className="scope-currency-badge">{formState.currency}</span>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={formState.scopePrices?.[scope] ?? ""}
-                      onChange={(e) => {
-                        setFormState((prev) => ({
-                          ...prev,
-                          scopePrices: { ...(prev.scopePrices || {}), [scope]: e.target.value },
-                        }));
-                        clearFieldError(errKey);
-                      }}
-                      placeholder={currencyPlaceholder}
+                      placeholder="Budget"
+                      onChange={(e) => { setFormState((prev) => ({ ...prev, scopePrices: { ...(prev.scopePrices || {}), [scope]: e.target.value } })); clearFieldError(`scope_${scope}`); }}
                     />
-                    <FieldError error={fieldErrors[errKey]} />
+                    <FieldError error={fieldErrors[`scope_${scope}`]} />
                   </div>
-                  <div className="field">
-                    <label>{scope} renewal %</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formState.renewalRates?.[scope] ?? 0}
-                      onChange={(e) =>
-                        setFormState((prev) => ({
-                          ...prev,
-                          renewalRates: { ...(prev.renewalRates || {}), [scope]: e.target.value },
-                        }))
-                      }
-                      placeholder="%"
-                    />
-                  </div>
-                </React.Fragment>
-              );
-            })}
+                )}
+              </div>
+            );
+          })}
+        </div>
+        <FieldError error={fieldErrors.scopes} />
+      </div>
+    </div>
+  );
+
+  const renderScopesStep = () => (
+    <div className="form-grid">
+      {formState.scopes.length === 0 ? (
+        <div className="field field-span-2">
+          <p className="muted" style={{ margin: 0 }}>No scopes selected. Go back to Basics to select service scopes and set budgets.</p>
+        </div>
+      ) : (
+        <div className="field field-span-2">
+          <label>Renewal rates (%) per scope</label>
+          <div className="form-grid" style={{ marginTop: 8 }}>
+            {formState.scopes.map((scope) => (
+              <div className="field" key={scope}>
+                <label>{scope === "Other" && formState.otherScopeText ? formState.otherScopeText : scope} renewal %</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formState.renewalRates?.[scope] ?? 0}
+                  onChange={(e) => setFormState((prev) => ({ ...prev, renewalRates: { ...(prev.renewalRates || {}), [scope]: e.target.value } }))}
+                  placeholder="%"
+                />
+              </div>
+            ))}
           </div>
-          <div style={{ marginTop: 12, display: "flex", gap: 16, fontSize: 14 }}>
-            <span><strong>Total:</strong> {formatCurrency(scopeBudgetTotal, formState.currency)}</span>
+          <div style={{ marginTop: 14, display: "flex", gap: 20, fontSize: 14, padding: "10px 14px", background: "var(--surface-2)", borderRadius: 10 }}>
+            <span><strong>Total budget:</strong> {formatCurrency(scopeBudgetTotal, formState.currency)}</span>
             {renewalBudgetSummary.renewedTotal > 0 && (
               <span><strong>Renewed:</strong> {formatCurrency(renewalBudgetSummary.renewedTotal, formState.currency)}</span>
             )}

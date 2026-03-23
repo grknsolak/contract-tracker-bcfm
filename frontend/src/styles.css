@@ -3519,3 +3519,124 @@ textarea {
 }
 
 .text-danger { color: var(--danger); }
+
+/* ─── Scope Inline Selection (Basics step) ────────── */
+.scope-inline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.scope-inline-header label {
+  margin-bottom: 0;
+}
+
+.scope-currency-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.scope-currency-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--muted);
+  transition: var(--transition);
+}
+
+.scope-currency-option input[type="radio"] {
+  display: none;
+}
+
+.scope-currency-option.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.scope-inline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.scope-inline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  transition: var(--transition);
+}
+
+.scope-inline-row.active {
+  background: var(--primary-50);
+  border-color: var(--primary-100);
+}
+
+.scope-inline-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.scope-inline-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.scope-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.scope-inline-price-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.scope-inline-price-wrap input {
+  width: 140px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 14px;
+  font-family: "DM Sans", system-ui;
+  outline: none;
+  transition: var(--transition);
+}
+
+.scope-inline-price-wrap input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px var(--primary-50);
+}
+
+.scope-currency-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-width: 26px;
+  text-align: right;
+}
