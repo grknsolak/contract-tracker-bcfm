@@ -3906,3 +3906,83 @@ textarea {
   font-size: 30px;
   letter-spacing: -0.035em;
 }
+
+/* ─── Pipeline renewal rates panel (Legal Review) ── */
+.pipeline-renewal-rates {
+  margin: 14px 0 0;
+  padding: 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(29,113,224,0.04) 0%, rgba(29,113,224,0.02) 100%);
+  border: 1px solid rgba(29,113,224,0.14);
+}
+.pipeline-renewal-rates-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.pipeline-renewal-rates-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--info);
+}
+.pipeline-renewal-rates-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pipeline-rate-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pipeline-rate-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 130px;
+  flex-shrink: 0;
+}
+.pipeline-rate-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 10px;
+  transition: var(--transition);
+}
+.pipeline-rate-input-wrap:focus-within {
+  border-color: var(--info);
+  box-shadow: 0 0 0 3px rgba(29,113,224,0.1);
+}
+.pipeline-rate-input {
+  width: 56px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: "DM Sans", system-ui;
+  outline: none;
+  color: var(--text);
+  padding: 0;
+  text-align: right;
+}
+.pipeline-rate-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.pipeline-rate-result {
+  font-size: 12px;
+}
+.pipeline-renewal-rates-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(29,113,224,0.1);
+}

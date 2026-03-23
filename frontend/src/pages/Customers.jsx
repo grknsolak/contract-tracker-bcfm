@@ -34,7 +34,6 @@ const durationOptions = [
 
 const WIZARD_STEPS = [
   { key: "basics", label: "Basics" },
-  { key: "scopes", label: "Scopes & Pricing" },
   { key: "details", label: "Details" },
   { key: "review", label: "Review" },
 ];
@@ -872,9 +871,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
         >
           {renderWizardSteps()}
           {wizardStep === 0 && renderBasicsStep()}
-          {wizardStep === 1 && renderScopesStep()}
-          {wizardStep === 2 && renderDetailsStep()}
-          {wizardStep === 3 && renderReviewStep()}
+          {wizardStep === 1 && renderDetailsStep()}
+          {wizardStep === 2 && renderReviewStep()}
         </Modal>
       )}
 

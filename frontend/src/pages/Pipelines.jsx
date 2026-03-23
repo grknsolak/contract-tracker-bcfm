@@ -5,7 +5,7 @@ import EmptyState from "../components/EmptyState";
 import Modal from "../components/Modal";
 import ProcessStepper from "../components/ProcessStepper";
 import { daysUntil, formatCurrency, formatDate, formatRemainingDays } from "../utils/date";
-import { getContractBudgetSummary } from "../utils/pricing";
+import { getContractBudgetSummary, getRenewalRates, getRenewedScopeAmount } from "../utils/pricing";
 import { getStageMeta, renewalTone } from "../utils/status";
 import {
   buildRenewalPipelines,
@@ -33,6 +33,16 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
   const [stageFilter, setStageFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [confirmStep, setConfirmStep] = useState(null);
+  const [pendingRates, setPendingRates] = useState({});
+
+  const saveRenewalRates = (contractId, rates) => {
+    setContracts((prev) =>
+      prev.map((c) =>
+        c.id === contractId ? { ...c, renewalRates: { ...c.renewalRates, ...rates } } : c
+      )
+    );
+    setPendingRates((prev) => { const next = { ...prev }; delete next[contractId]; return next; });
+  };
 
   const pipelines = useMemo(() => buildRenewalPipelines(contracts), [contracts]);
 
@@ -235,6 +245,75 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
                   setConfirmStep(pipeline);
                 }}
               />
+
+              {pipeline.currentStage === "Legal Review" && pipeline.scopes?.length > 0 && (() => {
+                const saved = getRenewalRates(pipeline);
+                const local = pendingRates[pipeline.contractId];
+                const rates = local ?? saved;
+                const hasPending = !!local;
+
+                return (
+                  <div className="pipeline-renewal-rates">
+                    <div className="pipeline-renewal-rates-header">
+                      <span className="pipeline-renewal-rates-title">Renewal rates (%)</span>
+                      <span className="muted" style={{ fontSize: 11 }}>Scope bazlı oranları girin</span>
+                    </div>
+                    <div className="pipeline-renewal-rates-grid">
+                      {pipeline.scopes.map((scope) => {
+                        const base = Number(pipeline.scopePrices?.[scope] || 0);
+                        const rate = Number(rates[scope] ?? 0);
+                        const renewed = getRenewedScopeAmount(base, rate);
+                        return (
+                          <div key={scope} className="pipeline-rate-row">
+                            <span className="pipeline-rate-label">{scope}</span>
+                            <div className="pipeline-rate-input-wrap">
+                              <input
+                                type="number"
+                                className="pipeline-rate-input"
+                                value={rates[scope] ?? ""}
+                                placeholder="0"
+                                step="0.5"
+                                min="0"
+                                onChange={(e) =>
+                                  setPendingRates((prev) => ({
+                                    ...prev,
+                                    [pipeline.contractId]: {
+                                      ...(prev[pipeline.contractId] ?? saved),
+                                      [scope]: e.target.value,
+                                    },
+                                  }))
+                                }
+                              />
+                              <span className="pipeline-rate-pct">%</span>
+                            </div>
+                            {base > 0 && (
+                              <span className="pipeline-rate-result muted">
+                                → {formatCurrency(renewed, pipeline.currency)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {hasPending && (
+                      <div className="pipeline-renewal-rates-footer">
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => saveRenewalRates(pipeline.contractId, rates)}
+                        >
+                          Kaydet
+                        </button>
+                        <button
+                          className="btn btn-sm btn-light"
+                          onClick={() => setPendingRates((prev) => { const next = { ...prev }; delete next[pipeline.contractId]; return next; })}
+                        >
+                          İptal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="pipeline-footer-row">
                 <p className="muted">
