@@ -9,14 +9,30 @@ import Alerts from "./pages/Alerts";
 import Segmentation from "./pages/Segmentation";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Pipelines from "./pages/Pipelines";
+import Settings from "./pages/Settings";
+import Login from "./Login";
 import { contractsSeed, activitySeed } from "./data/sampleData";
 import { useHashRoute } from "./hooks/useHashRoute";
+import { getAuthUser, logoutUser } from "./utils/auth";
+import { loadSettings } from "./utils/appSettings";
 
 export default function App() {
   const { route, navigate } = useHashRoute();
   const [contracts, setContracts] = useState([]);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // ── Auth ────────────────────────────────────────────
+  const [user, setUser] = useState(() => getAuthUser());
+
+  const handleLogin = (u) => setUser(u);
+  const handleLogout = () => {
+    logoutUser();
+    setUser(null);
+  };
+
+  // ── Settings ────────────────────────────────────────
+  const [settings, setSettings] = useState(() => loadSettings());
 
   // ── Theme ──────────────────────────────────────────
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
@@ -74,6 +90,16 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── Auth gate ───────────────────────────────────────
+  if (!user) {
+    return (
+      <>
+        <ToastContainer />
+        <Login onLogin={handleLogin} />
+      </>
+    );
+  }
+
   if (loading) {
     return (
       <div className="screen">
@@ -97,6 +123,8 @@ export default function App() {
   } else if (route.name === "contracts") {
     const contract = contracts.find((item) => item.id === route.id);
     content = <ContractDetails contract={contract} contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
+  } else if (route.name === "settings") {
+    content = <Settings settings={settings} onSettingsChange={setSettings} theme={theme} toggleTheme={toggleTheme} />;
   } else {
     content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} />;
   }
@@ -104,7 +132,7 @@ export default function App() {
   return (
     <>
       <ToastContainer />
-      <Layout route={route} onNavigate={navigate} contracts={contracts} theme={theme} toggleTheme={toggleTheme}>
+      <Layout route={route} onNavigate={navigate} contracts={contracts} theme={theme} toggleTheme={toggleTheme} user={user} onLogout={handleLogout}>
         {content}
       </Layout>
     </>
