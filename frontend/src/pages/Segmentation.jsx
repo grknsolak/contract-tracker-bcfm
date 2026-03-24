@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "../utils/date";
 import { getFxLatest } from "../api";
+import { CUSTOMER_TIERS } from "../utils/customerTier";
 
 function normalizeUsdValue(contract, rate) {
   const raw = Number(contract.value || 0);

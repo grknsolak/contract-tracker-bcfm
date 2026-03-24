@@ -96,7 +96,7 @@ export default function App() {
     content = <Alerts contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "contracts") {
     const contract = contracts.find((item) => item.id === route.id);
-    content = <ContractDetails contract={contract} setContracts={setContracts} onNavigate={navigate} />;
+    content = <ContractDetails contract={contract} contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
   } else {
     content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} />;
   }

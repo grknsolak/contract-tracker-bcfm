@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
+import TierBadge from "../components/TierBadge";
 import EmptyState from "../components/EmptyState";
 import ProcessStepper from "../components/ProcessStepper";
 import ContractGrowthChart from "../components/ContractGrowthChart";
@@ -9,8 +10,9 @@ import { getContractOperationalMetrics } from "../utils/contractMetrics";
 import { buildScopeBudgetRows, getContractBudgetSummary } from "../utils/pricing";
 import { getStageMeta, normalizeStage, renewalTone } from "../utils/status";
 import { buildPipelineSteps } from "../utils/pipelines";
+import { getTotalPortfolioValue } from "../utils/customerTier";
 
-export default function ContractDetails({ contract, setContracts, onNavigate }) {
+export default function ContractDetails({ contract, contracts = [], setContracts, onNavigate }) {
   const [commentText, setCommentText] = useState("");
   if (!contract) {
     return (
@@ -22,6 +24,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
     );
   }
 
+  const totalPortfolioValue = useMemo(() => getTotalPortfolioValue(contracts), [contracts]);
   const stageFlow = useMemo(() => buildPipelineSteps(contract), [contract]);
 
   const currentStage = normalizeStage(contract.stage);
@@ -71,6 +74,7 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           <div className="breadcrumb">Customers / {contract.customerName}</div>
           <h2>{contract.contractName}</h2>
           <div className="details-meta">
+            <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} />
             <span className={remaining < 0 ? "text-danger" : "muted"}>
               {formatRemainingDays(remaining, { remainingSuffix: "days remaining", overdueSuffix: "days overdue" })}
             </span>

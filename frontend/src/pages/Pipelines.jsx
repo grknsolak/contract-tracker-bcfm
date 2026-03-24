@@ -14,14 +14,12 @@ import {
   RENEWAL_PIPELINE_WINDOW_DAYS,
 } from "../utils/pipelines";
 
-// ── Segmentation degree based on share of total pipeline value ──────────────
+import { getCustomerTier, getTotalPortfolioValue } from "../utils/customerTier";
+
+// ── Segmentation degree — delegates to shared utility ───────────────────────
 function getSegDegree(value, total) {
   if (!total || !value) return null;
-  const pct = (value / total) * 100;
-  if (pct >= 20) return { label: "A+", color: "#C4912A", bg: "rgba(196,145,42,0.12)" };
-  if (pct >= 10) return { label: "A",  color: "#8E9BAD", bg: "rgba(142,155,173,0.1)"  };
-  if (pct >= 5)  return { label: "B",  color: "#6EE7B7", bg: "rgba(110,231,183,0.10)" };
-  return           { label: "C",  color: "#93C5FD", bg: "rgba(147,197,253,0.10)" };
+  return getCustomerTier(value, total);
 }
 
 function addMonthsPreservingDate(dateValue, months) {
@@ -57,10 +55,7 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
 
   const pipelines = useMemo(() => buildRenewalPipelines(contracts), [contracts]);
 
-  const totalPipelineValue = useMemo(
-    () => pipelines.reduce((sum, p) => sum + Number(p.value || 0), 0),
-    [pipelines]
-  );
+  const totalPortfolioValue = useMemo(() => getTotalPortfolioValue(contracts), [contracts]);
 
   const filteredPipelines = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -217,7 +212,7 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
           const stageMeta    = getStageMeta(pipeline.currentStage);
           const remaining    = daysUntil(pipeline.endDate);
           const budgetSummary = getContractBudgetSummary(pipeline);
-          const segDegree    = getSegDegree(Number(pipeline.value || 0), totalPipelineValue);
+          const segDegree    = getSegDegree(Number(pipeline.value || 0), totalPortfolioValue);
 
           return (
             <Card

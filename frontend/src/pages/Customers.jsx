@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
+import TierBadge from "../components/TierBadge";
 import Modal from "../components/Modal";
 import EmptyState from "../components/EmptyState";
 import { toastSuccess, toastError, toastWarning } from "../components/Toast";
 import { daysUntil, formatDate, formatMonthYear, formatCurrency } from "../utils/date";
 import { calculateScopeTotal, getContractBudgetSummary, getRenewalRates, getScopePrices } from "../utils/pricing";
+import { getTotalPortfolioValue } from "../utils/customerTier";
 import {
   contractStages,
   getStageMeta,
@@ -170,6 +172,8 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
       setFormState((prev) => ({ ...prev, stage: nextStageOptions[0] }));
     }
   }, [formState, isModalOpen]);
+
+  const totalPortfolioValue = useMemo(() => getTotalPortfolioValue(contracts), [contracts]);
 
   const filtered = useMemo(() => {
     const normalized = search.toLowerCase();
@@ -780,7 +784,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                 return (
                   <div key={contract.id} className="table-row">
                     <div className="clickable" onClick={() => onNavigate(`/contracts/${contract.id}`)}>
-                      <div className="primary-text">{contract.customerName}</div>
+                      <div className="primary-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        {contract.customerName}
+                        <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />
+                      </div>
                       <div className="muted">Owner: {contract.owner}</div>
                     </div>
                     <div>{contract.contractName}</div>
