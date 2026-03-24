@@ -7,11 +7,11 @@ const STORAGE_KEY = "appSettings";
 export const DEFAULT_SETTINGS = {
   companyName: "BCFM",
   tribes: [
-    { id: "enterprise",  name: "Enterprise",     teams: ["Atlas", "Team B"], color: "#C4912A" },
-    { id: "growth",      name: "Public & Growth", teams: ["Team A", "Mando"], color: "#3B82F6" },
-    { id: "smb",         name: "SMB & Digital",  teams: ["Apex", "Solid"],   color: "#10B981" },
+    { id: "ninjalar", name: "Ninjalar",  teams: ["Team B", "Apex"],                    color: "#ef4444" },
+    { id: "spaces",   name: "Spaces",    teams: ["Mando", "Solid", "Bank Dhofar"],     color: "#3b82f6" },
+    { id: "olimpos",  name: "Olimpos",   teams: ["Atlas", "Guardians", "Titan"],       color: "#f59e0b" },
   ],
-  teams: ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"],
+  teams: ["Team B", "Apex", "Mando", "Solid", "Bank Dhofar", "Atlas", "Guardians", "Titan"],
   scopes: ["DaaS (Fix)", "7/24 Support", "Outsource", "Man/Day (Fix)", "DaaS (T&M)", "Man/Day (T&M)", "Other"],
   renewalWindowDays: 90,
   churnAlertDays: 30,
