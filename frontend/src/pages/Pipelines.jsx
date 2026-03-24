@@ -246,7 +246,7 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
                 }}
               />
 
-              {pipeline.currentStage === "Legal Review" && pipeline.scopes?.length > 0 && (() => {
+              {pipeline.currentStage === "Signature" && pipeline.scopes?.length > 0 && (() => {
                 const saved = getRenewalRates(pipeline);
                 const local = pendingRates[pipeline.contractId];
                 const rates = local ?? saved;
@@ -255,8 +255,8 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
                 return (
                   <div className="pipeline-renewal-rates">
                     <div className="pipeline-renewal-rates-header">
-                      <span className="pipeline-renewal-rates-title">Renewal rates (%)</span>
-                      <span className="muted" style={{ fontSize: 11 }}>Scope bazlı oranları girin</span>
+                      <span className="pipeline-renewal-rates-title">Zam oranları — İmza Aşaması</span>
+                      <span className="muted" style={{ fontSize: 11 }}>Her scope için yenileme oranını girin</span>
                     </div>
                     <div className="pipeline-renewal-rates-grid">
                       {pipeline.scopes.map((scope) => {
