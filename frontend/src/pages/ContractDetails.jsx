@@ -219,6 +219,10 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
         <ProcessStepper currentStep={currentStage} steps={stageFlow} />
       </Card>
 
+      <Card title="Contract growth" subtitle="Track contract value movement over time">
+        <ContractGrowthChart contract={contract} />
+      </Card>
+
       <div className="details-grid">
         <Card title="History & comments" subtitle="Track customer discussions and internal notes">
           <div className="comment-composer">
@@ -274,10 +278,6 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           )}
         </Card>
       </div>
-
-      <Card title="Contract growth" subtitle="Track contract value movement over time">
-        <ContractGrowthChart contract={contract} />
-      </Card>
 
       <div className="details-grid">
         <Card title="Operational metrics" subtitle="Commercial efficiency view">
