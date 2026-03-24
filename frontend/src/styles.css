@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
-  /* Backgrounds — warm near-black, not cold navy */
-  --bg: #0D0D0F;
-  --bg-accent: #111113;
-  --surface: #141417;
-  --surface-2: #1B1B1F;
-  --surface-3: #222228;
+  /* Backgrounds — soft slate, not cave-black */
+  --bg: #1C1C22;
+  --bg-accent: #202027;
+  --surface: #25252D;
+  --surface-2: #2D2D37;
+  --surface-3: #363642;
 
-  /* Borders — slightly stronger, more visible structure */
-  --border: rgba(255, 255, 255, 0.07);
-  --border-hover: rgba(255, 255, 255, 0.14);
+  /* Borders — softer, comfortable contrast */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
 
-  /* Text — warm bone-white, not cold blue-white */
-  --text: #F0EDE6;
-  --text-secondary: #9898A6;
-  --muted: #55555E;
+  /* Text — warm off-white, readable without harshness */
+  --text: #EDEAE3;
+  --text-secondary: #9A97A3;
+  --muted: #62606A;
 
   /* Brand / Primary — warm amber, authoritative, not purple */
   --primary: #C4912A;
@@ -38,22 +38,22 @@
   --info: #5AAFDE;
   --info-bg: rgba(90, 175, 222, 0.08);
 
-  /* Sidebar */
-  --sidebar-bg: #090909;
-  --sidebar-border: rgba(255, 255, 255, 0.05);
-  --sidebar-text: rgba(180, 178, 172, 0.45);
-  --sidebar-text-hover: rgba(240, 237, 230, 0.82);
-  --sidebar-active-bg: rgba(196, 145, 42, 0.11);
+  /* Sidebar — slightly darker than main bg for contrast */
+  --sidebar-bg: #17171D;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-text: rgba(180, 178, 175, 0.5);
+  --sidebar-text-hover: rgba(237, 234, 227, 0.88);
+  --sidebar-active-bg: rgba(196, 145, 42, 0.12);
   --sidebar-active-text: #DBA84A;
   --sidebar-active-border: #C4912A;
 
-  /* Shadows */
-  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.55);
-  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.65);
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
-  --shadow-md: 0 8px 40px rgba(0, 0, 0, 0.75);
-  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.85);
-  --shadow-primary: 0 6px 24px rgba(196, 145, 42, 0.2);
+  /* Shadows — softer, not as oppressive */
+  --shadow-xs: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 40px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.55);
+  --shadow-primary: 0 6px 24px rgba(196, 145, 42, 0.18);
 
   /* Shape — tighter, more professional */
   --radius: 8px;
@@ -281,7 +281,7 @@ a {
 .topbar {
   padding: 11px 28px;
   border-bottom: 1px solid var(--border);
-  background: rgba(13, 13, 15, 0.92);
+  background: rgba(28, 28, 34, 0.92);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3712,7 +3712,7 @@ textarea {
 .revenue-point-halo { fill: rgba(196, 145, 42, 0.12); }
 
 .growth-tooltip-box {
-  fill: rgba(20, 20, 23, 0.96);
+  fill: rgba(37, 37, 45, 0.97);
   stroke: rgba(196, 145, 42, 0.18);
 }
 
