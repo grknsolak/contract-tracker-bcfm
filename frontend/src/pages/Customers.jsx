@@ -203,6 +203,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           valueA = a.stage;
           valueB = b.stage;
           break;
+        case "team":
+          valueA = a.team || "";
+          valueB = b.team || "";
+          break;
         default:
           valueA = daysUntil(a.endDate) ?? 99999;
           valueB = daysUntil(b.endDate) ?? 99999;
@@ -711,13 +715,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               <option value="endDate">End date</option>
               <option value="customer">Customer name</option>
               <option value="status">Stage</option>
-            </select>
-          </div>
-          <div className="field">
-            <label>Order</label>
-            <select value={sortDir} onChange={(event) => setSortDir(event.target.value)}>
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="team">Team</option>
             </select>
           </div>
           <div className="filter-actions">
