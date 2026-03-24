@@ -199,8 +199,14 @@ export default function Dashboard({ contracts, onNavigate }) {
         return typeof d === "number" && d >= 0 && d <= 30;
       })
     );
+    const currentYear = new Date().getFullYear();
     const churn = getUniqueCustomerContracts(
-      contracts.filter((c) => daysUntil(c.endDate) < 0 || c.renewalStatus === "Lost")
+      contracts.filter((c) => {
+        const endYear = c.endDate ? new Date(c.endDate).getFullYear() : null;
+        const isExpired = daysUntil(c.endDate) < 0;
+        const isLost = c.renewalStatus === "Lost";
+        return (isExpired || isLost) && endYear === currentYear;
+      })
     );
     return {
       customers: { title: "All customers", description: "Open a customer to jump straight to its contract detail.", items: customerContracts },
@@ -214,7 +220,7 @@ export default function Dashboard({ contracts, onNavigate }) {
     { id: "customers", label: "Customers", value: totalCustomers, meta: `${contracts.length} total contracts` },
     { id: "active", label: "Active", value: metrics.activeCustomers, meta: "Healthy customer base" },
     { id: "renewals30", label: "Renewals in 30d", value: metrics.next30, meta: "Immediate follow-up" },
-    { id: "churn", label: "Churn", value: metrics.churned, meta: "Lost customers", tone: "danger" },
+    { id: "churn", label: "Churn", value: metrics.churned, meta: `${new Date().getFullYear()} lost`, tone: "danger" },
   ];
 
   return (
