@@ -6256,3 +6256,68 @@ textarea {
   align-items: center;
   justify-content: center;
 }
+
+/* Editable perm toggle button */
+.um-perm-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.um-perm-toggle:hover {
+  background: var(--surface-3);
+  border-color: var(--border);
+  transform: scale(1.15);
+}
+
+.um-perm-toggle:active {
+  transform: scale(0.95);
+}
+
+.um-perm-toggle--readonly {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Lock icon in column header */
+.um-perm-lock {
+  color: var(--muted);
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+/* Header row with hint */
+.um-perm-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.um-perm-header-row .um-perm-title {
+  margin-bottom: 0;
+}
+
+.um-perm-hint {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+/* Column head with lock */
+.um-perm-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}

@@ -6,6 +6,7 @@
 const SESSION_KEY  = "auth_session";
 const USERS_KEY    = "auth_users";
 const USERS_VER    = "auth_users_v2"; // bump to force re-seed
+const PERMS_KEY    = "auth_perms";
 
 // ── Seed users ────────────────────────────────────────────────────────────────
 const SEED_USERS = [
@@ -105,6 +106,31 @@ export function setUserRole(id, role) {
   const users = loadUsers();
   const updated = users.map((u) => (u.id === id ? { ...u, role } : u));
   saveUsers(updated);
+}
+
+// ── Permission matrix ─────────────────────────────────────────────────────────
+
+const SEED_PERMS = [
+  { action: "Sözleşme görüntüleme",      admin: true,  manager: true,  viewer: true  },
+  { action: "Sözleşme ekleme/düzenleme", admin: true,  manager: true,  viewer: false },
+  { action: "Müşteri yönetimi",          admin: true,  manager: true,  viewer: false },
+  { action: "Raporlar ve analizler",     admin: true,  manager: true,  viewer: true  },
+  { action: "Ayarlar (genel)",           admin: true,  manager: false, viewer: false },
+  { action: "Kullanıcı yönetimi",        admin: true,  manager: false, viewer: false },
+];
+
+export function loadPerms() {
+  try {
+    const raw = localStorage.getItem(PERMS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...SEED_PERMS];
+}
+
+export function savePerms(perms) {
+  try {
+    localStorage.setItem(PERMS_KEY, JSON.stringify(perms));
+  } catch {}
 }
 
 /** Delete a user by id. Cannot delete the last Admin. Returns true on success. */

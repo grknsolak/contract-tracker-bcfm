@@ -6,6 +6,8 @@ import {
   toggleUserEnabled,
   setUserRole,
   deleteUser,
+  loadPerms,
+  savePerms,
 } from "../utils/auth";
 import { toastSuccess, toastError } from "../components/Toast";
 
@@ -186,14 +188,19 @@ function UsersPanel({ currentUser }) {
     toastSuccess(`${result.name} eklendi`);
   };
 
-  const PERM_TABLE = [
-    { action: "Sözleşme görüntüleme",    admin: true,  manager: true,  viewer: true  },
-    { action: "Sözleşme ekleme/düzenleme", admin: true,  manager: true,  viewer: false },
-    { action: "Müşteri yönetimi",          admin: true,  manager: true,  viewer: false },
-    { action: "Raporlar ve analizler",     admin: true,  manager: true,  viewer: true  },
-    { action: "Ayarlar (genel)",           admin: true,  manager: false, viewer: false },
-    { action: "Kullanıcı yönetimi",        admin: true,  manager: false, viewer: false },
-  ];
+  const [perms, setPerms] = useState(() => loadPerms());
+
+  const togglePerm = (actionIdx, role) => {
+    if (role === "admin") return; // Admin always has full access
+    setPerms((prev) => {
+      const next = prev.map((row, i) =>
+        i === actionIdx ? { ...row, [role]: !row[role] } : row
+      );
+      savePerms(next);
+      return next;
+    });
+    toastSuccess("Yetki güncellendi");
+  };
 
   return (
     <div className="settings-panel">
@@ -365,27 +372,55 @@ function UsersPanel({ currentUser }) {
 
       {/* Permission matrix */}
       <div className="um-perm-section">
-        <div className="um-perm-title">Yetki Matrisi</div>
+        <div className="um-perm-header-row">
+          <div className="um-perm-title">Yetki Matrisi</div>
+          {isAdmin && (
+            <span className="um-perm-hint">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Manager ve Viewer yetkilerini düzenleyebilirsiniz. Admin her zaman tam yetkilidir.
+            </span>
+          )}
+        </div>
         <div className="um-perm-table">
           <div className="um-perm-head">
             <div />
             {ROLES.map((r) => (
               <div key={r} className="um-perm-col-head">
                 <RoleBadge role={r} />
+                {r === "Admin" && (
+                  <svg className="um-perm-lock" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                )}
               </div>
             ))}
           </div>
-          {PERM_TABLE.map((row) => (
+          {perms.map((row, rowIdx) => (
             <div key={row.action} className="um-perm-row">
               <div className="um-perm-action">{row.action}</div>
+              {/* Admin — always locked */}
               <div className="um-perm-cell">
-                {row.admin ? <CheckIcon /> : <XIcon />}
+                <CheckIcon />
               </div>
+              {/* Manager — editable */}
               <div className="um-perm-cell">
-                {row.manager ? <CheckIcon /> : <XIcon />}
+                <button
+                  className={`um-perm-toggle${!isAdmin ? " um-perm-toggle--readonly" : ""}`}
+                  onClick={() => isAdmin && togglePerm(rowIdx, "manager")}
+                  title={isAdmin ? (row.manager ? "Kaldır" : "Ekle") : ""}
+                >
+                  {row.manager ? <CheckIcon /> : <XIcon />}
+                </button>
               </div>
+              {/* Viewer — editable */}
               <div className="um-perm-cell">
-                {row.viewer ? <CheckIcon /> : <XIcon />}
+                <button
+                  className={`um-perm-toggle${!isAdmin ? " um-perm-toggle--readonly" : ""}`}
+                  onClick={() => isAdmin && togglePerm(rowIdx, "viewer")}
+                  title={isAdmin ? (row.viewer ? "Kaldır" : "Ekle") : ""}
+                >
+                  {row.viewer ? <CheckIcon /> : <XIcon />}
+                </button>
               </div>
             </div>
           ))}
