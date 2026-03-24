@@ -34,6 +34,7 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
   const [search, setSearch] = useState("");
   const [confirmStep, setConfirmStep] = useState(null);
   const [pendingRates, setPendingRates] = useState({});
+  const [ratesModal, setRatesModal] = useState(null); // pipeline object
 
   const saveRenewalRates = (contractId, rates) => {
     setContracts((prev) =>
@@ -246,74 +247,35 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
                 }}
               />
 
-              {pipeline.currentStage === "Signature" && pipeline.scopes?.length > 0 && (() => {
-                const saved = getRenewalRates(pipeline);
-                const local = pendingRates[pipeline.contractId];
-                const rates = local ?? saved;
-                const hasPending = !!local;
-
-                return (
-                  <div className="pipeline-renewal-rates">
-                    <div className="pipeline-renewal-rates-header">
-                      <span className="pipeline-renewal-rates-title">Zam oranları — İmza Aşaması</span>
-                      <span className="muted" style={{ fontSize: 11 }}>Her scope için yenileme oranını girin</span>
-                    </div>
-                    <div className="pipeline-renewal-rates-grid">
-                      {pipeline.scopes.map((scope) => {
-                        const base = Number(pipeline.scopePrices?.[scope] || 0);
-                        const rate = Number(rates[scope] ?? 0);
-                        const renewed = getRenewedScopeAmount(base, rate);
-                        return (
-                          <div key={scope} className="pipeline-rate-row">
-                            <span className="pipeline-rate-label">{scope}</span>
-                            <div className="pipeline-rate-input-wrap">
-                              <input
-                                type="number"
-                                className="pipeline-rate-input"
-                                value={rates[scope] ?? ""}
-                                placeholder="0"
-                                step="0.5"
-                                min="0"
-                                onChange={(e) =>
-                                  setPendingRates((prev) => ({
-                                    ...prev,
-                                    [pipeline.contractId]: {
-                                      ...(prev[pipeline.contractId] ?? saved),
-                                      [scope]: e.target.value,
-                                    },
-                                  }))
-                                }
-                              />
-                              <span className="pipeline-rate-pct">%</span>
-                            </div>
-                            {base > 0 && (
-                              <span className="pipeline-rate-result muted">
-                                → {formatCurrency(renewed, pipeline.currency)}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {hasPending && (
-                      <div className="pipeline-renewal-rates-footer">
-                        <button
-                          className="btn btn-sm btn-primary"
-                          onClick={() => saveRenewalRates(pipeline.contractId, rates)}
-                        >
-                          Kaydet
-                        </button>
-                        <button
-                          className="btn btn-sm btn-light"
-                          onClick={() => setPendingRates((prev) => { const next = { ...prev }; delete next[pipeline.contractId]; return next; })}
-                        >
-                          İptal
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+              {pipeline.currentStage === "Signature" && pipeline.scopes?.length > 0 && (
+                <div className="pipeline-rates-trigger-row">
+                  <button
+                    className="btn btn-primary btn-sm btn-with-icon"
+                    onClick={() => {
+                      setPendingRates((prev) => ({
+                        ...prev,
+                        [pipeline.contractId]: prev[pipeline.contractId] ?? getRenewalRates(pipeline),
+                      }));
+                      setRatesModal(pipeline);
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Zam Oranlarını Gir
+                  </button>
+                  {(() => {
+                    const saved = getRenewalRates(pipeline);
+                    const hasRates = pipeline.scopes.some((s) => Number(saved[s]) > 0);
+                    if (!hasRates) return null;
+                    return (
+                      <span className="pipeline-rates-saved-hint">
+                        ✓ Oranlar kaydedildi · {formatCurrency(getContractBudgetSummary(pipeline).renewedTotal, pipeline.currency)} yenileme değeri
+                      </span>
+                    );
+                  })()}
+                </div>
+              )}
 
               <div className="pipeline-footer-row">
                 <p className="muted">
@@ -334,6 +296,93 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
           );
         })
       )}
+
+      {/* ── Renewal Rates Modal ── */}
+      {ratesModal && (() => {
+        const pipeline = ratesModal;
+        const saved = getRenewalRates(pipeline);
+        const local = pendingRates[pipeline.contractId] ?? saved;
+        const total = pipeline.scopes.reduce((sum, scope) => {
+          const base = Number(pipeline.scopePrices?.[scope] || 0);
+          const rate = Number(local[scope] ?? 0);
+          return sum + getRenewedScopeAmount(base, rate);
+        }, 0);
+
+        return (
+          <Modal
+            title="Zam Oranları — İmza Aşaması"
+            description={`${pipeline.customerName} · ${pipeline.contractName}`}
+            onClose={() => setRatesModal(null)}
+            footer={
+              <div className="modal-actions">
+                <button className="btn btn-light" onClick={() => setRatesModal(null)}>İptal</button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    saveRenewalRates(pipeline.contractId, local);
+                    setRatesModal(null);
+                  }}
+                >
+                  Kaydet
+                </button>
+              </div>
+            }
+          >
+            <div className="rates-modal-body">
+              <div className="rates-modal-grid">
+                {pipeline.scopes.map((scope) => {
+                  const base = Number(pipeline.scopePrices?.[scope] || 0);
+                  const rate = Number(local[scope] ?? 0);
+                  const renewed = getRenewedScopeAmount(base, rate);
+                  return (
+                    <div key={scope} className="rates-modal-row">
+                      <div className="rates-modal-scope">
+                        <span className="rates-modal-scope-name">{scope}</span>
+                        {base > 0 && (
+                          <span className="rates-modal-base">{formatCurrency(base, pipeline.currency)}</span>
+                        )}
+                      </div>
+                      <div className="rates-modal-input-wrap">
+                        <input
+                          type="number"
+                          className="rates-modal-input"
+                          value={local[scope] ?? ""}
+                          placeholder="0"
+                          step="0.5"
+                          min="0"
+                          onChange={(e) =>
+                            setPendingRates((prev) => ({
+                              ...prev,
+                              [pipeline.contractId]: {
+                                ...(prev[pipeline.contractId] ?? saved),
+                                [scope]: e.target.value,
+                              },
+                            }))
+                          }
+                        />
+                        <span className="rates-modal-pct">%</span>
+                      </div>
+                      {base > 0 && rate > 0 && (
+                        <div className="rates-modal-result">
+                          <span className="rates-modal-arrow">→</span>
+                          <span className="rates-modal-renewed">{formatCurrency(renewed, pipeline.currency)}</span>
+                          <span className="rates-modal-delta">+{formatCurrency(renewed - base, pipeline.currency)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {total > 0 && (
+                <div className="rates-modal-total">
+                  <span>Toplam yenileme değeri</span>
+                  <strong>{formatCurrency(total, pipeline.currency)}</strong>
+                </div>
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
 
       {confirmStep ? (
         <Modal
