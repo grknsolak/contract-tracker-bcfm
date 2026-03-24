@@ -2573,6 +2573,36 @@ textarea {
   color: var(--muted);
 }
 
+/* ─── Contract Note ─────────────────────────────── */
+.contract-note-body {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--primary);
+}
+
+.contract-note-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+.contract-note-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border-hover);
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* ─── Tags ──────────────────────────────────────── */
 .note-tags {
   margin-top: 10px;

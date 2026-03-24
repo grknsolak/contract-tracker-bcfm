@@ -71,8 +71,6 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
           <div className="breadcrumb">Customers / {contract.customerName}</div>
           <h2>{contract.contractName}</h2>
           <div className="details-meta">
-            <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
-            <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>{contract.renewalStatus}</Badge>
             <span className={remaining < 0 ? "text-danger" : "muted"}>
               {formatRemainingDays(remaining, { remainingSuffix: "days remaining", overdueSuffix: "days overdue" })}
             </span>
@@ -161,12 +159,29 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
         </Card>
 
         <Card title="Notes" subtitle="Customer context">
-          <p className="muted">{contract.notes || "No notes recorded."}</p>
-          <div className="note-tags">
-            <span className="tag">Quarterly review</span>
-            <span className="tag">Renewal prep</span>
-            <span className="tag">Executive sponsor</span>
-          </div>
+          {contract.notes ? (
+            <div className="contract-note-body">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2, opacity: 0.4 }}>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <p className="contract-note-text">{contract.notes}</p>
+            </div>
+          ) : (
+            <div className="contract-note-empty">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span>No notes added for this contract.</span>
+              <button className="btn btn-sm btn-ghost" onClick={() => onNavigate(`/customers?edit=${contract.id}`)}>
+                Add note →
+              </button>
+            </div>
+          )}
         </Card>
       </div>
 
