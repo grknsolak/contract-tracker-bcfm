@@ -3955,11 +3955,22 @@ textarea {
 }
 
 .ts-row-avg {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  margin-top: 2px;
+  letter-spacing: 0.01em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin-top: 4px;
+  opacity: 0.85;
 }
+
+.ts-row-avg.ts-rate--high  { background: var(--success-bg);  }
+.ts-row-avg.ts-rate--mid   { background: var(--primary-100); }
+.ts-row-avg.ts-rate--low   { background: var(--info-bg);     }
 
 /* Right: scope gauges */
 .ts-row-gauges {

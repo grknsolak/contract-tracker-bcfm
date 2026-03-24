@@ -308,7 +308,7 @@ export default function Dashboard({ contracts, onNavigate }) {
                           : "ts-rate--low"
                       }`}
                     >
-                      ort. +{row.teamAvgRate}%
+                      +{row.teamAvgRate}%
                     </span>
                   )}
                 </div>
