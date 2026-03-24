@@ -4427,6 +4427,9 @@ textarea {
 
   .sidebar-footer { display: none; }
 
+  /* Hide user footer in horizontal nav — topbar handles user actions */
+  .sidebar-user { display: none !important; }
+
   .stat-cards-row { grid-template-columns: repeat(3, 1fr); }
 
   .split-grid { grid-template-columns: 1fr; }
@@ -4478,6 +4481,14 @@ textarea {
   .exec-kpi-strip { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
   .exec-team-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .exec-charts-row { grid-template-columns: 1fr; }
+
+  /* Prevent topbar from overflowing at mid widths */
+  .search-field { min-width: 0; flex: 1; }
+  .search-shell { flex: 1; min-width: 0; }
+  .topbar-actions { flex-wrap: wrap; min-width: 0; }
+
+  /* Quarter view: 2 cols at mid-sizes avoids horizontal overflow */
+  .dashboard-quarter-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 720px) {
@@ -4562,7 +4573,8 @@ textarea {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 16px 20px;
   padding: 2px 4px 0;
 }
 
