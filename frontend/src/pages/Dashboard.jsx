@@ -161,12 +161,15 @@ function TrendChip({ trend }) {
   if (trend === null) return null;
   const up = trend >= 0;
   return (
-    <span className={`exec-trend${up ? " exec-trend--up" : " exec-trend--down"}`}>
+    <span
+      className={`exec-trend${up ? " exec-trend--up" : " exec-trend--down"}`}
+      title="Yıllık sözleşme değeri büyümesi (YoY) — en son yıl vs bir önceki yıl"
+    >
       {up
         ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
         : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       }
-      {Math.abs(trend).toFixed(0)}%
+      {Math.abs(trend).toFixed(0)}% <span style={{ fontSize: "9px", opacity: 0.7, fontWeight: 600, letterSpacing: "0.04em" }}>YoY</span>
     </span>
   );
 }
@@ -237,13 +240,6 @@ function TeamCard({ row, rank, maxUSD, onNavigate }) {
         )}
       </div>
 
-      {row.topName && row.topName !== "—" && (
-        <div className="exec-top-customer">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span className="exec-top-name">{row.topName}</span>
-          <span className="exec-top-val">{fmtUSD(row.topVal)}</span>
-        </div>
-      )}
     </div>
   );
 }
