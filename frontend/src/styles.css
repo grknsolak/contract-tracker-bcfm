@@ -3091,6 +3091,21 @@ textarea {
   stroke-dasharray: 5 5;
 }
 
+/* Band separator between scopes */
+.growth-band-sep {
+  stroke: rgba(148, 163, 184, 0.13);
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+}
+
+/* Left scope name label inside pill */
+.growth-left-label {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--text);
+  dominant-baseline: middle;
+}
+
 .growth-point-badge.tone-success {
   fill: rgba(16, 185, 129, 0.2);
 }
@@ -3104,9 +3119,9 @@ textarea {
 }
 
 .growth-point-badge-text {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
-  fill: #E8EDFF;
+  fill: var(--text);
 }
 
 .growth-series-label {

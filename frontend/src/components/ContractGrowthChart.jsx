@@ -79,10 +79,10 @@ export default function ContractGrowthChart({ contract }) {
     if (!series.length) return null;
     const width = Math.max(chartSize.width || 0, 320);
     const height = Math.max(chartSize.height || width * 0.44, width * 0.44);
-    const paddingLeft = width * 0.025;
-    const paddingRight = width * 0.09;
-    const paddingTop = height * 0.1;
-    const paddingBottom = height * 0.14;
+    const paddingLeft = 148;           // fixed px — room for left scope label
+    const paddingRight = width * 0.04;
+    const paddingTop = height * 0.08;
+    const paddingBottom = height * 0.12;
 
     const allPoints = series.flatMap((item) => item.history);
     const allDates = Array.from(new Set(allPoints.map((item) => item.date))).sort(
@@ -163,53 +163,61 @@ export default function ContractGrowthChart({ contract }) {
         role="img"
         aria-label="Contract growth chart"
       >
-        {chart.series.map((seriesItem) => (
+        {/* Band separator lines */}
+        {chart.series.map((seriesItem, i) => i < chart.series.length - 1 ? (
           <line
-            key={`${seriesItem.name}-guide`}
-            x1={chart.paddingLeft}
-            y1={seriesItem.bandBottom - 12}
-            x2={chart.width - chart.paddingRight}
-            y2={seriesItem.bandBottom - 12}
-            className="growth-grid-line"
+            key={`${seriesItem.name}-sep`}
+            x1={0}
+            y1={seriesItem.bandBottom}
+            x2={chart.width}
+            y2={seriesItem.bandBottom}
+            className="growth-band-sep"
           />
-        ))}
+        ) : null)}
 
+        {/* Left scope label pills */}
+        {chart.series.map((seriesItem) => {
+          const bandMid = (seriesItem.bandTop + seriesItem.bandBottom) / 2;
+          const labelW = 132;
+          const labelH = 28;
+          const lx = 6;
+          const ly = bandMid - labelH / 2;
+          return (
+            <g key={`${seriesItem.name}-label`}>
+              <rect x={lx} y={ly} width={labelW} height={labelH} rx={14}
+                fill={seriesItem.color + "22"} stroke={seriesItem.color + "55"} strokeWidth="1" />
+              <circle cx={lx + 16} cy={bandMid} r={5} fill={seriesItem.color} />
+              <text x={lx + 28} y={bandMid + 4.5} className="growth-left-label">
+                {seriesItem.name}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Series lines + points */}
         {chart.series.map((seriesItem) => (
           <g key={seriesItem.name}>
-            <path d={seriesItem.path} fill="none" stroke={seriesItem.color} strokeWidth="3" strokeLinecap="round" />
+            <path d={seriesItem.path} fill="none" stroke={seriesItem.color} strokeWidth="2.5" strokeLinecap="round" />
             {seriesItem.points.map((point) => (
               <g
                 key={`${seriesItem.name}-${point.date}`}
                 onMouseEnter={() => setHoveredPoint(point)}
                 onMouseLeave={() => setHoveredPoint(null)}
               >
-                <circle cx={point.x} cy={point.y} r="5" fill="#ffffff" stroke={seriesItem.color} strokeWidth="3" />
-            <rect
-              x={point.x - 36}
-              y={point.y - 36}
-              width="72"
-              height="26"
-              rx="13"
-              className={`growth-point-badge tone-${point.trend.tone}`}
-            />
-            <text x={point.x} y={point.y - 19} textAnchor="middle" className="growth-point-badge-text">
-              {point.trend.icon} {point.trend.percent}%
-            </text>
-          </g>
-        ))}
-
-            {seriesItem.latest ? (
-              <g>
-                <text
-                  x={Math.min(seriesItem.latest.x + 14, chart.width - 12)}
-                  y={seriesItem.latest.y + 4}
-                  className="growth-series-label"
-                  fill={seriesItem.color}
-                >
-                  {seriesItem.name}: {formatCurrency(seriesItem.latest.value, contract.currency)}
+                <circle cx={point.x} cy={point.y} r="5" fill="var(--surface)" stroke={seriesItem.color} strokeWidth="2.5" />
+                <rect
+                  x={point.x - 34}
+                  y={point.y - 34}
+                  width="68"
+                  height="24"
+                  rx="12"
+                  className={`growth-point-badge tone-${point.trend.tone}`}
+                />
+                <text x={point.x} y={point.y - 17} textAnchor="middle" className="growth-point-badge-text">
+                  {point.trend.icon} {point.trend.percent}%
                 </text>
               </g>
-            ) : null}
+            ))}
           </g>
         ))}
 
