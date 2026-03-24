@@ -99,34 +99,33 @@ function RankRow({ contract, rank, maxValue, onNavigate }) {
       style={{ "--tier-color": tier.color }}
       onClick={() => onNavigate(`/contracts/${contract.id}`)}
     >
-      {/* Rank */}
-      <div className="seg-rank-num" style={{ color: tier.color }}>
-        {rank < 10 ? `0${rank}` : rank}
-      </div>
-
-      {/* Info — tier pill inline with meta */}
-      <div className="seg-rank-info">
-        <span className="seg-rank-name">{contract.customerName}</span>
-        <span className="seg-rank-sub">
-          {contract.team}
-          <span className="seg-tier-pill seg-tier-pill--row" style={{ color: tier.color, borderColor: `${tier.color}40`, background: tier.bg }}>
-            {tier.label}
-          </span>
-        </span>
-      </div>
-
-      {/* Progress bar */}
-      <div className="seg-rank-bar-wrap">
-        <div className="seg-rank-bar-track">
-          <div className="seg-rank-bar-fill" style={{ width: `${pct}%`, background: tier.color }} />
+      {/* Inner div carries the grid — button element can't reliably be a grid container */}
+      <div className="seg-rank-row-inner">
+        <div className="seg-rank-num" style={{ color: tier.color }}>
+          {rank < 10 ? `0${rank}` : rank}
         </div>
-        <span className="seg-rank-pct">{pct}%</span>
-      </div>
 
-      {/* Value */}
-      <div className="seg-rank-value">
-        <span className="seg-rank-currency-tag">{contract.currency}</span>
-        {formatCurrency(contract.value, contract.currency)}
+        <div className="seg-rank-info">
+          <span className="seg-rank-name">{contract.customerName}</span>
+          <span className="seg-rank-sub">
+            {contract.team}
+            <span className="seg-tier-pill seg-tier-pill--row" style={{ color: tier.color, borderColor: `${tier.color}40`, background: tier.bg }}>
+              {tier.label}
+            </span>
+          </span>
+        </div>
+
+        <div className="seg-rank-bar-wrap">
+          <div className="seg-rank-bar-track">
+            <div className="seg-rank-bar-fill" style={{ width: `${pct}%`, background: tier.color }} />
+          </div>
+          <span className="seg-rank-pct">{pct}%</span>
+        </div>
+
+        <div className="seg-rank-value">
+          <span className="seg-rank-currency-tag">{contract.currency}</span>
+          {formatCurrency(contract.value, contract.currency)}
+        </div>
       </div>
     </button>
   );
