@@ -70,6 +70,167 @@
   --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
+/* ═══════════════════════════════════════════════════
+   LIGHT MODE — [data-theme="light"] on <html>
+   Warm cream palette, same amber accent
+═══════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg: #F5F3EE;
+  --bg-accent: #EDEAE4;
+  --surface: #FFFFFF;
+  --surface-2: #F0EDE8;
+  --surface-3: #E8E4DD;
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
+
+  --text: #1A1A1E;
+  --text-secondary: #5A5864;
+  --muted: #9A96A2;
+
+  /* Keep amber accent in light mode */
+  --primary: #B07E1A;
+  --primary-light: #C4912A;
+  --primary-50: rgba(176, 126, 26, 0.08);
+  --primary-100: rgba(176, 126, 26, 0.15);
+  --primary-600: #8F650F;
+
+  --success: #1AAD65;
+  --success-light: #22C374;
+  --success-bg: rgba(26, 173, 101, 0.09);
+  --warning: #C96B10;
+  --warning-light: #E8862B;
+  --warning-bg: rgba(201, 107, 16, 0.09);
+  --danger: #D03030;
+  --danger-light: #E84040;
+  --danger-bg: rgba(208, 48, 48, 0.08);
+  --neutral: #6B7280;
+  --info: #2E8FB5;
+  --info-bg: rgba(46, 143, 181, 0.08);
+
+  --sidebar-bg: #EDEAE4;
+  --sidebar-border: rgba(0, 0, 0, 0.07);
+  --sidebar-text: rgba(50, 46, 42, 0.55);
+  --sidebar-text-hover: rgba(26, 26, 30, 0.9);
+  --sidebar-active-bg: rgba(176, 126, 26, 0.1);
+  --sidebar-active-text: #9A6A10;
+  --sidebar-active-border: #B07E1A;
+
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 8px 40px rgba(0, 0, 0, 0.14);
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --shadow-primary: 0 6px 24px rgba(176, 126, 26, 0.18);
+}
+
+/* Light mode: topbar */
+[data-theme="light"] .topbar {
+  background: rgba(245, 243, 238, 0.92);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode: search */
+[data-theme="light"] .search-results {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Light mode: table rows flat bg */
+[data-theme="light"] .table {
+  background: #FFFFFF;
+}
+
+[data-theme="light"] .table-row:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Light mode: dot grid texture */
+[data-theme="light"] .app-content {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+}
+
+/* Light mode: SVG chart text */
+[data-theme="light"] .revenue-axis-label,
+[data-theme="light"] .growth-axis-label { fill: #9A96A2; }
+
+[data-theme="light"] .growth-series-label { fill: #5A5864; }
+
+[data-theme="light"] .growth-point-badge-text,
+[data-theme="light"] .revenue-total-label,
+[data-theme="light"] .revenue-donut-label,
+[data-theme="light"] .revenue-donut-center-value { fill: #1A1A1E; }
+
+[data-theme="light"] .revenue-donut-center-copy { fill: #9A96A2; }
+
+[data-theme="light"] .growth-tooltip-box {
+  fill: rgba(255, 255, 255, 0.98);
+  stroke: rgba(176, 126, 26, 0.2);
+}
+[data-theme="light"] .growth-tooltip-title { fill: #1A1A1E; }
+[data-theme="light"] .growth-tooltip-copy { fill: rgba(26, 26, 30, 0.6); }
+
+[data-theme="light"] .revenue-trend-grid,
+[data-theme="light"] .growth-grid-line {
+  stroke: rgba(0, 0, 0, 0.06);
+}
+
+/* Light mode: revenue point */
+[data-theme="light"] .revenue-point { fill: #FFFFFF; }
+
+/* Light mode: sidebar brand mark */
+[data-theme="light"] .brand-mark {
+  background: #B07E1A;
+  color: #FFFFFF;
+}
+
+/* Light mode: nav item */
+[data-theme="light"] .nav-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="light"] .nav-item.active {
+  background: rgba(176, 126, 26, 0.1);
+}
+
+/* Light mode: priority items */
+[data-theme="light"] .priority-item,
+[data-theme="light"] .quarter-item {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+/* Light mode: primary button */
+[data-theme="light"] .btn-primary {
+  background: #B07E1A;
+  color: #FFFFFF;
+}
+[data-theme="light"] .btn-primary:hover {
+  background: #C4912A;
+  color: #FFFFFF;
+}
+
+/* Light mode: scope inline active */
+[data-theme="light"] .scope-inline-row.active {
+  background: rgba(176, 126, 26, 0.06);
+  border-color: rgba(176, 126, 26, 0.25);
+}
+
+/* Light mode: theme toggle hover */
+[data-theme="light"] .topbar-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.07);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: var(--text);
+}
+
+/* Smooth theme transition */
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.app-shell, .sidebar, .topbar, .card, .table, .table-row,
+.app-content, .btn, .badge, .kpi-card, input, select, textarea {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -126,6 +287,18 @@ a {
 
 /* sidebar glow removed — clean, functional aesthetic */
 .sidebar::before { display: none; }
+
+/* ─── Theme Toggle Button ───────────────────────── */
+.theme-toggle {
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  color: var(--primary-light);
+  border-color: rgba(196, 145, 42, 0.3);
+  background: var(--primary-50);
+}
 
 .sidebar-brand {
   display: flex;

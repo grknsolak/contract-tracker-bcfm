@@ -18,6 +18,16 @@ export default function App() {
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Theme ──────────────────────────────────────────
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setContracts(contractsSeed);
@@ -57,7 +67,7 @@ export default function App() {
   return (
     <>
       <ToastContainer />
-      <Layout route={route} onNavigate={navigate} contracts={contracts}>
+      <Layout route={route} onNavigate={navigate} contracts={contracts} theme={theme} toggleTheme={toggleTheme}>
         {content}
       </Layout>
     </>
