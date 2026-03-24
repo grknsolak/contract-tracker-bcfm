@@ -9,11 +9,10 @@ function normalizeUsdValue(contract, rate) {
 }
 
 const TIER = [
-  { min: 1, max: 1,  label: "Champion",  color: "#C4912A", bg: "rgba(196,145,42,0.12)" },
-  { min: 2, max: 2,  label: "Challenger",color: "#8E9BAD", bg: "rgba(142,155,173,0.1)" },
-  { min: 3, max: 3,  label: "Contender", color: "#B87333", bg: "rgba(184,115,51,0.1)"  },
-  { min: 4, max: 6,  label: "Tier I",    color: "#6EE7B7", bg: "rgba(110,231,183,0.08)" },
-  { min: 7, max: 10, label: "Tier II",   color: "#93C5FD", bg: "rgba(147,197,253,0.08)" },
+  { min: 1, max: 1,  label: "A+", color: "#C4912A", bg: "rgba(196,145,42,0.12)" },
+  { min: 2, max: 3,  label: "A",  color: "#8E9BAD", bg: "rgba(142,155,173,0.1)"  },
+  { min: 4, max: 6,  label: "B",  color: "#6EE7B7", bg: "rgba(110,231,183,0.08)" },
+  { min: 7, max: 10, label: "C",  color: "#93C5FD", bg: "rgba(147,197,253,0.08)" },
 ];
 
 function getTier(rank) {

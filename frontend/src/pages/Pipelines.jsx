@@ -18,10 +18,10 @@ import {
 function getSegDegree(value, total) {
   if (!total || !value) return null;
   const pct = (value / total) * 100;
-  if (pct >= 20) return { label: "Critical", tone: "danger",  color: "#ef4444", bg: "rgba(239,68,68,0.10)"  };
-  if (pct >= 10) return { label: "High",     tone: "warning", color: "#f59e0b", bg: "rgba(245,158,11,0.10)" };
-  if (pct >= 5)  return { label: "Medium",   tone: "info",    color: "#3b82f6", bg: "rgba(59,130,246,0.10)" };
-  return           { label: "Low",      tone: "neutral", color: "#6b7280", bg: "rgba(107,114,128,0.10)" };
+  if (pct >= 20) return { label: "A+", color: "#C4912A", bg: "rgba(196,145,42,0.12)" };
+  if (pct >= 10) return { label: "A",  color: "#8E9BAD", bg: "rgba(142,155,173,0.1)"  };
+  if (pct >= 5)  return { label: "B",  color: "#6EE7B7", bg: "rgba(110,231,183,0.10)" };
+  return           { label: "C",  color: "#93C5FD", bg: "rgba(147,197,253,0.10)" };
 }
 
 function addMonthsPreservingDate(dateValue, months) {
