@@ -2657,7 +2657,7 @@ textarea {
 
 .seg-rank-list-header {
   display: grid;
-  grid-template-columns: 50px 200px 1fr 144px;
+  grid-template-columns: 50px 1fr 260px 160px;
   gap: 16px;
   align-items: center;
   padding: 9px 24px;
@@ -2670,13 +2670,12 @@ textarea {
   background: var(--surface-2);
 }
 
-.seg-rank-list-header > :last-child {
-  text-align: right;
-}
+.seg-rank-list-header > :nth-child(3) { text-align: left; }
+.seg-rank-list-header > :last-child   { text-align: right; }
 
 .seg-rank-row {
   display: grid;
-  grid-template-columns: 50px 200px 1fr 144px;
+  grid-template-columns: 50px 1fr 260px 160px;
   gap: 16px;
   align-items: center;
   padding: 12px 24px;
@@ -2762,7 +2761,9 @@ textarea {
   align-items: center;
   gap: 5px;
   justify-content: flex-end;
+  justify-self: end;
   white-space: nowrap;
+  width: 100%;
 }
 
 .seg-rank-currency-tag {
