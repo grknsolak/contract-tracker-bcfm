@@ -260,25 +260,6 @@ export default function ContractGrowthChart({ contract }) {
       </svg>
       </div>
 
-      <div className="growth-legend">
-        {chart.series.map((item) => {
-          const latest = item.latest;
-          const latestTrend = latest?.trend || { icon: "→", percent: 0, tone: "neutral" };
-          return (
-            <div key={item.name} className="growth-legend-card">
-              <div className="growth-legend-head">
-                <div className="growth-legend-title-wrap">
-                  <span className="growth-series-dot" style={{ background: item.color }} />
-                  <div className="growth-legend-title">{item.name}</div>
-                </div>
-                <div className={`growth-delta tone-${latestTrend.tone}`}>{latestTrend.icon} {latestTrend.percent}%</div>
-              </div>
-              <div className="growth-legend-value">{formatCurrency(latest?.value || 0, contract.currency)}</div>
-              <div className="growth-legend-date">{latest?.date ? formatDate(latest.date) : "-"}</div>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
