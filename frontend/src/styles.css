@@ -3890,282 +3890,123 @@ textarea {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   TEAM SUMMARY — Two-tier Zam Rate Gauge
+   TEAM SUMMARY — Scope Gauge Rows (flat, no accordion)
    ══════════════════════════════════════════════════════════════════ */
-
-/* Company header */
-.ts-company-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.ts-company-gauge {
-  flex-shrink: 0;
-}
-
-.ts-company-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ts-company-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.ts-company-teams {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 
 /* Gauge SVG */
 .gauge-svg {
   display: block;
-  width: 100px;
+  width: 90px;
   height: auto;
   overflow: visible;
 }
 
-/* Team list */
-.ts-team-list {
+/* Color tokens */
+.ts-rate--high  { color: var(--success); }
+.ts-rate--mid   { color: var(--primary-light); }
+.ts-rate--low   { color: var(--info); }
+.ts-rate--none  { color: var(--muted); }
+
+/* Row list */
+.ts-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-/* Team block wrapper */
-.ts-team-block {
+  gap: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  transition: border-color 0.15s;
 }
 
-.ts-team-block.is-open {
-  border-color: var(--primary);
-}
-
-/* Team header button */
-.ts-team-header {
-  width: 100%;
+/* Single team row */
+.ts-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--surface);
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-  gap: 10px;
+  align-items: stretch;
+  min-height: 120px;
+  border-bottom: 1px solid var(--border);
 }
 
-.ts-team-header:hover {
-  background: var(--surface-2);
+.ts-row:last-child {
+  border-bottom: none;
 }
 
-.ts-team-block.is-open .ts-team-header {
-  background: var(--primary-50);
-}
-
-.ts-team-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ts-chevron {
-  color: var(--text-secondary);
+/* Left: team identity */
+.ts-row-label {
   flex-shrink: 0;
-  transition: transform 0.22s cubic-bezier(.4,0,.2,1);
-}
-
-.ts-chevron--open {
-  transform: rotate(90deg);
-}
-
-.ts-team-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.ts-team-meta {
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: var(--surface-3);
-  padding: 2px 7px;
-  border-radius: 99px;
-}
-
-.ts-team-header-right {
-  flex-shrink: 0;
-}
-
-/* Rate badges on team header */
-.ts-team-rate-badge {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 99px;
-  letter-spacing: -0.01em;
-}
-
-.ts-rate--high {
-  color: var(--success);
-  background: var(--success-bg);
-}
-
-.ts-rate--mid {
-  color: var(--primary-light);
-  background: var(--primary-50);
-}
-
-.ts-rate--low {
-  color: var(--info);
-  background: var(--info-bg);
-}
-
-.ts-rate--none {
-  color: var(--muted);
-  background: var(--surface-3);
-}
-
-/* Customer gauge grid */
-.ts-customer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1px;
-  background: var(--border);
-}
-
-/* Customer card */
-.ts-customer-card {
+  width: 130px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 14px 14px;
-  background: var(--surface-2);
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.12s;
-  width: 100%;
-}
-
-.ts-customer-card:hover {
-  background: var(--primary-50);
-}
-
-.ts-customer-gauge-wrap {
-  width: 100px;
-  flex-shrink: 0;
-}
-
-.ts-customer-info {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ts-customer-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  text-align: center;
-  line-height: 1.3;
-}
-
-/* Scope rate rows */
-.ts-scope-rate-list {
-  display: flex;
-  flex-direction: column;
+  justify-content: center;
   gap: 5px;
-  width: 100%;
+  padding: 16px 14px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
 }
 
-.ts-scope-rate-row {
-  display: grid;
-  grid-template-columns: 1fr 60px 30px;
-  align-items: center;
-  gap: 6px;
+.ts-row-team-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
 }
 
-.ts-scope-name {
+.ts-row-team-meta {
   font-size: 10px;
   color: var(--text-secondary);
+}
+
+.ts-row-avg {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Right: scope gauges */
+.ts-row-gauges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  padding: 12px 8px;
+  background: var(--surface-2);
+  flex: 1;
+}
+
+/* Each scope cell */
+.ts-scope-gauge-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  min-width: 100px;
+}
+
+.ts-scope-gauge-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.3;
+  max-width: 90px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.ts-scope-bar-track {
-  height: 4px;
-  border-radius: 99px;
-  background: var(--surface-3);
-  overflow: hidden;
-}
-
-.ts-scope-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.6s cubic-bezier(.4,0,.2,1);
-}
-
-.ts-scope-bar-fill--high  { background: var(--success); }
-.ts-scope-bar-fill--mid   { background: var(--primary); }
-.ts-scope-bar-fill--low   { background: var(--info); }
-
-.ts-scope-rate-val {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  text-align: right;
 }
 
 .ts-no-rates {
   font-size: 11px;
   color: var(--muted);
   font-style: italic;
-  text-align: center;
+  padding: 0 8px;
 }
 
 /* Light mode */
-[data-theme="light"] .ts-company-header {
+[data-theme="light"] .ts-row-label {
   background: var(--surface);
 }
 
-[data-theme="light"] .ts-team-header {
-  background: var(--surface);
-}
-
-[data-theme="light"] .ts-team-header:hover,
-[data-theme="light"] .ts-team-block.is-open .ts-team-header {
-  background: var(--primary-50);
-}
-
-[data-theme="light"] .ts-customer-card {
-  background: var(--surface);
-}
-
-[data-theme="light"] .ts-customer-card:hover {
-  background: var(--primary-50);
-}
-
-[data-theme="light"] .ts-scope-bar-track,
-[data-theme="light"] .ts-team-meta {
-  background: var(--surface-2);
+[data-theme="light"] .ts-row-gauges {
+  background: var(--bg);
 }
 
 .dashboard-quarter-grid {

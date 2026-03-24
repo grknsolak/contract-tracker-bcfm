@@ -109,14 +109,6 @@ function GaugeChart({ value, maxValue = 50 }) {
 // ── Main Dashboard ───────────────────────────────────────────────────────────
 export default function Dashboard({ contracts, onNavigate }) {
   const [selectedMetric, setSelectedMetric] = useState(null);
-  const [expandedTeams, setExpandedTeams] = useState(new Set());
-
-  const toggleTeam = (team) =>
-    setExpandedTeams((prev) => {
-      const next = new Set(prev);
-      next.has(team) ? next.delete(team) : next.add(team);
-      return next;
-    });
 
   const totalCustomers = useMemo(
     () => new Set(contracts.map((c) => c.customerName)).size,
@@ -143,68 +135,47 @@ export default function Dashboard({ contracts, onNavigate }) {
     return { activeCustomers, next30, churned };
   }, [contracts]);
 
-  // ── Team rows: 2-tier with scope-level zam rates ─────────────────────────
+  // ── Team rows: scope-level zam rate averages ─────────────────────────────
   const teamRows = useMemo(() => {
     const grouped = contracts.reduce((acc, contract) => {
       const team = contract.team || "Unassigned";
-      if (!acc[team]) acc[team] = { team, byCustomer: {} };
-      const name = contract.customerName;
-      if (!acc[team].byCustomer[name]) acc[team].byCustomer[name] = [];
-      acc[team].byCustomer[name].push(contract);
+      if (!acc[team]) acc[team] = { team, contracts: [], customerNames: new Set() };
+      acc[team].contracts.push(contract);
+      acc[team].customerNames.add(contract.customerName);
       return acc;
     }, {});
 
     return Object.values(grouped)
       .map((group) => {
-        const customers = Object.entries(group.byCustomer).map(([customerName, customerContracts]) => {
-          // Aggregate scope zam rates across contracts
-          const scopeSum = {};
-          const scopeN = {};
-          customerContracts.forEach((contract) => {
-            const rates = getRenewalRates(contract);
-            (contract.scopes || []).forEach((scope) => {
-              const rate = Number(rates[scope] || 0);
-              if (rate > 0) {
-                scopeSum[scope] = (scopeSum[scope] || 0) + rate;
-                scopeN[scope] = (scopeN[scope] || 0) + 1;
-              }
-            });
+        // Per-scope: average zam rate across all contracts in this team
+        const scopeSum = {};
+        const scopeN = {};
+        group.contracts.forEach((contract) => {
+          const rates = getRenewalRates(contract);
+          (contract.scopes || []).forEach((scope) => {
+            const rate = Number(rates[scope] || 0);
+            if (rate > 0) {
+              scopeSum[scope] = (scopeSum[scope] || 0) + rate;
+              scopeN[scope] = (scopeN[scope] || 0) + 1;
+            }
           });
+        });
 
-          const scopeRates = Object.fromEntries(
-            Object.keys(scopeSum).map((s) => [s, Math.round(scopeSum[s] / scopeN[s])])
-          );
-          const rateVals = Object.values(scopeRates);
-          const avgRate =
-            rateVals.length > 0
-              ? Math.round(rateVals.reduce((s, v) => s + v, 0) / rateVals.length)
-              : 0;
+        const scopeRates = Object.entries(scopeSum)
+          .map(([scope, sum]) => ({ scope, rate: Math.round(sum / scopeN[scope]) }))
+          .sort((a, b) => b.rate - a.rate);
 
-          const latestContract = [...customerContracts].sort(
-            (a, b) => new Date(b.endDate) - new Date(a.endDate)
-          )[0];
-
-          return {
-            customerName,
-            scopeRates,
-            avgRate,
-            contractId: latestContract.id,
-            contractCount: customerContracts.length,
-          };
-        }).sort((a, b) => b.avgRate - a.avgRate);
-
-        const withRates = customers.filter((c) => c.avgRate > 0);
         const teamAvgRate =
-          withRates.length > 0
-            ? Math.round(withRates.reduce((s, c) => s + c.avgRate, 0) / withRates.length)
+          scopeRates.length > 0
+            ? Math.round(scopeRates.reduce((s, r) => s + r.rate, 0) / scopeRates.length)
             : 0;
 
         return {
           team: group.team,
-          customers,
-          customerCount: customers.length,
+          customerCount: group.customerNames.size,
+          contractCount: group.contracts.length,
+          scopeRates,
           teamAvgRate,
-          ratedCount: withRates.length,
         };
       })
       .sort((a, b) => b.teamAvgRate - a.teamAvgRate || a.team.localeCompare(b.team));
@@ -315,135 +286,48 @@ export default function Dashboard({ contracts, onNavigate }) {
           </div>
         </Card>
 
-        {/* Team summary — two-tier zam gauge */}
+        {/* Team summary — scope gauge rows */}
         <Card
           title="Team summary"
-          subtitle="Zam oranı ortalaması takıma ve müşteriye göre"
+          subtitle="Scope bazlı ortalama zam oranları"
         >
-          {/* Company-wide header */}
-          {companyAvgRate > 0 && (
-            <div className="ts-company-header">
-              <div className="ts-company-gauge">
-                <GaugeChart value={companyAvgRate} maxValue={50} />
-              </div>
-              <div className="ts-company-info">
-                <span className="ts-company-label">Şirket geneli ortalama zam</span>
-                <div className="ts-company-teams">
-                  {teamRows.filter((t) => t.teamAvgRate > 0).length} takım ·{" "}
-                  {teamRows.reduce((s, t) => s + t.ratedCount, 0)} müşteri
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Team accordion list */}
-          <div className="ts-team-list">
-            {teamRows.map((row) => {
-              const isOpen = expandedTeams.has(row.team);
-              return (
-                <div key={row.team} className={`ts-team-block ${isOpen ? "is-open" : ""}`}>
-                  {/* Team header row */}
-                  <button
-                    className="ts-team-header"
-                    onClick={() => toggleTeam(row.team)}
-                    aria-expanded={isOpen}
-                  >
-                    <div className="ts-team-header-left">
-                      <svg
-                        className={`ts-chevron ${isOpen ? "ts-chevron--open" : ""}`}
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                      <span className="ts-team-name">{row.team}</span>
-                      <span className="ts-team-meta">{row.customerCount} müşteri</span>
-                    </div>
-                    <div className="ts-team-header-right">
-                      {row.teamAvgRate > 0 ? (
-                        <span
-                          className={`ts-team-rate-badge ${
-                            row.teamAvgRate >= 30
-                              ? "ts-rate--high"
-                              : row.teamAvgRate >= 15
-                              ? "ts-rate--mid"
-                              : "ts-rate--low"
-                          }`}
-                        >
-                          +{row.teamAvgRate}% ort.
-                        </span>
-                      ) : (
-                        <span className="ts-team-rate-badge ts-rate--none">Veri yok</span>
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expanded customer gauge grid */}
-                  {isOpen && (
-                    <div className="ts-customer-grid">
-                      {row.customers.map((customer) => (
-                        <button
-                          key={customer.customerName}
-                          className="ts-customer-card"
-                          onClick={() => onNavigate(`/contracts/${customer.contractId}`)}
-                        >
-                          {/* Gauge */}
-                          <div className="ts-customer-gauge-wrap">
-                            <GaugeChart value={customer.avgRate} maxValue={50} />
-                          </div>
-
-                          {/* Info */}
-                          <div className="ts-customer-info">
-                            <div className="ts-customer-name">{customer.customerName}</div>
-
-                            {Object.keys(customer.scopeRates).length > 0 ? (
-                              <div className="ts-scope-rate-list">
-                                {Object.entries(customer.scopeRates).map(([scope, rate]) => (
-                                  <div key={scope} className="ts-scope-rate-row">
-                                    <span className="ts-scope-name">{scope}</span>
-                                    <div className="ts-scope-bar-track">
-                                      <div
-                                        className={`ts-scope-bar-fill ${
-                                          rate >= 30
-                                            ? "ts-scope-bar-fill--high"
-                                            : rate >= 15
-                                            ? "ts-scope-bar-fill--mid"
-                                            : "ts-scope-bar-fill--low"
-                                        }`}
-                                        style={{ width: `${Math.min((rate / 50) * 100, 100)}%` }}
-                                      />
-                                    </div>
-                                    <span
-                                      className={`ts-scope-rate-val ${
-                                        rate >= 30
-                                          ? "ts-rate--high"
-                                          : rate >= 15
-                                          ? "ts-rate--mid"
-                                          : "ts-rate--low"
-                                      }`}
-                                    >
-                                      +{rate}%
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="ts-no-rates">Henüz zam oranı girilmedi</span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+          <div className="ts-rows">
+            {teamRows.map((row) => (
+              <div key={row.team} className="ts-row">
+                {/* Left: team identity box */}
+                <div className="ts-row-label">
+                  <span className="ts-row-team-name">{row.team}</span>
+                  <span className="ts-row-team-meta">{row.customerCount} müşteri</span>
+                  {row.teamAvgRate > 0 && (
+                    <span
+                      className={`ts-row-avg ${
+                        row.teamAvgRate >= 30
+                          ? "ts-rate--high"
+                          : row.teamAvgRate >= 15
+                          ? "ts-rate--mid"
+                          : "ts-rate--low"
+                      }`}
+                    >
+                      ort. +{row.teamAvgRate}%
+                    </span>
                   )}
                 </div>
-              );
-            })}
+
+                {/* Right: scope gauges side-by-side */}
+                <div className="ts-row-gauges">
+                  {row.scopeRates.length > 0 ? (
+                    row.scopeRates.map(({ scope, rate }) => (
+                      <div key={scope} className="ts-scope-gauge-cell">
+                        <GaugeChart value={rate} maxValue={50} />
+                        <span className="ts-scope-gauge-label">{scope}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="ts-no-rates">Henüz zam oranı girilmedi</span>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
