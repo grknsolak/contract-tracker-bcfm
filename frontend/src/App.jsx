@@ -23,6 +23,8 @@ export default function App() {
 
   // ── Global USD Rate ─────────────────────────────────
   const [usdRate, setUsdRate] = useState(() => parseFloat(localStorage.getItem("usdRate")) || 32);
+  const [usdRateUpdatedAt, setUsdRateUpdatedAt] = useState(() => localStorage.getItem("usdRateUpdatedAt") || null);
+  const [usdRateFetching, setUsdRateFetching] = useState(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -30,6 +32,30 @@ export default function App() {
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
+  // Fetch live USD/TRY from Frankfurter API (free, no key)
+  useEffect(() => {
+    const cachedAt = localStorage.getItem("usdRateUpdatedAt");
+    const isStale = !cachedAt || Date.now() - new Date(cachedAt).getTime() > 1000 * 60 * 60 * 8; // 8 saatte bir
+
+    if (!isStale) return;
+
+    setUsdRateFetching(true);
+    fetch("https://api.frankfurter.app/latest?from=USD&to=TRY")
+      .then((r) => r.json())
+      .then((data) => {
+        const rate = data?.rates?.TRY;
+        if (rate && rate > 0) {
+          const now = new Date().toISOString();
+          setUsdRate(rate);
+          setUsdRateUpdatedAt(now);
+          localStorage.setItem("usdRate", rate);
+          localStorage.setItem("usdRateUpdatedAt", now);
+        }
+      })
+      .catch(() => { /* API failed — cached/default rate kullanılır */ })
+      .finally(() => setUsdRateFetching(false));
+  }, []);
 
   const updateUsdRate = (rate) => {
     const parsed = parseFloat(rate);
@@ -59,7 +85,7 @@ export default function App() {
   let content = null;
 
   if (route.name === "customers") {
-    content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} usdRate={usdRate} onUsdRateChange={updateUsdRate} />;
+    content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} usdRate={usdRate} onUsdRateChange={updateUsdRate} usdRateUpdatedAt={usdRateUpdatedAt} usdRateFetching={usdRateFetching} />;
   } else if (route.name === "revenue") {
     content = <RevenueDashboard contracts={contracts} />;
   } else if (route.name === "segmentation") {

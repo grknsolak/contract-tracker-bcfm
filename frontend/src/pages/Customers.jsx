@@ -109,7 +109,7 @@ function FieldError({ error }) {
   return <div className="field-error-message">{error}</div>;
 }
 
-export default function Customers({ contracts, setContracts, onNavigate, route, usdRate = 32, onUsdRateChange }) {
+export default function Customers({ contracts, setContracts, onNavigate, route, usdRate = 32, onUsdRateChange, usdRateUpdatedAt, usdRateFetching }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
   const [sortBy, setSortBy] = useState("recent");
@@ -727,11 +727,18 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                 className="usd-rate-widget-input"
                 value={usdRate}
                 min="1"
-                step="0.5"
+                step="0.1"
                 onChange={(e) => onUsdRateChange?.(e.target.value)}
-                title="Dolar kuru güncelle"
+                title="Kuru manuel güncelle"
               />
               <span className="usd-rate-widget-currency">₺</span>
+              {usdRateFetching ? (
+                <span className="usd-rate-fetching" title="Kur güncelleniyor...">⟳</span>
+              ) : usdRateUpdatedAt ? (
+                <span className="usd-rate-timestamp" title={`Son güncelleme: ${new Date(usdRateUpdatedAt).toLocaleString("tr-TR")}`}>
+                  🟢
+                </span>
+              ) : null}
             </div>
             <button className="btn btn-primary" onClick={openNew}>Add customer</button>
           </div>
