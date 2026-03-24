@@ -104,16 +104,16 @@ function RankRow({ contract, rank, maxValue, onNavigate }) {
         {rank < 10 ? `0${rank}` : rank}
       </div>
 
-      {/* Info */}
+      {/* Info — tier pill inline with meta */}
       <div className="seg-rank-info">
         <span className="seg-rank-name">{contract.customerName}</span>
-        <span className="seg-rank-sub">{contract.contractName} · {contract.team}</span>
+        <span className="seg-rank-sub">
+          {contract.team}
+          <span className="seg-tier-pill seg-tier-pill--row" style={{ color: tier.color, borderColor: `${tier.color}40`, background: tier.bg }}>
+            {tier.label}
+          </span>
+        </span>
       </div>
-
-      {/* Tier pill */}
-      <span className="seg-tier-pill seg-tier-pill--row" style={{ color: tier.color, borderColor: `${tier.color}40` }}>
-        {tier.label}
-      </span>
 
       {/* Progress bar */}
       <div className="seg-rank-bar-wrap">
@@ -240,9 +240,8 @@ export default function Segmentation({ contracts, onNavigate }) {
               <div className="seg-rank-list-header">
                 <span>RANK</span>
                 <span>CUSTOMER</span>
-                <span />
-                <span>RELATIVE SCORE</span>
-                <span>CONTRACT VALUE</span>
+                <span>SCORE</span>
+                <span>VALUE</span>
               </div>
               {ranked.slice(3).map((contract, i) => (
                 <RankRow
