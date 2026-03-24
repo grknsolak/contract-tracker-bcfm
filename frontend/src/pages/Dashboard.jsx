@@ -291,6 +291,20 @@ export default function Dashboard({ contracts, onNavigate }) {
           title="Team summary"
           subtitle="Sözleşme yenileme oranı"
         >
+          {/* Company-wide renewal rate */}
+          {companyAvgRate > 0 && (
+            <div className="ts-company-header">
+              <GaugeChart value={companyAvgRate} maxValue={50} />
+              <div className="ts-company-info">
+                <span className="ts-company-label">Şirket geneli ortalama zam</span>
+                <span className="ts-company-sub">
+                  {teamRows.filter((t) => t.teamAvgRate > 0).length} takım ·{" "}
+                  {contracts.length} sözleşme
+                </span>
+              </div>
+            </div>
+          )}
+
           <div className="ts-rows">
             {teamRows.map((row) => (
               <div key={row.team} className="ts-row">
