@@ -138,22 +138,52 @@ export default function ContractDetails({ contract, setContracts, onNavigate }) 
             <span className="muted">No scopes selected.</span>
           ) : (
             <div className="scope-breakdown-list">
-              {scopeBudgetRows.map((row) => (
-                <div key={row.scope} className="scope-breakdown-item">
-                  <div>
-                    <div className="primary-text">
-                      {row.scope === "Other" && contract.otherScopeText ? contract.otherScopeText : row.scope}
+              {scopeBudgetRows.map((row) => {
+                const scopeLabel = row.scope === "Other" && contract.otherScopeText
+                  ? contract.otherScopeText : row.scope;
+                const trendColor = row.trend === "up"   ? "#4ade80"
+                                 : row.trend === "down" ? "#f87171"
+                                 : "var(--text-secondary)";
+                const TrendIcon = () => {
+                  if (row.trend === "up") return (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>
+                    </svg>
+                  );
+                  if (row.trend === "down") return (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
+                    </svg>
+                  );
+                  return (
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  );
+                };
+                return (
+                  <div key={row.scope} className="scope-breakdown-item">
+                    <div className="scope-breakdown-left">
+                      <div className="primary-text">{scopeLabel}</div>
+                      <div className="scope-year-values">
+                        <span className="scope-year-prev">
+                          {formatCurrency(row.prevYearAmount, contract.currency)}
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+                          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                        <span className="scope-year-curr" style={{ color: trendColor }}>
+                          {formatCurrency(row.currYearAmount, contract.currency)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="muted">
-                      {formatCurrency(row.baseAmount, contract.currency)} {"->"} {formatCurrency(row.renewedAmount, contract.currency)}
+                    <div className="scope-trend-badge" style={{ color: trendColor, borderColor: `${trendColor}35`, background: `${trendColor}12` }}>
+                      <TrendIcon />
+                      <span>{row.pctChange > 0 ? "+" : ""}{row.pctChange}%</span>
                     </div>
                   </div>
-                  <Badge tone={row.renewalRate >= 0 ? "success" : "danger"}>
-                    {row.renewalRate > 0 ? "+" : ""}
-                    {row.renewalRate}%
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>

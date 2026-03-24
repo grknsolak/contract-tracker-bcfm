@@ -2864,6 +2864,45 @@ textarea {
   border: 1px solid var(--border);
 }
 
+.scope-breakdown-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* prev year → curr year values */
+.scope-year-values {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.scope-year-prev {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.scope-year-curr {
+  font-weight: 700;
+}
+
+/* trend badge */
+.scope-trend-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  border: 1px solid;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .action-list {
   display: flex;
   flex-direction: column;

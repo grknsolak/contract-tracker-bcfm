@@ -22,20 +22,49 @@ export function getRenewedScopeAmount(baseAmount, renewalRate) {
 }
 
 export function buildScopeBudgetRows(contract) {
-  const scopes = contract?.scopes || [];
-  const scopePrices = getScopePrices(contract);
-  const renewalRates = getRenewalRates(contract);
+  const scopes        = contract?.scopes || [];
+  const scopePrices   = getScopePrices(contract);
+  const renewalRates  = getRenewalRates(contract);
+  const svh           = contract?.scopeValueHistory || [];
 
   return scopes.map((scope) => {
-    const baseAmount = Number(scopePrices[scope] || 0);
+    const baseAmount  = Number(scopePrices[scope] || 0);
     const renewalRate = Number(renewalRates[scope] || 0);
     const renewedAmount = getRenewedScopeAmount(baseAmount, renewalRate);
+
+    // Resolve prev / curr from scopeValueHistory
+    const entry   = svh.find((e) => e.name === scope);
+    const history = entry?.history
+      ? [...entry.history].sort((a, b) => new Date(a.date) - new Date(b.date))
+      : [];
+
+    const prevYearAmount = history.length >= 2
+      ? Number(history[0].value)
+      : baseAmount;
+
+    const currYearAmount = history.length >= 1
+      ? Number(history[history.length - 1].value)
+      : renewedAmount;
+
+    const pctChange = prevYearAmount > 0
+      ? Math.round(((currYearAmount - prevYearAmount) / prevYearAmount) * 100)
+      : renewalRate;
+
+    const trend = currYearAmount > prevYearAmount ? "up"
+                : currYearAmount < prevYearAmount ? "down"
+                : "neutral";
+
     return {
       scope,
       baseAmount,
       renewalRate,
       renewedAmount,
       deltaAmount: renewedAmount - baseAmount,
+      prevYearAmount,
+      currYearAmount,
+      pctChange,
+      trend,
+      hasHistory: history.length > 0,
     };
   });
 }
