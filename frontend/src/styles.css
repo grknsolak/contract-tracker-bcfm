@@ -2646,21 +2646,24 @@ textarea {
 
 /* ── Rank rows #4–10 ── */
 .seg-rank-list {
-  max-width: 820px;
-  margin: 0 auto;
-  width: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
 }
 
-.seg-rank-list-header {
+/* Shared column definition — used by BOTH header and rows */
+.seg-rank-list-header,
+.seg-rank-row {
   display: grid;
-  grid-template-columns: 50px 1fr 260px 160px;
-  gap: 16px;
+  grid-template-columns: 56px minmax(0,1fr) 280px 180px;
+  column-gap: 0;
   align-items: center;
-  padding: 9px 24px;
+  padding: 0 28px;
+}
+
+.seg-rank-list-header {
+  height: 38px;
   border-bottom: 1px solid var(--border);
   font-size: 10px;
   font-weight: 700;
@@ -2670,15 +2673,11 @@ textarea {
   background: var(--surface-2);
 }
 
-.seg-rank-list-header > :nth-child(3) { text-align: left; }
+.seg-rank-list-header > :nth-child(3) { padding-left: 0; }
 .seg-rank-list-header > :last-child   { text-align: right; }
 
 .seg-rank-row {
-  display: grid;
-  grid-template-columns: 50px 1fr 260px 160px;
-  gap: 16px;
-  align-items: center;
-  padding: 12px 24px;
+  min-height: 60px;
   border: none;
   border-bottom: 1px solid var(--border);
   background: transparent;
@@ -2761,9 +2760,7 @@ textarea {
   align-items: center;
   gap: 5px;
   justify-content: flex-end;
-  justify-self: end;
   white-space: nowrap;
-  width: 100%;
 }
 
 .seg-rank-currency-tag {
