@@ -227,8 +227,6 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
             >
               <div className="pipeline-header-row">
                 <div className="pipeline-badges">
-                  <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
-                  <Badge tone={renewalTone[pipeline.renewalStatus] || "neutral"}>{pipeline.renewalStatus}</Badge>
                   {segDegree && (
                     <span className="pipeline-seg-badge" style={{ color: segDegree.color, background: segDegree.bg, borderColor: `${segDegree.color}40` }}>
                       <span className="pipeline-seg-dot" style={{ background: segDegree.color }} />
