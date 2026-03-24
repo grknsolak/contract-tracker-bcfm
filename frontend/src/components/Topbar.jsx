@@ -100,7 +100,7 @@ function buildSeedNotifs() {
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
-export default function Topbar({ onNavigate, contracts = [], route = {}, theme = "dark", toggleTheme }) {
+export default function Topbar({ onNavigate, contracts = [], route = {}, theme = "dark", toggleTheme, onNotifNavigate }) {
   // Search
   const [query, setQuery]       = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -293,7 +293,7 @@ export default function Topbar({ onNavigate, contracts = [], route = {}, theme =
                       <div
                         key={n.id}
                         className={`notif-item${n.read ? "" : " notif-item--unread"}`}
-                        onClick={() => markRead(n.id)}
+                        onClick={() => { markRead(n.id); setNotifOpen(false); onNavigate("/notifications"); }}
                       >
                         <div className="notif-icon-wrap" style={{ background: cfg.bg }}>
                           <NotifIcon type={n.type} />
