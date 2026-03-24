@@ -15,6 +15,7 @@ import {
   renewalContractStages,
   renewalTone,
 } from "../utils/status";
+import { shouldCreateRenewalPipeline, getRenewalCurrentStage } from "../utils/pipelines";
 
 const scopeOptions = [
   "DaaS (Fix)",
@@ -588,42 +589,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
           ))}
         </select>
       </div>
-      <div className="field">
-        <label>Stage</label>
-        <select
-          value={formState.stage}
-          onChange={(e) => setFormState({ ...formState, stage: e.target.value })}
-        >
-          {stageOptions.map((stage) => (
-            <option key={stage}>{stage}</option>
-          ))}
-        </select>
-      </div>
-      <div className="field">
-        <label>Renewal status</label>
-        <select
-          value={formState.renewalStatus}
-          onChange={(e) => setFormState({ ...formState, renewalStatus: e.target.value })}
-        >
-          <option>On Track</option>
-          <option>Negotiation</option>
-          <option>Needs Attention</option>
-          <option>Pending</option>
-          <option>Lost</option>
-        </select>
-      </div>
-      <div className="field field-span-2">
-        <label>Flow</label>
-        <div className="muted" style={{ fontSize: 13 }}>
-          {isRenewalFlow
-            ? "Renewal flow detected. NDA is skipped and the process starts from the active contract."
-            : "Initial contract flow. NDA is required before draft and legal review."}
-        </div>
-      </div>
       <div className="field field-span-2">
         <label>Notes</label>
         <textarea
-          rows="3"
+          rows="4"
           value={formState.notes}
           onChange={(e) => setFormState({ ...formState, notes: e.target.value })}
           placeholder="Additional notes about this contract..."
@@ -779,9 +748,16 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               />
             ) : (
               filtered.map((contract) => {
-                const meta = getStageMeta(contract.stage);
                 const remaining = daysUntil(contract.endDate);
                 const budgetSummary = getContractBudgetSummary(contract);
+
+                // Stage: pipeline'dan otomatik hesapla
+                const inPipeline = shouldCreateRenewalPipeline(contract);
+                const displayStage = inPipeline
+                  ? getRenewalCurrentStage(contract)
+                  : normalizeStage(contract.stage);
+                const meta = getStageMeta(displayStage);
+
                 return (
                   <div key={contract.id} className="table-row">
                     <div className="clickable" onClick={() => onNavigate(`/contracts/${contract.id}`)}>
