@@ -268,10 +268,9 @@ a {
 
 /* ─── App Shell ─────────────────────────────────── */
 .app-shell {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  height: 100vh;          /* exact viewport height */
-  overflow: hidden;       /* prevent outer scroll */
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ─── Sidebar ───────────────────────────────────── */
@@ -282,11 +281,114 @@ a {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  position: sticky;
-  top: 0;
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  flex-shrink: 0;
+  width: 260px;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Collapsed state ── */
+.sidebar--collapsed {
+  width: 62px;
+}
+
+/* Brand text: fade + clip when collapsed */
+.sidebar-brand-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  transition: opacity 0.15s ease, max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 200px;
+}
+
+.sidebar--collapsed .sidebar-brand-text {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+/* Nav item label */
+.nav-label {
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 200px;
+}
+
+.sidebar--collapsed .nav-label {
+  opacity: 0;
+  max-width: 0;
+  pointer-events: none;
+}
+
+/* Nav item: center icon when collapsed */
+.sidebar--collapsed .nav-item {
+  justify-content: center;
+  padding: 11px 0;
+}
+
+/* User info: hide when collapsed */
+.sidebar--collapsed .sidebar-user-info {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-user-info {
+  transition: opacity 0.15s ease, max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 200px;
+}
+
+/* Logout button: hide when collapsed */
+.sidebar--collapsed .sidebar-logout-btn {
+  display: none;
+}
+
+/* User footer: center when collapsed */
+.sidebar--collapsed .sidebar-user {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar--collapsed .sidebar-user-profile-btn {
+  justify-content: center;
+}
+
+/* Toggle button */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+  margin-left: auto;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  border-color: rgba(196, 145, 42, 0.3);
+}
+
+/* When collapsed: center the toggle in brand area */
+.sidebar--collapsed .sidebar-brand {
+  justify-content: center;
+  padding-bottom: 18px;
+}
+
+.sidebar--collapsed .sidebar-toggle-btn {
+  margin-left: 0;
 }
 
 /* sidebar glow removed — clean, functional aesthetic */

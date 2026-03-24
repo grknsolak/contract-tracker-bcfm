@@ -76,11 +76,13 @@ const navItems = [
   },
 ];
 
-export default function Sidebar({ route, onNavigate, user, onLogout }) {
+export default function Sidebar({ route, onNavigate, user, onLogout, collapsed, onToggle }) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+
+      {/* Brand */}
       <div className="sidebar-brand">
-        <div className="brand-mark">
+        <div className="brand-mark" style={{ flexShrink: 0 }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
             <polyline points="14 2 14 8 20 8" />
@@ -89,22 +91,41 @@ export default function Sidebar({ route, onNavigate, user, onLogout }) {
             <polyline points="10 9 9 9 8 9" />
           </svg>
         </div>
-        <div>
+        <div className="sidebar-brand-text">
           <div className="brand-title">Contract Tracker</div>
           <div className="brand-subtitle">Operations Suite</div>
         </div>
+        <button
+          className="sidebar-toggle-btn"
+          onClick={onToggle}
+          title={collapsed ? "Genişlet" : "Daralt"}
+          aria-label={collapsed ? "Sidebar'ı aç" : "Sidebar'ı kapat"}
+        >
+          {collapsed ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {/* Nav */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <button
             key={item.id}
             className={`nav-item ${route.name === item.id ? "active" : ""}`}
             onClick={() => onNavigate(`/${item.id}`)}
+            title={collapsed ? item.label : undefined}
           >
             <span className="nav-icon" aria-hidden="true">
               {item.icon}
             </span>
-            {item.label}
+            <span className="nav-label">{item.label}</span>
           </button>
         ))}
       </nav>
@@ -115,7 +136,7 @@ export default function Sidebar({ route, onNavigate, user, onLogout }) {
           <button
             className="sidebar-user-profile-btn"
             onClick={() => onNavigate("/settings?section=users")}
-            title="Profil & Kullanıcı Ayarları"
+            title={collapsed ? `${user.name} — ${user.role}` : "Profil & Kullanıcı Ayarları"}
           >
             <div className="sidebar-user-avatar" aria-hidden="true">
               {user.initials || user.name?.slice(0, 2).toUpperCase() || "U"}
