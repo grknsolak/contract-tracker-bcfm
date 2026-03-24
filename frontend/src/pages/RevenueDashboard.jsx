@@ -75,115 +75,96 @@ export default function RevenueDashboard({ contracts }) {
       </div>
 
       <Card title="Filters" subtitle="Executive controls for team and reporting window" className="revenue-filter-card">
-        <div className="revenue-filter-shell">
-          <div className="revenue-filter-compact">
-            <div className="revenue-filter-compact-group revenue-filter-team">
-              <div className="revenue-filter-label">Team</div>
-              <select className="revenue-team-select" value={teamFilter} onChange={(event) => setTeamFilter(event.target.value)}>
+        <div className="rfi-bar">
+          {/* Team select */}
+          <div className="rfi-group">
+            <span className="rfi-label">Team</span>
+            <div className="rfi-select-wrap">
+              <select className="rfi-select" value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
                 {teams.map((team) => (
-                  <option key={team} value={team}>
-                    {team}
-                  </option>
+                  <option key={team} value={team}>{team}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="revenue-filter-compact-group revenue-filter-ranges">
-              <div className="revenue-filter-label">Range</div>
-              <div className="range-chip-row premium-range-chip-row">
-                {RANGE_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    className={`range-chip premium-range-chip ${rangePreset === preset.id ? "active" : ""}`}
-                    onClick={() => handlePresetChange(preset.id)}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className={`range-chip premium-range-chip ${rangePreset === "custom" ? "active" : ""}`}
-                  onClick={handleCustomRange}
-                >
-                  Custom
-                </button>
-              </div>
-            </div>
-
-            <div className="revenue-filter-compact-group revenue-filter-summary-simple">
-              <div className="revenue-filter-label">Window</div>
-              <div className="revenue-range-window revenue-range-window-simple">
-                <strong>{formatMonthDisplay(effectiveRange.startKey)}</strong>
-                <span className="revenue-range-arrow">→</span>
-                <strong>{formatMonthDisplay(effectiveRange.endKey)}</strong>
-              </div>
-              <div className="revenue-range-meta">
-                <span>{analytics.months.length} months</span>
-                <span>{teamFilter === "All" ? "All teams" : teamFilter}</span>
-              </div>
+              <svg className="rfi-select-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
           </div>
 
-          {rangePreset === "custom" ? (
-            <div className="revenue-custom-inline">
-              <div className="revenue-custom-field">
-                <span className="revenue-filter-label">Start month</span>
-                <select
-                  className="revenue-month-select"
-                  value={manualRange.startKey || effectiveRange.startKey}
-                  onChange={(event) => {
-                    setRangePreset("custom");
-                    setManualRange((current) => ({ ...current, startKey: event.target.value }));
-                  }}
+          <div className="rfi-divider" />
+
+          {/* Range segmented control */}
+          <div className="rfi-group">
+            <span className="rfi-label">Range</span>
+            <div className="rfi-segments">
+              {RANGE_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  className={`rfi-seg ${rangePreset === preset.id ? "is-active" : ""}`}
+                  onClick={() => handlePresetChange(preset.id)}
                 >
-                  {availableMonths
-                    .filter((month) => !(manualRange.endKey || defaultEndKey) || month.key <= (manualRange.endKey || defaultEndKey))
-                    .map((month) => (
-                      <option key={`start-${month.key}`} value={month.key}>
-                        {formatMonthDisplay(month.key)}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="revenue-custom-divider" aria-hidden>
-                →
-              </div>
-
-              <div className="revenue-custom-field">
-                <span className="revenue-filter-label">End month</span>
-                <select
-                  className="revenue-month-select"
-                  value={manualRange.endKey || defaultEndKey}
-                  onChange={(event) => {
-                    setRangePreset("custom");
-                    setManualRange((current) => ({ ...current, endKey: event.target.value }));
-                  }}
-                >
-                  {availableMonths
-                    .filter((month) => month.key >= (manualRange.startKey || availableMonths[0]?.key || ""))
-                    .map((month) => (
-                      <option key={`end-${month.key}`} value={month.key}>
-                        {formatMonthDisplay(month.key)}
-                      </option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="revenue-custom-summary">
-                <span className="revenue-filter-label">Range summary</span>
-                <div className="revenue-custom-summary-value">
-                  {formatMonthDisplay(manualRange.startKey || effectiveRange.startKey)} → {formatMonthDisplay(manualRange.endKey || defaultEndKey)}
-                </div>
-                <div className="revenue-range-meta">
-                  <span>{analytics.months.length} months</span>
-                  <span>{teamFilter === "All" ? "All teams" : teamFilter}</span>
-                </div>
-              </div>
+                  {preset.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={`rfi-seg ${rangePreset === "custom" ? "is-active" : ""}`}
+                onClick={handleCustomRange}
+              >
+                Custom
+              </button>
             </div>
-          ) : null}
+          </div>
+
+          <div className="rfi-divider" />
+
+          {/* Window badge */}
+          <div className="rfi-group">
+            <span className="rfi-label">Window</span>
+            <div className="rfi-window">
+              <span className="rfi-window-date">{formatMonthDisplay(effectiveRange.startKey)}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity: 0.4}}>
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+              <span className="rfi-window-date">{formatMonthDisplay(effectiveRange.endKey)}</span>
+              <span className="rfi-window-pill">{analytics.months.length}mo</span>
+            </div>
+          </div>
         </div>
+
+        {/* Custom range expander */}
+        {rangePreset === "custom" && (
+          <div className="rfi-custom">
+            <div className="rfi-custom-field">
+              <span className="rfi-label">Start month</span>
+              <select
+                className="rfi-select rfi-month-select"
+                value={manualRange.startKey || effectiveRange.startKey}
+                onChange={(e) => { setRangePreset("custom"); setManualRange((c) => ({ ...c, startKey: e.target.value })); }}
+              >
+                {availableMonths
+                  .filter((m) => !(manualRange.endKey || defaultEndKey) || m.key <= (manualRange.endKey || defaultEndKey))
+                  .map((m) => <option key={`s-${m.key}`} value={m.key}>{formatMonthDisplay(m.key)}</option>)}
+              </select>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.4, marginTop:20}}>
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+            <div className="rfi-custom-field">
+              <span className="rfi-label">End month</span>
+              <select
+                className="rfi-select rfi-month-select"
+                value={manualRange.endKey || defaultEndKey}
+                onChange={(e) => { setRangePreset("custom"); setManualRange((c) => ({ ...c, endKey: e.target.value })); }}
+              >
+                {availableMonths
+                  .filter((m) => m.key >= (manualRange.startKey || availableMonths[0]?.key || ""))
+                  .map((m) => <option key={`e-${m.key}`} value={m.key}>{formatMonthDisplay(m.key)}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
       </Card>
 
       <div className="page-grid">

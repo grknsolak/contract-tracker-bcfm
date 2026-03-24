@@ -1596,192 +1596,185 @@ a {
   box-shadow: none;
 }
 
-/* ─── Revenue Filter ────────────────────────────── */
-.revenue-filter-panel {
-  gap: 14px;
-}
-
+/* ─── Revenue Filter (rfi) ──────────────────────── */
 .revenue-filter-card {
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
 
-.revenue-filter-card .card-body {
+/* Main toolbar row */
+.rfi-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+/* Each group: label + control */
+.rfi-group {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
+  padding: 2px 20px 2px 0;
 }
 
-.revenue-filter-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.rfi-group:first-child {
+  padding-left: 0;
 }
 
-.revenue-filter-topline {
-  display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(320px, 1fr);
-  gap: 12px;
-  align-items: stretch;
-}
-
-.revenue-filter-bottomline {
-  display: flex;
-}
-
-.revenue-filter-block {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: var(--radius);
-  padding: 13px 15px;
-}
-
-.revenue-filter-summary {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.revenue-filter-preset-block {
-  width: 100%;
-}
-
-.revenue-filter-label {
-  font-size: 11px;
+.rfi-label {
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--muted);
-  margin-bottom: 10px;
-  font-weight: 700;
 }
 
-.revenue-team-select {
-  width: 100%;
-  min-height: 46px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-3);
-  padding: 11px 13px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+/* Vertical separator */
+.rfi-divider {
+  width: 1px;
+  height: 48px;
+  background: var(--border);
+  margin: 0 20px 0 0;
+  flex-shrink: 0;
 }
 
-.revenue-range-window {
+/* Team select */
+.rfi-select-wrap {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  background: var(--primary-50);
-  border: 1px solid rgba(196, 145, 42, 0.2);
-  color: var(--text);
-  font-size: 15px;
 }
 
-.revenue-range-window strong {
-  font-family: var(--font-mono);
-  font-size: 14px;
+.rfi-select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 34px;
+  padding: 0 32px 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  min-width: 120px;
 }
 
-.revenue-range-arrow {
+.rfi-select:hover,
+.rfi-select:focus {
+  border-color: var(--border-hover);
+  background: var(--surface-3);
+  outline: none;
+}
+
+.rfi-select-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
   color: var(--muted);
-  font-weight: 800;
 }
 
-.revenue-range-meta {
-  margin-top: 10px;
+/* Segmented range control */
+.rfi-segments {
   display: flex;
-  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.rfi-seg {
+  height: 34px;
+  padding: 0 13px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.rfi-seg:last-child {
+  border-right: none;
+}
+
+.rfi-seg:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.rfi-seg.is-active {
+  background: rgba(196, 145, 42, 0.15);
+  color: var(--primary-light);
+}
+
+/* Window date display */
+.rfi-window {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.rfi-window-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rfi-window-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary-light);
+  background: var(--primary-100);
+  padding: 1px 6px;
+  border-radius: 99px;
+}
+
+/* Custom range expander */
+.rfi-custom {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.rfi-custom-field {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
-.revenue-range-meta span {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: var(--surface-3);
-  border: 1px solid var(--border);
-  font-size: 12px;
+.rfi-month-select {
+  min-width: 160px;
+}
+
+/* Keep old class for backwards compat */
+.revenue-filter-label {
+  font-size: 10px;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--muted);
 }
 
-.premium-range-chip {
-  min-width: 56px;
-  min-height: 40px;
-  border-radius: 12px;
-  padding: 9px 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-
-.premium-range-chip.active {
-  background: rgba(196, 145, 42, 0.14);
-  color: #DBA84A;
-  border-color: rgba(196, 145, 42, 0.4);
-  box-shadow: none;
-}
-
-.revenue-custom-range-panel {
-  margin-top: 2px;
-}
-
-.revenue-custom-inline {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) 40px minmax(220px, 1fr) minmax(260px, 0.9fr);
-  gap: 12px;
-  align-items: end;
-}
-
-.revenue-custom-field,
-.revenue-custom-summary {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  border-radius: var(--radius);
-  padding: 13px 15px;
-  min-height: 80px;
-}
-
-.revenue-month-select {
-  width: 100%;
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-3);
-  padding: 11px 13px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.revenue-custom-divider {
-  height: 44px;
-  display: grid;
-  place-items: center;
-  font-size: 20px;
-  color: var(--muted);
-  font-weight: 800;
-}
-
-.revenue-custom-summary-value {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-}
+.premium-range-chip { display: none; }
+.revenue-range-window { display: none; }
 
 .range-summary-card {
   display: flex;
