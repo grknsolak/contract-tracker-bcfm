@@ -2646,28 +2646,9 @@ textarea {
   font-size: 20px;
 }
 
-.seg-podium-bar-track {
-  width: 72%;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--surface-3);
-  overflow: hidden;
-  margin-top: 6px;
-}
-
-.seg-podium-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.7s cubic-bezier(0.16,1,0.3,1);
-}
-
-.seg-podium-pct {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
-}
+.seg-podium-bar-track,
+.seg-podium-bar-fill,
+.seg-podium-pct { display: none; }
 
 /* no base block any more */
 .seg-podium-base { display: none; }
@@ -2687,7 +2668,7 @@ textarea {
 .seg-rank-list-header,
 .seg-rank-row-inner {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr) 260px 160px;
+  grid-template-columns: 56px minmax(0, 1fr) 72px 180px;
   align-items: center;
   padding: 0 24px;
   gap: 0;
@@ -2762,26 +2743,48 @@ textarea {
   color: var(--text-secondary);
 }
 
-.seg-rank-bar-wrap {
+/* ── Score ring (replaces bar) ── */
+.seg-rank-score {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
-.seg-rank-bar-track {
-  flex: 1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--surface-3);
-  overflow: hidden;
+.seg-score-ring {
+  display: block;
+  flex-shrink: 0;
 }
 
-.seg-rank-bar-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+.seg-ring-arc {
+  transition: stroke-dasharray 0.7s cubic-bezier(0.16,1,0.3,1);
 }
 
+.seg-ring-pct {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Podium ring wrap */
+.seg-podium-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.seg-podium-ring-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+/* Remove old bar classes gracefully */
+.seg-rank-bar-wrap { display: none; }
 .seg-rank-pct {
   font-family: var(--font-mono);
   font-size: 10px;

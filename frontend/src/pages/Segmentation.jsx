@@ -20,6 +20,38 @@ function getTier(rank) {
   return TIER.find((t) => rank >= t.min && rank <= t.max) || TIER[TIER.length - 1];
 }
 
+// ── Score Ring (SVG donut) ───────────────────────────────────────────────────
+function ScoreRing({ pct, color, size = 54 }) {
+  const cx   = size / 2;
+  const r    = cx - 7;
+  const circ = 2 * Math.PI * r;
+  const dash = circ * (pct / 100);
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="seg-score-ring">
+      {/* Track */}
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke="var(--border)" strokeWidth="4" />
+      {/* Arc */}
+      <circle
+        cx={cx} cy={cx} r={r}
+        fill="none"
+        stroke={color}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ - dash}`}
+        strokeDashoffset={0}
+        transform={`rotate(-90 ${cx} ${cx})`}
+        className="seg-ring-arc"
+      />
+      {/* Percentage text */}
+      <text x={cx} y={cx + 1} textAnchor="middle" dominantBaseline="middle"
+        className="seg-ring-pct" fill={color}>
+        {pct}%
+      </text>
+    </svg>
+  );
+}
+
 // Crown / Medal icons
 function CrownIcon({ size = 16, color }) {
   return (
@@ -40,9 +72,9 @@ function MedalIcon({ rank }) {
 }
 
 // Podium block for top-3
-function PodiumCard({ contract, rank, maxValue, onNavigate }) {
+function PodiumCard({ contract, rank, totalValue, onNavigate }) {
   const tier    = getTier(rank);
-  const pct     = maxValue ? Math.round((contract.usdValue / maxValue) * 100) : 0;
+  const pct     = totalValue ? Math.round((contract.usdValue / totalValue) * 100) : 0;
   const heights = { 1: 160, 2: 126, 3: 108 };
   const h       = heights[rank] || 100;
 
@@ -74,11 +106,11 @@ function PodiumCard({ contract, rank, maxValue, onNavigate }) {
         {formatCurrency(contract.value, contract.currency)}
       </div>
 
-      {/* Relative bar */}
-      <div className="seg-podium-bar-track">
-        <div className="seg-podium-bar-fill" style={{ width: `${pct}%`, background: tier.color }} />
+      {/* Score ring */}
+      <div className="seg-podium-ring-wrap">
+        <ScoreRing pct={pct} color={tier.color} size={60} />
+        <span className="seg-podium-ring-label" style={{ color: "var(--text-secondary)" }}>of total pool</span>
       </div>
-      <div className="seg-podium-pct" style={{ color: tier.color }}>{pct}%</div>
 
       {/* Podium base */}
       <div className="seg-podium-base" style={{ height: `var(--podium-h)`, background: `${tier.color}18`, borderTop: `2px solid ${tier.color}50` }}>
@@ -89,9 +121,9 @@ function PodiumCard({ contract, rank, maxValue, onNavigate }) {
 }
 
 // Rank row for #4–10
-function RankRow({ contract, rank, maxValue, onNavigate }) {
+function RankRow({ contract, rank, totalValue, onNavigate }) {
   const tier = getTier(rank);
-  const pct  = maxValue ? Math.round((contract.usdValue / maxValue) * 100) : 0;
+  const pct  = totalValue ? Math.round((contract.usdValue / totalValue) * 100) : 0;
 
   return (
     <button
@@ -115,11 +147,8 @@ function RankRow({ contract, rank, maxValue, onNavigate }) {
           </span>
         </div>
 
-        <div className="seg-rank-bar-wrap">
-          <div className="seg-rank-bar-track">
-            <div className="seg-rank-bar-fill" style={{ width: `${pct}%`, background: tier.color }} />
-          </div>
-          <span className="seg-rank-pct">{pct}%</span>
+        <div className="seg-rank-score">
+          <ScoreRing pct={pct} color={tier.color} size={52} />
         </div>
 
         <div className="seg-rank-value">
@@ -225,7 +254,7 @@ export default function Segmentation({ contracts, onNavigate }) {
                     key={contract.id}
                     contract={contract}
                     rank={rank}
-                    maxValue={maxValue}
+                    totalValue={totalValue}
                     onNavigate={onNavigate}
                   />
                 );
@@ -247,7 +276,7 @@ export default function Segmentation({ contracts, onNavigate }) {
                   key={contract.id}
                   contract={contract}
                   rank={i + 4}
-                  maxValue={maxValue}
+                  totalValue={totalValue}
                   onNavigate={onNavigate}
                 />
               ))}
