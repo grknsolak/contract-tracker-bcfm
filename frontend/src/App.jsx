@@ -10,6 +10,7 @@ import Segmentation from "./pages/Segmentation";
 import RevenueDashboard from "./pages/RevenueDashboard";
 import Pipelines from "./pages/Pipelines";
 import Settings from "./pages/Settings";
+import Executive from "./pages/Executive";
 import Login from "./Login";
 import { contractsSeed, activitySeed } from "./data/sampleData";
 import { useHashRoute } from "./hooks/useHashRoute";
@@ -118,6 +119,8 @@ export default function App() {
     content = <Segmentation contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "pipelines") {
     content = <Pipelines contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
+  } else if (route.name === "executive") {
+    content = <Executive contracts={contracts} usdRate={usdRate} onNavigate={navigate} />;
   } else if (route.name === "alerts") {
     content = <Alerts contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "contracts") {

@@ -5150,6 +5150,476 @@ textarea {
 }
 
 /* ═══════════════════════════════════════════════════
+   EXECUTIVE / TEAMS OVERVIEW PAGE
+═══════════════════════════════════════════════════ */
+.exec-page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.exec-header-meta {
+  display: flex;
+  align-items: flex-end;
+}
+
+.exec-header-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* KPI strip */
+.exec-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.exec-kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.exec-kpi--success { border-color: rgba(34,195,116,0.2); }
+.exec-kpi--primary { border-color: rgba(196,145,42,0.25); }
+.exec-kpi--danger  { border-color: rgba(232,64,64,0.2); }
+
+.exec-kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+
+.exec-kpi--success .exec-kpi-value { color: var(--success); }
+.exec-kpi--primary .exec-kpi-value { color: var(--primary-light); }
+.exec-kpi--danger  .exec-kpi-value { color: var(--danger-light); }
+
+.exec-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.exec-kpi-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Section title */
+.exec-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  margin-bottom: -16px;
+}
+
+/* Team cards grid */
+.exec-team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.exec-team-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.exec-team-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Card header */
+.exec-team-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exec-team-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exec-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid;
+  flex-shrink: 0;
+  letter-spacing: -0.3px;
+}
+
+.exec-team-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.exec-team-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  letter-spacing: -0.3px;
+}
+
+/* Trend chip */
+.exec-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.exec-trend--up {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.exec-trend--down {
+  color: var(--danger-light);
+  background: var(--danger-bg);
+}
+
+/* Portfolio % bar */
+.exec-pct-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.exec-hbar-track {
+  width: 100%;
+  background: var(--surface-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.exec-hbar-fill {
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.exec-pct-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Metrics row */
+.exec-metrics-row {
+  display: flex;
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 0;
+}
+
+.exec-metric-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.exec-metric-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  font-family: var(--font-mono);
+  letter-spacing: -0.3px;
+}
+
+.exec-metric-key {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.exec-metric-sep {
+  width: 1px;
+  height: 28px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Tier chips */
+.exec-tiers {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.exec-tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.exec-tier-chip strong {
+  font-weight: 700;
+}
+
+/* Status chips */
+.exec-status-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 22px;
+}
+
+.exec-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.exec-status-chip--danger {
+  color: var(--danger-light);
+  background: var(--danger-bg);
+}
+
+.exec-status-chip--info {
+  color: var(--info);
+  background: var(--info-bg);
+}
+
+.exec-status-chip--muted {
+  color: var(--text-secondary);
+  background: var(--surface-3);
+}
+
+/* Top customer row */
+.exec-top-customer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--primary);
+}
+
+.exec-top-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exec-top-val {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* Charts row */
+.exec-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.exec-chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 22px 18px;
+}
+
+.exec-chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.exec-chart-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 18px;
+}
+
+.exec-chart-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.exec-chart-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 52px;
+  align-items: center;
+  gap: 10px;
+}
+
+.exec-chart-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exec-chart-bar-track {
+  height: 7px;
+  background: var(--surface-3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.exec-chart-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.exec-chart-bar-val {
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Risk matrix */
+.exec-matrix-card {
+  grid-column: 1 / -1;
+}
+
+.exec-matrix-body {
+  position: relative;
+  height: 220px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.exec-matrix-grid {
+  position: absolute;
+  inset: 0;
+}
+
+.exec-matrix-vline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+  transform: translateX(-50%);
+}
+
+.exec-matrix-hline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+  transform: translateY(50%);
+}
+
+.exec-matrix-qlabel {
+  position: absolute;
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+.exec-bubble {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transform: translate(-50%, 50%);
+  transition: transform var(--transition), box-shadow var(--transition);
+  z-index: 2;
+}
+
+.exec-bubble:hover {
+  transform: translate(-50%, 50%) scale(1.15);
+  box-shadow: 0 0 0 4px rgba(255,255,255,0.08);
+  z-index: 3;
+}
+
+.exec-bubble-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .exec-kpi-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .exec-team-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 750px) {
+  .exec-kpi-strip { grid-template-columns: repeat(2, 1fr); }
+  .exec-team-grid { grid-template-columns: 1fr; }
+  .exec-charts-row { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════
    SIDEBAR USER FOOTER
 ═══════════════════════════════════════════════════ */
 .sidebar-user {
