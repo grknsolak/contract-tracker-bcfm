@@ -781,15 +781,22 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                         </div>
                       ) : null}
                     </div>
-                    <div className="scope-tags">
+                    <div className="scope-chips">
                       {(contract.scopes || []).length === 0 ? (
-                        <span className="muted">-</span>
+                        <span className="muted">—</span>
                       ) : (
-                        (contract.scopes || []).map((scope) => (
-                          <span key={scope} className="tag">
-                            {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
-                          </span>
-                        ))
+                        <>
+                          {(contract.scopes || []).slice(0, 3).map((scope) => (
+                            <span key={scope} className="scope-chip">
+                              {scope === "Other" && contract.otherScopeText ? contract.otherScopeText : scope}
+                            </span>
+                          ))}
+                          {(contract.scopes || []).length > 3 && (
+                            <span className="scope-chip scope-chip-more">
+                              +{(contract.scopes || []).length - 3}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                     <div>
