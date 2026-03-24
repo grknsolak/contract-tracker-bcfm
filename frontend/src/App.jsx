@@ -21,12 +21,23 @@ export default function App() {
   // ── Theme ──────────────────────────────────────────
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
 
+  // ── Global USD Rate ─────────────────────────────────
+  const [usdRate, setUsdRate] = useState(() => parseFloat(localStorage.getItem("usdRate")) || 32);
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("theme", theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
+  const updateUsdRate = (rate) => {
+    const parsed = parseFloat(rate);
+    if (!isNaN(parsed) && parsed > 0) {
+      setUsdRate(parsed);
+      localStorage.setItem("usdRate", parsed);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -48,7 +59,7 @@ export default function App() {
   let content = null;
 
   if (route.name === "customers") {
-    content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} />;
+    content = <Customers contracts={contracts} setContracts={setContracts} onNavigate={navigate} route={route} usdRate={usdRate} onUsdRateChange={updateUsdRate} />;
   } else if (route.name === "revenue") {
     content = <RevenueDashboard contracts={contracts} />;
   } else if (route.name === "segmentation") {

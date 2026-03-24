@@ -109,7 +109,7 @@ function FieldError({ error }) {
   return <div className="field-error-message">{error}</div>;
 }
 
-export default function Customers({ contracts, setContracts, onNavigate, route }) {
+export default function Customers({ contracts, setContracts, onNavigate, route, usdRate = 32, onUsdRateChange }) {
   const [search, setSearch] = useState("");
   const [stageFilter, setStageFilter] = useState("All");
   const [sortBy, setSortBy] = useState("recent");
@@ -718,7 +718,21 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
               <option value="team">Team</option>
             </select>
           </div>
-          <div className="filter-actions">
+          <div className="filter-actions" style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
+            <div className="usd-rate-widget">
+              <span className="usd-rate-widget-label">1 USD</span>
+              <span className="usd-rate-widget-eq">=</span>
+              <input
+                type="number"
+                className="usd-rate-widget-input"
+                value={usdRate}
+                min="1"
+                step="0.5"
+                onChange={(e) => onUsdRateChange?.(e.target.value)}
+                title="Dolar kuru güncelle"
+              />
+              <span className="usd-rate-widget-currency">₺</span>
+            </div>
             <button className="btn btn-primary" onClick={openNew}>Add customer</button>
           </div>
         </div>
@@ -770,14 +784,17 @@ export default function Customers({ contracts, setContracts, onNavigate, route }
                       {remaining < 0 ? "Churn" : `${remaining} days`}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 600 }}>{formatCurrency(contract.value, contract.currency)}</div>
-                      {contract.currency === "TL" && contract.valueUsd != null && (
-                        <div className="muted" style={{ fontSize: 12 }}>≈ {formatCurrency(contract.valueUsd, "USD")}</div>
+                      <div style={{ fontWeight: 600, fontFamily: "var(--font-mono)", letterSpacing: "-0.01em" }}>
+                        {formatCurrency(contract.value, contract.currency)}
+                      </div>
+                      {contract.currency === "TL" && usdRate > 0 && (
+                        <div className="value-usd-equiv">
+                          ≈ {formatCurrency(Math.round(contract.value / usdRate), "USD")}
+                        </div>
                       )}
                       {budgetSummary.deltaTotal !== 0 ? (
-                        <div className={budgetSummary.deltaTotal > 0 ? "text-success" : "text-danger"} style={{ fontSize: 12 }}>
-                          Renewal {budgetSummary.deltaTotal > 0 ? "+" : ""}
-                          {formatCurrency(budgetSummary.deltaTotal, contract.currency)}
+                        <div className={budgetSummary.deltaTotal > 0 ? "text-success" : "text-danger"} style={{ fontSize: 11 }}>
+                          {budgetSummary.deltaTotal > 0 ? "+" : ""}{formatCurrency(budgetSummary.deltaTotal, contract.currency)}
                         </div>
                       ) : null}
                     </div>
