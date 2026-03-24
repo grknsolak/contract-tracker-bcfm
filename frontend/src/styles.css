@@ -553,6 +553,7 @@ a {
 .app-main {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-width: 0;
   height: 100vh;
   overflow-y: auto;   /* scroll happens here, not on body */
@@ -789,7 +790,7 @@ a {
 /* ─── KPI Stat Cards ─────────────────────────────── */
 .stat-cards-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
 }
 
@@ -975,7 +976,7 @@ a {
 }
 
 .page-grid-operational {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .operational-stat {
@@ -4363,10 +4364,12 @@ textarea {
 
 @media (max-width: 1100px) {
   .app-shell {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .sidebar {
+    width: 100% !important;
+    height: auto !important;
     border-right: none;
     border-bottom: 1px solid var(--sidebar-border);
     flex-direction: row;
@@ -4374,7 +4377,11 @@ textarea {
     align-items: center;
     padding: 10px 14px;
     gap: 8px;
+    overflow-y: visible;
+    overflow-x: hidden;
   }
+
+  .sidebar-toggle-btn { display: none; }
 
   .sidebar::before { display: none; }
 
@@ -4447,6 +4454,30 @@ textarea {
   .table-row {
     grid-template-columns: 1.5fr 1.2fr 1fr 1fr;
   }
+
+  .app-main {
+    height: calc(100vh - 60px); /* account for horizontal sidebar */
+  }
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+    gap: 6px;
+  }
+
+  .settings-save-bar {
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .exec-kpi-strip { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .exec-team-grid { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .exec-charts-row { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {
@@ -4505,10 +4536,6 @@ textarea {
     display: none;
   }
 
-  .stat-cards-row { grid-template-columns: repeat(2, 1fr); }
-
-  .page-grid-operational { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-
   .app-content { padding: 18px 14px 40px; }
 
   .topbar { flex-wrap: wrap; gap: 10px; }
@@ -4518,6 +4545,10 @@ textarea {
   .search-shell { flex: 1; }
 
   .search-field { min-width: 0; }
+
+  .dashboard-headline-grid { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-quarter-grid  { grid-template-columns: repeat(2, 1fr); }
+  .exec-kpi-strip          { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ─── Dashboard (codex) ─────────────────────────── */
@@ -4578,7 +4609,7 @@ textarea {
 
 .dashboard-headline-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
 }
 
@@ -4898,7 +4929,7 @@ textarea {
 
 .dashboard-quarter-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 10px;
 }
 
@@ -5274,7 +5305,7 @@ textarea {
 /* KPI strip */
 .exec-kpi-strip {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
 }
 
@@ -5330,7 +5361,7 @@ textarea {
 /* Team cards grid */
 .exec-team-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 14px;
 }
 
@@ -5566,7 +5597,7 @@ textarea {
 /* Charts row */
 .exec-charts-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 14px;
 }
 
@@ -6663,7 +6694,7 @@ textarea {
 
 .um-add-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
