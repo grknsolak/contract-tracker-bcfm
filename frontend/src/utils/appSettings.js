@@ -5,7 +5,12 @@
 const STORAGE_KEY = "appSettings";
 
 export const DEFAULT_SETTINGS = {
-  companyName: "",
+  companyName: "BCFM",
+  tribes: [
+    { id: "enterprise",  name: "Enterprise",     teams: ["Atlas", "Team B"], color: "#C4912A" },
+    { id: "growth",      name: "Public & Growth", teams: ["Team A", "Mando"], color: "#3B82F6" },
+    { id: "smb",         name: "SMB & Digital",  teams: ["Apex", "Solid"],   color: "#10B981" },
+  ],
   teams: ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"],
   scopes: ["DaaS (Fix)", "7/24 Support", "Outsource", "Man/Day (Fix)", "DaaS (T&M)", "Man/Day (T&M)", "Other"],
   renewalWindowDays: 90,

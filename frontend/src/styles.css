@@ -7572,3 +7572,337 @@ textarea {
   .nl-card-header { flex-direction: column; }
   .nl-card-meta { justify-content: flex-start; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   TRIBES PAGE
+   ═══════════════════════════════════════════════════════════ */
+
+.tribes-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0;
+}
+
+.tribes-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tribes-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tribes-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+/* KPI strip */
+.tribes-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.tribes-kpi-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tribes-kpi-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.tribes-kpi-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* Tree */
+.tribes-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Root node */
+.tribes-root-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px 10px 0 0;
+  border-bottom: none;
+}
+
+.tribes-root-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(59,130,246,.15);
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.tribes-root-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tribes-stat-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* Root children container */
+.tribes-root-children {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Tribe node */
+.tribe-node {
+  border-bottom: 1px solid var(--border);
+}
+.tribe-node:last-child {
+  border-bottom: none;
+}
+
+.tribe-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .15s;
+  flex-wrap: wrap;
+}
+.tribe-node-header:hover {
+  background: var(--hover-bg);
+}
+
+.tribe-node-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tribe-node-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tribe-node-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tribe-node-body {
+  padding: 0 0 0 32px;
+  background: var(--bg-secondary, rgba(0,0,0,.04));
+  border-top: 1px solid var(--border);
+}
+
+/* Tribe stat pills */
+.tribe-stat-pill {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+.tribe-stat-pill--active {
+  background: rgba(16,185,129,.12);
+  color: #10b981;
+  border-color: rgba(16,185,129,.25);
+}
+.tribe-stat-pill--val {
+  background: rgba(59,130,246,.1);
+  color: #3b82f6;
+  border-color: rgba(59,130,246,.2);
+}
+
+/* Count badges */
+.tribe-count-badge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--badge-bg, rgba(100,116,139,.15));
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.tribe-count-badge--lg {
+  font-size: 12px;
+}
+.tribes-count-badge--root {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(59,130,246,.12);
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Team node */
+.tribe-team-node {
+  border-bottom: 1px solid var(--border);
+}
+.tribe-team-node:last-child {
+  border-bottom: none;
+}
+
+.tribe-team-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  cursor: pointer;
+  user-select: none;
+  border-left: 3px solid transparent;
+  transition: background .15s;
+  flex-wrap: wrap;
+}
+.tribe-team-header:hover {
+  background: var(--hover-bg);
+}
+
+.tribe-team-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tribe-team-stats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tribe-stat-chip {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.tribe-stat-chip.tribe-stat-active {
+  background: rgba(16,185,129,.1);
+  color: #10b981;
+  border-color: rgba(16,185,129,.2);
+}
+
+.tribe-team-body {
+  padding: 4px 0 4px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tribe-empty-team {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 0;
+  font-style: italic;
+}
+
+/* Customer leaf */
+.tribe-leaf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+  flex-wrap: wrap;
+}
+.tribe-leaf:hover {
+  background: var(--hover-bg);
+}
+
+.tribe-leaf-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tribe-leaf-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tribe-leaf-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Chevron */
+.tribe-chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: transform .2s;
+}
+.tribe-chevron--closed {
+  transform: rotate(-90deg);
+}
+.tribe-chevron--lg svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Unassigned */
+.tribe-node--unassigned .tribe-node-header {
+  cursor: default;
+}
+.tribe-node--unassigned .tribe-node-header:hover {
+  background: transparent;
+}
+

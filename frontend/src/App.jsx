@@ -12,6 +12,7 @@ import Pipelines from "./pages/Pipelines";
 import Settings from "./pages/Settings";
 import Executive from "./pages/Executive";
 import NotificationLog from "./pages/NotificationLog";
+import Tribes from "./pages/Tribes";
 import Login from "./Login";
 import { contractsSeed, activitySeed } from "./data/sampleData";
 import { useHashRoute } from "./hooks/useHashRoute";
@@ -122,6 +123,8 @@ export default function App() {
     content = <Pipelines contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
   } else if (route.name === "executive") {
     content = <Executive contracts={contracts} usdRate={usdRate} onNavigate={navigate} />;
+  } else if (route.name === "tribes") {
+    content = <Tribes contracts={contracts} onNavigate={navigate} />;
   } else if (route.name === "notifications") {
     content = <NotificationLog highlightId={route.query?.id} />;
   } else if (route.name === "alerts") {

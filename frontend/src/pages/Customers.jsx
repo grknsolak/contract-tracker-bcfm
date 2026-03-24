@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { loadSettings } from "../utils/appSettings";
 import Card from "../components/Card";
 import Badge from "../components/Badge";
 import TierBadge from "../components/TierBadge";
@@ -119,6 +120,7 @@ const emptyForm = {
   customerName: "",
   contractName: "",
   owner: "",
+  tribe: "",
   team: "",
   durationType: "",
   startDate: "",
@@ -173,7 +175,9 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
   const [returnToContract, setReturnToContract] = useState(null);
-  const teamOptions = ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"];
+  const settings = useMemo(() => loadSettings(), []);
+  const tribeOptions = settings.tribes || [];
+  const allTeamOptions = settings.teams || ["Team A", "Team B", "Atlas", "Apex", "Solid", "Mando"];
 
   const getStageOptionsForForm = (draft) => {
     const normalizedCustomer = String(draft.customerName || "").trim().toLowerCase();
@@ -286,6 +290,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
       ...contract,
       value: contract.value ?? "",
       currency: contract.currency || "USD",
+      tribe: contract.tribe || "",
       team: contract.team || "",
       durationType: contract.durationType || inferDurationType(contract.startDate, contract.endDate),
       stage: normalizeStage(contract.stage),
@@ -631,8 +636,24 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
     </div>
   );
 
-  const renderDetailsStep = () => (
+  const renderDetailsStep = () => {
+    const selectedTribe = tribeOptions.find((t) => t.id === formState.tribe);
+    const filteredTeams = selectedTribe ? selectedTribe.teams : allTeamOptions;
+
+    return (
     <div className="form-grid">
+      <div className="field">
+        <label>Tribe</label>
+        <select
+          value={formState.tribe}
+          onChange={(e) => setFormState({ ...formState, tribe: e.target.value, team: "" })}
+        >
+          <option value="">Select tribe</option>
+          {tribeOptions.map((tribe) => (
+            <option key={tribe.id} value={tribe.id}>{tribe.name}</option>
+          ))}
+        </select>
+      </div>
       <div className="field">
         <label>Team</label>
         <select
@@ -640,7 +661,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
           onChange={(e) => setFormState({ ...formState, team: e.target.value })}
         >
           <option value="">Select team</option>
-          {teamOptions.map((team) => (
+          {filteredTeams.map((team) => (
             <option key={team} value={team}>{team}</option>
           ))}
         </select>
@@ -656,6 +677,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
       </div>
     </div>
   );
+  };
 
   const renderReviewStep = () => {
     const totalValue = calculateScopeTotal(formState.scopePrices);
@@ -692,6 +714,14 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
             <div>
               <div className="muted" style={{ fontSize: 12 }}>Owner</div>
               <div style={{ fontWeight: 700 }}>{formState.owner || "-"}</div>
+            </div>
+          </div>
+          <div className="scope-breakdown-item">
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>Tribe</div>
+              <div style={{ fontWeight: 700 }}>
+                {tribeOptions.find((t) => t.id === formState.tribe)?.name || "-"}
+              </div>
             </div>
           </div>
           <div className="scope-breakdown-item">
