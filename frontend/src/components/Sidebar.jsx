@@ -98,13 +98,6 @@ export default function Sidebar({ route, onNavigate }) {
           </button>
         ))}
       </nav>
-      <div className="sidebar-footer">
-        <div className="sidebar-card">
-          <div className="sidebar-card-title">Need help?</div>
-          <p className="sidebar-card-text">Check documentation or contact support for assistance.</p>
-          <button className="btn btn-sm btn-primary" style={{ width: "100%", fontSize: 13 }}>View docs</button>
-        </div>
-      </div>
     </aside>
   );
 }
