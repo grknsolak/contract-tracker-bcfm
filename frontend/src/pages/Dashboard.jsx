@@ -296,7 +296,7 @@ export default function Dashboard({ contracts, onNavigate }) {
             <div className="ts-company-header">
               <GaugeChart value={companyAvgRate} maxValue={50} />
               <div className="ts-company-info">
-                <span className="ts-company-label">Şirket geneli ortalama zam</span>
+                <span className="ts-company-label">Sözleşme yenileme oranı</span>
                 <span className="ts-company-sub">
                   {teamRows.filter((t) => t.teamAvgRate > 0).length} takım ·{" "}
                   {contracts.length} sözleşme

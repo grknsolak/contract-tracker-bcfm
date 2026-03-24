@@ -3910,19 +3910,22 @@ textarea {
 /* Company-wide header */
 .ts-company-header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 20px 16px 16px;
   margin-bottom: 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
+  text-align: center;
 }
 
 .ts-company-info {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  align-items: center;
 }
 
 .ts-company-label {
