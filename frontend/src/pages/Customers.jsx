@@ -759,7 +759,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
             <div>Value</div>
             <div>Scopes</div>
             <div>Stage</div>
-            <div>Renewal</div>
+            <div>Tier</div>
             <div>Actions</div>
           </div>
           <div className="table-body">
@@ -784,10 +784,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                 return (
                   <div key={contract.id} className="table-row">
                     <div className="clickable" onClick={() => onNavigate(`/contracts/${contract.id}`)}>
-                      <div className="primary-text" style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        {contract.customerName}
-                        <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />
-                      </div>
+                      <div className="primary-text">{contract.customerName}</div>
                       <div className="muted">Owner: {contract.owner}</div>
                     </div>
                     <div>{contract.contractName}</div>
@@ -834,9 +831,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                       <Badge tone={meta.tone}>{meta.label}</Badge>
                     </div>
                     <div>
-                      <Badge tone={renewalTone[contract.renewalStatus] || "neutral"}>
-                        {contract.renewalStatus}
-                      </Badge>
+                      <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />
                     </div>
                     <div className="row-actions">
                       <button className="btn btn-ghost" onClick={() => openEdit(contract)}>Edit</button>
