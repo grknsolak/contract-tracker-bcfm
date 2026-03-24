@@ -112,13 +112,19 @@ export default function Sidebar({ route, onNavigate, user, onLogout }) {
       {/* User footer */}
       {user && (
         <div className="sidebar-user">
-          <div className="sidebar-user-avatar" aria-hidden="true">
-            {user.initials || user.name?.slice(0, 2).toUpperCase() || "U"}
-          </div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">{user.name}</span>
-            <span className="sidebar-user-role">{user.role}</span>
-          </div>
+          <button
+            className="sidebar-user-profile-btn"
+            onClick={() => onNavigate("/settings?section=users")}
+            title="Profil & Kullanıcı Ayarları"
+          >
+            <div className="sidebar-user-avatar" aria-hidden="true">
+              {user.initials || user.name?.slice(0, 2).toUpperCase() || "U"}
+            </div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">{user.name}</span>
+              <span className="sidebar-user-role">{user.role}</span>
+            </div>
+          </button>
           <button
             className="sidebar-logout-btn"
             onClick={onLogout}

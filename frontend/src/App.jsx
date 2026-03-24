@@ -124,7 +124,7 @@ export default function App() {
     const contract = contracts.find((item) => item.id === route.id);
     content = <ContractDetails contract={contract} contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
   } else if (route.name === "settings") {
-    content = <Settings settings={settings} onSettingsChange={setSettings} theme={theme} toggleTheme={toggleTheme} />;
+    content = <Settings settings={settings} onSettingsChange={setSettings} theme={theme} toggleTheme={toggleTheme} currentUser={user} initialSection={route.query?.section} />;
   } else {
     content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} />;
   }

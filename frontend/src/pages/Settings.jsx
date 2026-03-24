@@ -1,30 +1,56 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DEFAULT_SETTINGS, saveSettings } from "../utils/appSettings";
-import { toastSuccess } from "../components/Toast";
+import {
+  loadUsers,
+  addUser,
+  toggleUserEnabled,
+  setUserRole,
+  deleteUser,
+} from "../utils/auth";
+import { toastSuccess, toastError } from "../components/Toast";
+
+const ROLES = ["Admin", "Manager", "Viewer"];
+
+const ROLE_META = {
+  Admin:   { color: "#C4912A", bg: "rgba(196,145,42,0.12)",   border: "rgba(196,145,42,0.3)"  },
+  Manager: { color: "#5AAFDE", bg: "rgba(90,175,222,0.1)",    border: "rgba(90,175,222,0.28)" },
+  Viewer:  { color: "#6EE7B7", bg: "rgba(110,231,183,0.1)",   border: "rgba(110,231,183,0.28)" },
+};
 
 const SECTIONS = [
   {
-    id: "general", label: "General",
-    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
-  },
-  {
-    id: "teams", label: "Teams",
+    id: "users",
+    label: "Users",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
   },
   {
-    id: "scopes", label: "Service Scopes",
+    id: "general",
+    label: "General",
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+  },
+  {
+    id: "teams",
+    label: "Teams",
+    icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+  },
+  {
+    id: "scopes",
+    label: "Service Scopes",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
   },
   {
-    id: "pipeline", label: "Pipeline",
+    id: "pipeline",
+    label: "Pipeline",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
   },
   {
-    id: "tiers", label: "Customer Tiers",
+    id: "tiers",
+    label: "Customer Tiers",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   },
   {
-    id: "appearance", label: "Appearance",
+    id: "appearance",
+    label: "Appearance",
     icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
   },
 ];
@@ -71,7 +97,320 @@ function TagListEditor({ items, onChange, placeholder = "Add item…", emptyText
   );
 }
 
-// ── Section panels ────────────────────────────────────────────────────────────
+// ── Role badge ───────────────────────────────────────────────────────────────
+function RoleBadge({ role }) {
+  const m = ROLE_META[role] || ROLE_META.Viewer;
+  return (
+    <span
+      className="um-role-badge"
+      style={{ color: m.color, background: m.bg, borderColor: m.border }}
+    >
+      {role}
+    </span>
+  );
+}
+
+// ── Toggle switch ────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange, disabled }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={checked}
+      className={`um-toggle${checked ? " um-toggle--on" : ""}${disabled ? " um-toggle--disabled" : ""}`}
+      onClick={() => !disabled && onChange(!checked)}
+      disabled={disabled}
+      type="button"
+    >
+      <span className="um-toggle-thumb" />
+    </button>
+  );
+}
+
+// ── Users panel ──────────────────────────────────────────────────────────────
+const BLANK_FORM = { name: "", email: "", password: "", role: "Viewer" };
+
+function UsersPanel({ currentUser }) {
+  const [users, setUsers] = useState(() => loadUsers());
+  const [form, setForm] = useState(BLANK_FORM);
+  const [formError, setFormError] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const isAdmin = currentUser?.role === "Admin";
+  const reload = () => setUsers(loadUsers());
+
+  const handleToggle = (id) => {
+    if (id === currentUser?.id) return; // can't disable yourself
+    toggleUserEnabled(id);
+    reload();
+    toastSuccess("Kullanıcı durumu güncellendi");
+  };
+
+  const handleRoleChange = (id, role) => {
+    setUserRole(id, role);
+    reload();
+    toastSuccess("Yetki güncellendi");
+  };
+
+  const handleDelete = (id) => {
+    if (id === currentUser?.id) return;
+    setDeletingId(id);
+  };
+
+  const confirmDelete = () => {
+    const ok = deleteUser(deletingId);
+    setDeletingId(null);
+    if (!ok) {
+      toastError("Son Admin kullanıcısı silinemez.");
+      return;
+    }
+    reload();
+    toastSuccess("Kullanıcı silindi");
+  };
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    setFormError("");
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
+      setFormError("Tüm alanlar zorunludur.");
+      return;
+    }
+    const result = addUser(form);
+    if (!result) {
+      setFormError("Bu e-posta adresi zaten kayıtlı.");
+      return;
+    }
+    reload();
+    setForm(BLANK_FORM);
+    setShowForm(false);
+    toastSuccess(`${result.name} eklendi`);
+  };
+
+  const PERM_TABLE = [
+    { action: "Sözleşme görüntüleme",    admin: true,  manager: true,  viewer: true  },
+    { action: "Sözleşme ekleme/düzenleme", admin: true,  manager: true,  viewer: false },
+    { action: "Müşteri yönetimi",          admin: true,  manager: true,  viewer: false },
+    { action: "Raporlar ve analizler",     admin: true,  manager: true,  viewer: true  },
+    { action: "Ayarlar (genel)",           admin: true,  manager: false, viewer: false },
+    { action: "Kullanıcı yönetimi",        admin: true,  manager: false, viewer: false },
+  ];
+
+  return (
+    <div className="settings-panel">
+      <div className="settings-panel-header">
+        <h3>Users &amp; Permissions</h3>
+        <p>Sisteme erişebilecek kullanıcıları ve yetkilerini yönetin.</p>
+      </div>
+
+      {/* User list */}
+      <div className="um-list">
+        {users.map((u) => {
+          const isSelf = u.id === currentUser?.id;
+          return (
+            <div key={u.id} className={`um-row${!u.enabled ? " um-row--disabled" : ""}`}>
+              {/* Avatar */}
+              <div className="um-avatar" style={ROLE_META[u.role]
+                ? { background: ROLE_META[u.role].bg, borderColor: ROLE_META[u.role].border, color: ROLE_META[u.role].color }
+                : {}}>
+                {u.initials || u.name?.slice(0, 2).toUpperCase()}
+              </div>
+
+              {/* Identity */}
+              <div className="um-identity">
+                <span className="um-name">
+                  {u.name}
+                  {isSelf && <span className="um-self-badge">siz</span>}
+                </span>
+                <span className="um-email">{u.email}</span>
+              </div>
+
+              {/* Role selector */}
+              <div className="um-role-wrap">
+                {isAdmin && !isSelf ? (
+                  <select
+                    className="um-role-select"
+                    value={u.role}
+                    onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                  >
+                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                ) : (
+                  <RoleBadge role={u.role} />
+                )}
+              </div>
+
+              {/* Status toggle */}
+              <div className="um-status">
+                <Toggle
+                  checked={u.enabled !== false}
+                  onChange={() => handleToggle(u.id)}
+                  disabled={!isAdmin || isSelf}
+                />
+                <span className="um-status-label">
+                  {u.enabled !== false ? "Aktif" : "Devre dışı"}
+                </span>
+              </div>
+
+              {/* Delete */}
+              {isAdmin && !isSelf && (
+                <button
+                  className="um-delete-btn"
+                  onClick={() => handleDelete(u.id)}
+                  title="Kullanıcıyı sil"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Add user */}
+      {isAdmin && (
+        <div className="um-add-wrap">
+          {!showForm ? (
+            <button className="um-add-trigger" onClick={() => setShowForm(true)}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Yeni kullanıcı ekle
+            </button>
+          ) : (
+            <form className="um-add-form" onSubmit={handleAdd}>
+              <div className="um-add-form-title">Yeni Kullanıcı</div>
+              <div className="um-add-grid">
+                <div className="settings-group">
+                  <label className="settings-label">Ad Soyad</label>
+                  <input
+                    className="settings-input"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="Ahmet Yılmaz"
+                    autoFocus
+                  />
+                </div>
+                <div className="settings-group">
+                  <label className="settings-label">E-posta</label>
+                  <input
+                    className="settings-input"
+                    type="email"
+                    value={form.email}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="ahmet@bcfm.com"
+                  />
+                </div>
+                <div className="settings-group">
+                  <label className="settings-label">Şifre</label>
+                  <input
+                    className="settings-input"
+                    type="password"
+                    value={form.password}
+                    onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div className="settings-group">
+                  <label className="settings-label">Yetki</label>
+                  <select
+                    className="settings-input"
+                    value={form.role}
+                    onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  >
+                    {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+              {formError && (
+                <div className="um-form-error">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  {formError}
+                </div>
+              )}
+              <div className="um-add-actions">
+                <button type="button" className="btn btn-light" onClick={() => { setShowForm(false); setForm(BLANK_FORM); setFormError(""); }}>
+                  İptal
+                </button>
+                <button type="submit" className="btn btn-primary">Kullanıcı Ekle</button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deletingId && (
+        <div className="um-confirm-overlay" onClick={() => setDeletingId(null)}>
+          <div className="um-confirm-card" onClick={(e) => e.stopPropagation()}>
+            <div className="um-confirm-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div className="um-confirm-text">
+              <strong>Kullanıcıyı sil</strong>
+              <span>Bu kullanıcı kalıcı olarak silinecek. Bu işlem geri alınamaz.</span>
+            </div>
+            <div className="um-confirm-actions">
+              <button className="btn btn-light" onClick={() => setDeletingId(null)}>İptal</button>
+              <button className="btn btn-danger" onClick={confirmDelete}>Sil</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permission matrix */}
+      <div className="um-perm-section">
+        <div className="um-perm-title">Yetki Matrisi</div>
+        <div className="um-perm-table">
+          <div className="um-perm-head">
+            <div />
+            {ROLES.map((r) => (
+              <div key={r} className="um-perm-col-head">
+                <RoleBadge role={r} />
+              </div>
+            ))}
+          </div>
+          {PERM_TABLE.map((row) => (
+            <div key={row.action} className="um-perm-row">
+              <div className="um-perm-action">{row.action}</div>
+              <div className="um-perm-cell">
+                {row.admin ? <CheckIcon /> : <XIcon />}
+              </div>
+              <div className="um-perm-cell">
+                {row.manager ? <CheckIcon /> : <XIcon />}
+              </div>
+              <div className="um-perm-cell">
+                {row.viewer ? <CheckIcon /> : <XIcon />}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#22C374" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+}
+function XIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  );
+}
+
+// ── Other section panels ──────────────────────────────────────────────────────
 function GeneralPanel({ settings, onChange }) {
   return (
     <div className="settings-panel">
@@ -251,10 +590,15 @@ function AppearancePanel({ theme, toggleTheme }) {
 }
 
 // ── Main Settings Page ───────────────────────────────────────────────────────
-export default function Settings({ settings, onSettingsChange, theme, toggleTheme }) {
-  const [activeSection, setActiveSection] = useState("general");
+export default function Settings({ settings, onSettingsChange, theme, toggleTheme, currentUser, initialSection }) {
+  const [activeSection, setActiveSection] = useState(initialSection || "users");
   const [local, setLocal] = useState({ ...settings });
   const [dirty, setDirty] = useState(false);
+
+  // Sync if initialSection changes (e.g. navigated from profile)
+  useEffect(() => {
+    if (initialSection) setActiveSection(initialSection);
+  }, [initialSection]);
 
   const update = (patch) => {
     setLocal((prev) => ({ ...prev, ...patch }));
@@ -275,6 +619,7 @@ export default function Settings({ settings, onSettingsChange, theme, toggleThem
 
   const renderContent = () => {
     switch (activeSection) {
+      case "users":      return <UsersPanel currentUser={currentUser} />;
       case "general":    return <GeneralPanel    settings={local} onChange={update} />;
       case "teams":      return <TeamsPanel      settings={local} onChange={update} />;
       case "scopes":     return <ScopesPanel     settings={local} onChange={update} />;
@@ -285,15 +630,17 @@ export default function Settings({ settings, onSettingsChange, theme, toggleThem
     }
   };
 
+  const isUserSection = activeSection === "users";
+
   return (
     <div className="page">
       <div className="details-header">
         <div>
           <div className="breadcrumb">System</div>
           <h2>Settings</h2>
-          <p className="muted">Manage teams, scopes, pipeline behaviour and appearance.</p>
+          <p className="muted">Manage users, teams, scopes, pipeline behaviour and appearance.</p>
         </div>
-        {dirty && (
+        {dirty && !isUserSection && (
           <div className="settings-save-bar">
             <button className="btn btn-light" onClick={reset}>Discard</button>
             <button className="btn btn-primary" onClick={save}>Save changes</button>

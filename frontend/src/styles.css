@@ -5221,6 +5221,25 @@ textarea {
   background: var(--danger-bg);
 }
 
+.sidebar-user-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
+  text-align: left;
+}
+
+.sidebar-user-profile-btn:hover {
+  opacity: 0.8;
+}
+
 /* ═══════════════════════════════════════════════════
    LOGIN PAGE
 ═══════════════════════════════════════════════════ */
@@ -5813,4 +5832,412 @@ textarea {
     flex-wrap: wrap;
     position: static;
   }
+}
+
+/* ═══════════════════════════════════════════════════
+   USER MANAGEMENT PANEL
+═══════════════════════════════════════════════════ */
+
+/* User list */
+.um-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.um-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 130px 110px 36px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition);
+}
+
+.um-row:hover {
+  border-color: var(--border-hover);
+}
+
+.um-row--disabled {
+  opacity: 0.5;
+}
+
+/* Avatar */
+.um-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Identity */
+.um-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.um-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.um-self-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--primary-50);
+  border: 1px solid rgba(196, 145, 42, 0.25);
+  color: var(--primary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.um-email {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Role */
+.um-role-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.um-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.um-role-select {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-body);
+  padding: 5px 8px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  width: 100%;
+}
+
+.um-role-select:focus {
+  border-color: var(--primary);
+}
+
+/* Status toggle */
+.um-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.um-status-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Toggle switch */
+.um-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), border-color var(--transition);
+  padding: 0;
+}
+
+.um-toggle--on {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.um-toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.um-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition);
+  display: block;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.um-toggle--on .um-toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* Delete button */
+.um-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+
+.um-delete-btn:hover {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* Add user trigger */
+.um-add-wrap {
+  margin-bottom: 28px;
+}
+
+.um-add-trigger {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+}
+
+.um-add-trigger:hover {
+  border-color: var(--primary);
+  color: var(--primary-light);
+  background: var(--primary-50);
+}
+
+/* Add user form */
+.um-add-form {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+}
+
+.um-add-form-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.um-add-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.um-form-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  background: var(--danger-bg);
+  border: 1px solid rgba(232, 64, 64, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--danger-light);
+  margin-bottom: 12px;
+}
+
+.um-add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Delete confirm overlay */
+.um-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.um-confirm-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.um-confirm-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--warning-bg);
+  border: 1px solid rgba(232, 134, 43, 0.2);
+  color: var(--warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.um-confirm-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.um-confirm-text strong {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.um-confirm-text span {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.um-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.btn-danger:hover {
+  background: var(--danger-light);
+}
+
+/* Permission matrix */
+.um-perm-section {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+
+.um-perm-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+
+.um-perm-table {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.um-perm-head,
+.um-perm-row {
+  display: grid;
+  grid-template-columns: 1fr repeat(3, 100px);
+  align-items: center;
+}
+
+.um-perm-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-3);
+}
+
+.um-perm-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.um-perm-row {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.um-perm-row:last-child {
+  border-bottom: none;
+}
+
+.um-perm-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.um-perm-action {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.um-perm-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
