@@ -1596,6 +1596,226 @@ a {
   box-shadow: none;
 }
 
+/* ─── Dual Month Picker (dmp) ───────────────────── */
+
+.dmp-team-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dmp-team-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+.dmp {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Preset strip */
+.dmp-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dmp-presets-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+.dmp-preset {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.dmp-preset:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.dmp-preset--active {
+  background: rgba(196,145,42,0.14);
+  color: var(--primary-light);
+  border-color: rgba(196,145,42,0.35);
+}
+
+.dmp-range-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: auto;
+}
+
+/* Dual calendar layout */
+.dmp-calendars {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.dmp-cal-sep {
+  background: var(--border);
+  height: 100%;
+  min-height: 180px;
+}
+
+/* Single calendar */
+.dmp-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dmp-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dmp-cal-year {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.dmp-nav {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.dmp-nav:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.dmp-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Month grid — 4 columns × 3 rows */
+.dmp-months-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+}
+
+.dmp-month {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.dmp-month-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.dmp-month:hover:not(.dmp-month--disabled) {
+  background: var(--surface-3);
+  border-color: var(--border-hover);
+}
+
+/* Range fill */
+.dmp-month--range {
+  background: rgba(196,145,42,0.1);
+  border-radius: 0;
+}
+
+.dmp-month--range .dmp-month-label {
+  color: var(--primary-light);
+}
+
+/* Start / End caps */
+.dmp-month--start,
+.dmp-month--end {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  border-radius: 8px !important;
+}
+
+.dmp-month--start .dmp-month-label,
+.dmp-month--end .dmp-month-label {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Today dot */
+.dmp-today-dot {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.dmp-month--start .dmp-today-dot,
+.dmp-month--end .dmp-today-dot {
+  background: rgba(255,255,255,0.7);
+}
+
+/* Disabled */
+.dmp-month--disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Light mode */
+[data-theme="light"] .dmp-month--range {
+  background: rgba(196,145,42,0.08);
+}
+
+[data-theme="light"] .dmp-month:hover:not(.dmp-month--disabled) {
+  background: var(--surface-2);
+}
+
 /* ─── Revenue Filter (rfi) ──────────────────────── */
 .revenue-filter-card {
   background: var(--surface);
