@@ -146,12 +146,13 @@ export default function RevenueStackedChart({
       >
         <defs>
           <linearGradient id={`${title.replace(/\s+/g, "-").toLowerCase()}-fill`} x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#4a7dff" stopOpacity="0.30" />
-            <stop offset="100%" stopColor="#4a7dff" stopOpacity="0.02" />
+            <stop offset="0%"   stopColor="#C4912A" stopOpacity="0.22" />
+            <stop offset="60%"  stopColor="#C4912A" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="#C4912A" stopOpacity="0.00" />
           </linearGradient>
           <linearGradient id={`${title.replace(/\s+/g, "-").toLowerCase()}-line`} x1="0" x2="1" y1="0" y2="0">
-            <stop offset="0%" stopColor="#2f5ef4" />
-            <stop offset="100%" stopColor="#6ea2ff" />
+            <stop offset="0%"   stopColor="#A87020" />
+            <stop offset="100%" stopColor="#E8B55A" />
           </linearGradient>
         </defs>
 
@@ -230,9 +231,9 @@ export default function RevenueStackedChart({
               ⤢
             </button>
             <div className="revenue-chart-stats">
-              <div className="revenue-chart-stat">
-                <span className="revenue-chart-stat-label">Current</span>
-                <strong>{formatCompactRevenue(totalChart.lastPoint.total)}</strong>
+              <div className="revenue-chart-stat revenue-chart-stat--current">
+                <span className="revenue-chart-stat-label">Current total</span>
+                <strong className="revenue-chart-stat-current-val">{formatCompactRevenue(totalChart.lastPoint.total)}</strong>
               </div>
               <div className="revenue-chart-stat">
                 <span className="revenue-chart-stat-label">Peak</span>
@@ -263,7 +264,7 @@ export default function RevenueStackedChart({
                   </text>
                 </g>
               ))}
-              <circle cx="180" cy="180" r="58" fill="#ffffff" />
+              <circle cx="180" cy="180" r="60" className="revenue-donut-center-bg" />
               <text x="180" y="170" textAnchor="middle" className="revenue-donut-center-value">
                 {formatCompactRevenue(pieData?.total || 0)}
               </text>
@@ -290,16 +291,7 @@ export default function RevenueStackedChart({
         </div>
       ) : null}
 
-      {mode !== "total" ? (
-        <div className="revenue-chart-legend">
-          {legendItems.map((segment) => (
-            <div key={segment.label} className="revenue-legend-item">
-              <span className="revenue-legend-dot" style={{ background: segment.color }} />
-              <span>{segment.label}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+      {/* Bottom legend intentionally removed — scope legend is shown inline in donut layout */}
 
       {expanded && mode === "total" ? (
         <div className="modal-backdrop" onClick={() => setExpanded(false)}>
