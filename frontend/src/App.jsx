@@ -129,7 +129,7 @@ export default function App() {
   } else if (route.name === "settings") {
     content = <Settings settings={settings} onSettingsChange={setSettings} theme={theme} toggleTheme={toggleTheme} currentUser={user} initialSection={route.query?.section} />;
   } else {
-    content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} />;
+    content = <Dashboard contracts={contracts} activity={activity} onNavigate={navigate} usdRate={usdRate} />;
   }
 
   return (
