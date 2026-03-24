@@ -640,12 +640,6 @@ export default function Settings({ settings, onSettingsChange, theme, toggleThem
           <h2>Settings</h2>
           <p className="muted">Manage users, teams, scopes, pipeline behaviour and appearance.</p>
         </div>
-        {dirty && !isUserSection && (
-          <div className="settings-save-bar">
-            <button className="btn btn-light" onClick={reset}>Discard</button>
-            <button className="btn btn-primary" onClick={save}>Save changes</button>
-          </div>
-        )}
       </div>
 
       <div className="settings-layout">
@@ -668,6 +662,14 @@ export default function Settings({ settings, onSettingsChange, theme, toggleThem
           {renderContent()}
         </div>
       </div>
+
+      {/* Fixed save bar — bottom-right */}
+      {dirty && !isUserSection && (
+        <div className="settings-save-bar">
+          <button className="btn btn-light" onClick={reset}>Discard</button>
+          <button className="btn btn-primary" onClick={save}>Save changes</button>
+        </div>
+      )}
     </div>
   );
 }
