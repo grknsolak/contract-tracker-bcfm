@@ -14,6 +14,16 @@ import {
   RENEWAL_PIPELINE_WINDOW_DAYS,
 } from "../utils/pipelines";
 
+// ── Segmentation degree based on share of total pipeline value ──────────────
+function getSegDegree(value, total) {
+  if (!total || !value) return null;
+  const pct = (value / total) * 100;
+  if (pct >= 20) return { label: "Critical", tone: "danger",  color: "#ef4444", bg: "rgba(239,68,68,0.10)"  };
+  if (pct >= 10) return { label: "High",     tone: "warning", color: "#f59e0b", bg: "rgba(245,158,11,0.10)" };
+  if (pct >= 5)  return { label: "Medium",   tone: "info",    color: "#3b82f6", bg: "rgba(59,130,246,0.10)" };
+  return           { label: "Low",      tone: "neutral", color: "#6b7280", bg: "rgba(107,114,128,0.10)" };
+}
+
 function addMonthsPreservingDate(dateValue, months) {
   const base = new Date(dateValue);
   if (Number.isNaN(base.getTime())) return "";
@@ -46,6 +56,11 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
   };
 
   const pipelines = useMemo(() => buildRenewalPipelines(contracts), [contracts]);
+
+  const totalPipelineValue = useMemo(
+    () => pipelines.reduce((sum, p) => sum + Number(p.value || 0), 0),
+    [pipelines]
+  );
 
   const filteredPipelines = useMemo(() => {
     const normalized = search.trim().toLowerCase();
@@ -199,9 +214,10 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
         </Card>
       ) : (
         filteredPipelines.map((pipeline) => {
-          const stageMeta = getStageMeta(pipeline.currentStage);
-          const remaining = daysUntil(pipeline.endDate);
+          const stageMeta    = getStageMeta(pipeline.currentStage);
+          const remaining    = daysUntil(pipeline.endDate);
           const budgetSummary = getContractBudgetSummary(pipeline);
+          const segDegree    = getSegDegree(Number(pipeline.value || 0), totalPipelineValue);
 
           return (
             <Card
@@ -213,6 +229,12 @@ export default function Pipelines({ contracts, setContracts, onNavigate }) {
                 <div className="pipeline-badges">
                   <Badge tone={stageMeta.tone}>{stageMeta.label}</Badge>
                   <Badge tone={renewalTone[pipeline.renewalStatus] || "neutral"}>{pipeline.renewalStatus}</Badge>
+                  {segDegree && (
+                    <span className="pipeline-seg-badge" style={{ color: segDegree.color, background: segDegree.bg, borderColor: `${segDegree.color}40` }}>
+                      <span className="pipeline-seg-dot" style={{ background: segDegree.color }} />
+                      {segDegree.label}
+                    </span>
+                  )}
                 </div>
                 <div className="pipeline-meta">
                   <div className="pipeline-meta-item">
