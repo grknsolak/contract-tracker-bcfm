@@ -3,10 +3,11 @@
  * Users are stored in localStorage so changes persist.
  */
 
-const SESSION_KEY = "auth_session";
-const USERS_KEY   = "auth_users";
+const SESSION_KEY  = "auth_session";
+const USERS_KEY    = "auth_users";
+const USERS_VER    = "auth_users_v2"; // bump to force re-seed
 
-// ── Seed users (loaded on first run) ──────────────────────────────────────────
+// ── Seed users ────────────────────────────────────────────────────────────────
 const SEED_USERS = [
   {
     id: 1,
@@ -23,7 +24,7 @@ const SEED_USERS = [
     email: "gurkan@bcfm.com",
     password: "gurkan123",
     name: "Gürkan Solak",
-    role: "Manager",
+    role: "Admin",
     initials: "GS",
     enabled: true,
     createdAt: "2024-01-01T00:00:00.000Z",
@@ -33,11 +34,18 @@ const SEED_USERS = [
 // ── User store helpers ────────────────────────────────────────────────────────
 export function loadUsers() {
   try {
+    // Version check: re-seed if schema changed
+    const ver = localStorage.getItem(USERS_VER);
+    if (ver !== "1") {
+      saveUsers(SEED_USERS);
+      localStorage.setItem(USERS_VER, "1");
+      return [...SEED_USERS];
+    }
     const raw = localStorage.getItem(USERS_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  // First run: seed
   saveUsers(SEED_USERS);
+  localStorage.setItem(USERS_VER, "1");
   return [...SEED_USERS];
 }
 
