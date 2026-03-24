@@ -25,6 +25,7 @@ export const contractsSeed = [
     team: "Team A",
     scopes: ["7/24 Support", "DaaS (Fix)", "Outsource"],
     otherScopeText: "",
+    renewalRates: { "7/24 Support": 15, "DaaS (Fix)": 25, "Outsource": 10 },
     scopeValueHistory: [
       {
         name: "DaaS (Fix)",
@@ -107,6 +108,7 @@ export const contractsSeed = [
     team: "Team B",
     scopes: ["DaaS (T&M)", "Man/Day (T&M)"],
     otherScopeText: "",
+    renewalRates: { "DaaS (T&M)": 30, "Man/Day (T&M)": 20 },
     renewalStartedAt: "2026-03-10",
     valueHistory: [
       { date: "2025-02-01", value: 160000, label: "Initial" },
@@ -150,6 +152,7 @@ export const contractsSeed = [
     team: "Atlas",
     scopes: ["Outsource", "Man/Day (Fix)"],
     otherScopeText: "",
+    renewalRates: { "Outsource": 18, "Man/Day (Fix)": 22 },
     actions: [
       { id: "acn-1003-1", title: "Approve hypercare extension", dueDate: "2026-03-20", status: "open" },
     ],
@@ -206,6 +209,7 @@ export const contractsSeed = [
     team: "Solid",
     scopes: ["DaaS (Fix)", "Other"],
     otherScopeText: "Custom reporting",
+    renewalRates: { "DaaS (Fix)": 12, "Other": 8 },
     actions: [
       { id: "acn-1005-1", title: "Kickoff workshop", dueDate: "2026-03-25", status: "open" },
     ],
@@ -232,6 +236,7 @@ export const contractsSeed = [
     team: "Mando",
     scopes: ["Man/Day (Fix)", "7/24 Support"],
     otherScopeText: "",
+    renewalRates: { "Man/Day (Fix)": 40, "7/24 Support": 15 },
     renewalStartedAt: "2025-10-10",
     renewalClosedAt: "2025-10-29",
     actions: [
@@ -261,6 +266,7 @@ export const contractsSeed = [
     team: "Atlas",
     scopes: ["DaaS (T&M)", "Man/Day (T&M)", "7/24 Support"],
     otherScopeText: "",
+    renewalRates: { "DaaS (T&M)": 28, "Man/Day (T&M)": 22, "7/24 Support": 18 },
     actions: [
       { id: "acn-1007-1", title: "Collect security approval", dueDate: "2026-03-14", status: "open" },
       { id: "acn-1007-2", title: "Confirm signature meeting", dueDate: "2026-03-19", status: "open" },
@@ -287,6 +293,7 @@ export const contractsSeed = [
     team: "Team A",
     scopes: ["Outsource", "DaaS (Fix)"],
     otherScopeText: "",
+    renewalRates: { "Outsource": 20, "DaaS (Fix)": 30 },
     renewalStartedAt: "2026-03-16",
     valueHistory: [
       { date: "2025-02-01", value: 98000, label: "Initial" },
@@ -358,6 +365,7 @@ export const contractsSeed = [
     team: "Apex",
     scopes: ["DaaS (T&M)"],
     otherScopeText: "",
+    renewalRates: { "DaaS (T&M)": 45 },
     actions: [
       { id: "acn-1010-1", title: "Confirm procurement feedback", dueDate: "2026-03-13", status: "open" },
     ],

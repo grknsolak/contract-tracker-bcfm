@@ -3889,129 +3889,282 @@ textarea {
   color: var(--text);
 }
 
-/* ── Team Renewal Rate ── */
-.team-summary-company-rate {
+/* ══════════════════════════════════════════════════════════════════
+   TEAM SUMMARY — Two-tier Zam Rate Gauge
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Company header */
+.ts-company-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px 18px;
   background: var(--surface);
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
-.team-summary-company-rate-label {
+.ts-company-gauge {
+  flex-shrink: 0;
+}
+
+.ts-company-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ts-company-label {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-secondary);
 }
 
-.team-summary-company-rate-value {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.team-summary-company-rate-meta {
+.ts-company-teams {
   font-size: 12px;
   color: var(--text-secondary);
 }
 
-.team-rate-pct {
-  font-family: var(--font-mono);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
+/* Gauge SVG */
+.gauge-svg {
+  display: block;
+  width: 100px;
+  height: auto;
+  overflow: visible;
 }
 
-.team-rate-pct--good  { color: var(--success-light); }
-.team-rate-pct--warn  { color: var(--warning-light); }
-.team-rate-pct--danger { color: var(--danger-light); }
+/* Team list */
+.ts-team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-.team-summary-company-bar-track {
-  height: 6px;
+/* Team block wrapper */
+.ts-team-block {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.ts-team-block.is-open {
+  border-color: var(--primary);
+}
+
+/* Team header button */
+.ts-team-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  gap: 10px;
+}
+
+.ts-team-header:hover {
+  background: var(--surface-2);
+}
+
+.ts-team-block.is-open .ts-team-header {
+  background: var(--primary-50);
+}
+
+.ts-team-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ts-chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(.4,0,.2,1);
+}
+
+.ts-chevron--open {
+  transform: rotate(90deg);
+}
+
+.ts-team-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ts-team-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--surface-3);
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.ts-team-header-right {
+  flex-shrink: 0;
+}
+
+/* Rate badges on team header */
+.ts-team-rate-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: -0.01em;
+}
+
+.ts-rate--high {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.ts-rate--mid {
+  color: var(--primary-light);
+  background: var(--primary-50);
+}
+
+.ts-rate--low {
+  color: var(--info);
+  background: var(--info-bg);
+}
+
+.ts-rate--none {
+  color: var(--muted);
+  background: var(--surface-3);
+}
+
+/* Customer gauge grid */
+.ts-customer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1px;
+  background: var(--border);
+}
+
+/* Customer card */
+.ts-customer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 14px 14px;
+  background: var(--surface-2);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+  width: 100%;
+}
+
+.ts-customer-card:hover {
+  background: var(--primary-50);
+}
+
+.ts-customer-gauge-wrap {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.ts-customer-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ts-customer-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Scope rate rows */
+.ts-scope-rate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.ts-scope-rate-row {
+  display: grid;
+  grid-template-columns: 1fr 60px 30px;
+  align-items: center;
+  gap: 6px;
+}
+
+.ts-scope-name {
+  font-size: 10px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ts-scope-bar-track {
+  height: 4px;
   border-radius: 99px;
   background: var(--surface-3);
   overflow: hidden;
 }
 
-.team-summary-company-bar-fill {
+.ts-scope-bar-fill {
   height: 100%;
   border-radius: 99px;
   transition: width 0.6s cubic-bezier(.4,0,.2,1);
 }
 
-.team-summary-company-bar-fill--good   { background: var(--success); }
-.team-summary-company-bar-fill--warn   { background: var(--warning); }
-.team-summary-company-bar-fill--danger { background: var(--danger); }
+.ts-scope-bar-fill--high  { background: var(--success); }
+.ts-scope-bar-fill--mid   { background: var(--primary); }
+.ts-scope-bar-fill--low   { background: var(--info); }
 
-.dashboard-team-renewal-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dashboard-team-renewal-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  transition: border-color 0.15s;
-}
-
-.dashboard-team-renewal-row:hover {
-  border-color: var(--border-hover);
-}
-
-.dashboard-team-renewal-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.dashboard-team-renewal-name {
-  font-size: 14px;
+.ts-scope-rate-val {
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 600;
-  color: var(--text);
+  text-align: right;
 }
 
-.dashboard-team-renewal-bar-track {
-  height: 5px;
-  border-radius: 99px;
-  background: var(--surface-3);
-  overflow: hidden;
-}
-
-.dashboard-team-renewal-bar-fill {
-  height: 100%;
-  border-radius: 99px;
-  transition: width 0.55s cubic-bezier(.4,0,.2,1);
-}
-
-.dashboard-team-renewal-bar-fill--good   { background: var(--success); }
-.dashboard-team-renewal-bar-fill--warn   { background: var(--warning); }
-.dashboard-team-renewal-bar-fill--danger { background: var(--danger); }
-
-.dashboard-team-renewal-meta {
+.ts-no-rates {
   font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
 }
 
-/* light mode overrides for new team renewal */
-[data-theme="light"] .team-summary-company-rate,
-[data-theme="light"] .dashboard-team-renewal-row {
+/* Light mode */
+[data-theme="light"] .ts-company-header {
   background: var(--surface);
-  border-color: var(--border);
 }
 
-[data-theme="light"] .team-summary-company-bar-track,
-[data-theme="light"] .dashboard-team-renewal-bar-track {
+[data-theme="light"] .ts-team-header {
+  background: var(--surface);
+}
+
+[data-theme="light"] .ts-team-header:hover,
+[data-theme="light"] .ts-team-block.is-open .ts-team-header {
+  background: var(--primary-50);
+}
+
+[data-theme="light"] .ts-customer-card {
+  background: var(--surface);
+}
+
+[data-theme="light"] .ts-customer-card:hover {
+  background: var(--primary-50);
+}
+
+[data-theme="light"] .ts-scope-bar-track,
+[data-theme="light"] .ts-team-meta {
   background: var(--surface-2);
 }
 
