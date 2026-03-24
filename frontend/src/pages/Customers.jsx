@@ -19,55 +19,15 @@ import {
 } from "../utils/status";
 import { shouldCreateRenewalPipeline, getRenewalCurrentStage } from "../utils/pipelines";
 
-// ── Pipeline stage steps ────────────────────────────────────────────────────
-const PIPELINE_STEPS = ["Draft", "Legal Review", "Signature", "Renewal Protocol", "Expired"];
-const INITIAL_STEPS  = ["Draft", "Legal Review", "Signature", "Active"];
-
-const STEP_COLORS = {
-  Draft:             "#64748b",
-  "Legal Review":    "#60a5fa",
-  Signature:         "#6366f1",
-  Active:            "#10b981",
-  "Renewal Protocol":"#f59e0b",
-  Expired:           "#ef4444",
+// ── Stage display helper ─────────────────────────────────────────────────────
+const STAGE_COLORS = {
+  Draft:             { color: "#64748b", bg: "rgba(100,116,139,0.12)" },
+  "Legal Review":    { color: "#60a5fa", bg: "rgba(96,165,250,0.12)"  },
+  Signature:         { color: "#818cf8", bg: "rgba(129,140,248,0.12)" },
+  Active:            { color: "#10b981", bg: "rgba(16,185,129,0.12)"  },
+  "Renewal Protocol":{ color: "#f59e0b", bg: "rgba(245,158,11,0.12)"  },
+  Expired:           { color: "#ef4444", bg: "rgba(239,68,68,0.12)"   },
 };
-
-function MiniStageStepper({ stage, isRenewal }) {
-  const steps   = isRenewal ? PIPELINE_STEPS : INITIAL_STEPS;
-  const current = steps.indexOf(stage);
-  const color   = STEP_COLORS[stage] || "var(--text-secondary)";
-
-  return (
-    <div className="mini-stepper">
-      {/* Step dots + connectors */}
-      <div className="mini-stepper-track">
-        {steps.map((step, i) => {
-          const done    = i < current;
-          const active  = i === current;
-          const stepCol = STEP_COLORS[step] || "var(--border)";
-          return (
-            <React.Fragment key={step}>
-              {i > 0 && (
-                <div
-                  className="mini-stepper-line"
-                  style={{ background: done || active ? stepCol : "var(--border)" }}
-                />
-              )}
-              <div
-                className={`mini-stepper-dot${active ? " active" : done ? " done" : ""}`}
-                style={active ? { background: stepCol, boxShadow: `0 0 0 3px ${stepCol}30` }
-                              : done ? { background: stepCol } : {}}
-                title={step}
-              />
-            </React.Fragment>
-          );
-        })}
-      </div>
-      {/* Current step label */}
-      <span className="mini-stepper-label" style={{ color }}>{stage}</span>
-    </div>
-  );
-}
 
 const scopeOptions = [
   "DaaS (Fix)",
@@ -878,10 +838,15 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                       )}
                     </div>
                     <div>
-                      <MiniStageStepper
-                        stage={displayStage}
-                        isRenewal={inPipeline || isRenewalContract(contract)}
-                      />
+                      {(() => {
+                        const label = inPipeline ? displayStage : "Active";
+                        const style = STAGE_COLORS[label] || STAGE_COLORS["Active"];
+                        return (
+                          <span className="stage-simple-badge" style={{ color: style.color, background: style.bg, borderColor: `${style.color}40` }}>
+                            {label}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <div>
                       <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />
