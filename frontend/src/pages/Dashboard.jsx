@@ -289,7 +289,7 @@ export default function Dashboard({ contracts, onNavigate }) {
         {/* Team summary — scope gauge rows */}
         <Card
           title="Team summary"
-          subtitle="Scope bazlı ortalama zam oranları"
+          subtitle="Sözleşme yenileme oranı"
         >
           <div className="ts-rows">
             {teamRows.map((row) => (
