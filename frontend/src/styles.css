@@ -3889,6 +3889,132 @@ textarea {
   color: var(--text);
 }
 
+/* ── Team Renewal Rate ── */
+.team-summary-company-rate {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: var(--surface);
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.team-summary-company-rate-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.team-summary-company-rate-value {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.team-summary-company-rate-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.team-rate-pct {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.team-rate-pct--good  { color: var(--success-light); }
+.team-rate-pct--warn  { color: var(--warning-light); }
+.team-rate-pct--danger { color: var(--danger-light); }
+
+.team-summary-company-bar-track {
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.team-summary-company-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+
+.team-summary-company-bar-fill--good   { background: var(--success); }
+.team-summary-company-bar-fill--warn   { background: var(--warning); }
+.team-summary-company-bar-fill--danger { background: var(--danger); }
+
+.dashboard-team-renewal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-team-renewal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+
+.dashboard-team-renewal-row:hover {
+  border-color: var(--border-hover);
+}
+
+.dashboard-team-renewal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-team-renewal-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dashboard-team-renewal-bar-track {
+  height: 5px;
+  border-radius: 99px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.dashboard-team-renewal-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.55s cubic-bezier(.4,0,.2,1);
+}
+
+.dashboard-team-renewal-bar-fill--good   { background: var(--success); }
+.dashboard-team-renewal-bar-fill--warn   { background: var(--warning); }
+.dashboard-team-renewal-bar-fill--danger { background: var(--danger); }
+
+.dashboard-team-renewal-meta {
+  font-size: 11px;
+}
+
+/* light mode overrides for new team renewal */
+[data-theme="light"] .team-summary-company-rate,
+[data-theme="light"] .dashboard-team-renewal-row {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .team-summary-company-bar-track,
+[data-theme="light"] .dashboard-team-renewal-bar-track {
+  background: var(--surface-2);
+}
+
 .dashboard-quarter-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

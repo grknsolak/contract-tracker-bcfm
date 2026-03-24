@@ -84,27 +84,18 @@ export default function Dashboard({ contracts, onNavigate }) {
     const grouped = contracts.reduce((acc, contract) => {
       const team = contract.team || "Unassigned";
       if (!acc[team]) {
-        acc[team] = { team, customers: new Map() };
+        acc[team] = { team, total: 0, renewed: 0 };
       }
 
       const normalizedStage = normalizeStage(contract.stage);
       const remainingDays = daysUntil(contract.endDate);
-      const isActiveCustomer =
-        normalizedStage !== "Expired" &&
-        normalizedStage !== "Renewal Protocol" &&
-        contract.renewalStatus !== "Lost" &&
-        !(typeof remainingDays === "number" && remainingDays < 0);
+      const isExpiredOrLost =
+        normalizedStage === "Expired" ||
+        contract.renewalStatus === "Lost" ||
+        (typeof remainingDays === "number" && remainingDays < 0);
 
-      if (isActiveCustomer) {
-        if (!acc[team].customers.has(contract.customerName)) {
-          acc[team].customers.set(contract.customerName, contract);
-        } else {
-          const current = acc[team].customers.get(contract.customerName);
-          if (new Date(contract.endDate).getTime() > new Date(current.endDate).getTime()) {
-            acc[team].customers.set(contract.customerName, contract);
-          }
-        }
-      }
+      acc[team].total += 1;
+      if (!isExpiredOrLost) acc[team].renewed += 1;
 
       return acc;
     }, {});
@@ -112,11 +103,21 @@ export default function Dashboard({ contracts, onNavigate }) {
     return Object.values(grouped)
       .map((row) => ({
         ...row,
-        customersList: Array.from(row.customers.values()).sort((a, b) => a.customerName.localeCompare(b.customerName)),
-        customerCount: row.customers.size,
+        rate: row.total > 0 ? Math.round((row.renewed / row.total) * 100) : 0,
       }))
-      .filter((row) => row.customerCount > 0)
-      .sort((a, b) => b.customerCount - a.customerCount || a.team.localeCompare(b.team));
+      .filter((row) => row.total > 0)
+      .sort((a, b) => b.rate - a.rate || a.team.localeCompare(b.team));
+  }, [contracts]);
+
+  const companyRenewalRate = useMemo(() => {
+    const total = contracts.length;
+    if (!total) return null;
+    const renewed = contracts.filter((c) => {
+      const stage = normalizeStage(c.stage);
+      const rem = daysUntil(c.endDate);
+      return stage !== "Expired" && c.renewalStatus !== "Lost" && !(typeof rem === "number" && rem < 0);
+    }).length;
+    return Math.round((renewed / total) * 100);
   }, [contracts]);
 
   const quarterSummary = useMemo(() => getQuarterSummary(contracts), [contracts]);
@@ -231,34 +232,69 @@ export default function Dashboard({ contracts, onNavigate }) {
           </div>
         </Card>
 
-        <Card title="Team summary" subtitle="Active customers by team">
-          <div className="dashboard-team-list">
+        <Card title="Team summary" subtitle="Annual renewal rate by team">
+          {companyRenewalRate !== null && (
+            <div className="team-summary-company-rate">
+              <div className="team-summary-company-rate-label">Company-wide renewal rate</div>
+              <div className="team-summary-company-rate-value">
+                <span
+                  className={
+                    companyRenewalRate >= 80
+                      ? "team-rate-pct team-rate-pct--good"
+                      : companyRenewalRate >= 50
+                      ? "team-rate-pct team-rate-pct--warn"
+                      : "team-rate-pct team-rate-pct--danger"
+                  }
+                >
+                  {companyRenewalRate}%
+                </span>
+                <span className="team-summary-company-rate-meta">{contracts.length} total contracts</span>
+              </div>
+              <div className="team-summary-company-bar-track">
+                <div
+                  className={
+                    companyRenewalRate >= 80
+                      ? "team-summary-company-bar-fill team-summary-company-bar-fill--good"
+                      : companyRenewalRate >= 50
+                      ? "team-summary-company-bar-fill team-summary-company-bar-fill--warn"
+                      : "team-summary-company-bar-fill team-summary-company-bar-fill--danger"
+                  }
+                  style={{ width: `${companyRenewalRate}%` }}
+                />
+              </div>
+            </div>
+          )}
+          <div className="dashboard-team-renewal-list">
             {teamRows.map((row) => (
-              <div key={row.team} className="dashboard-team-row">
-                <div className="dashboard-team-main">
-                  <div className="dashboard-team-head">
-                    <div className="primary-text">{row.team}</div>
-                    <div className="dashboard-team-count-mobile">
-                      <strong>{row.customerCount}</strong>
-                      <span className="muted">customers</span>
-                    </div>
-                  </div>
-                  <div className="dashboard-team-customer-list">
-                    {row.customersList.map((customer) => (
-                      <button
-                        key={`${row.team}-${customer.id}`}
-                        className="dashboard-team-customer-item"
-                        onClick={() => onNavigate(`/contracts/${customer.id}`)}
-                      >
-                        <span className="primary-text">{customer.customerName}</span>
-                        <span className="muted">{formatDate(customer.endDate)}</span>
-                      </button>
-                    ))}
-                  </div>
+              <div key={row.team} className="dashboard-team-renewal-row">
+                <div className="dashboard-team-renewal-top">
+                  <span className="dashboard-team-renewal-name">{row.team}</span>
+                  <span
+                    className={
+                      row.rate >= 80
+                        ? "team-rate-pct team-rate-pct--good"
+                        : row.rate >= 50
+                        ? "team-rate-pct team-rate-pct--warn"
+                        : "team-rate-pct team-rate-pct--danger"
+                    }
+                  >
+                    {row.rate}%
+                  </span>
                 </div>
-                <div className="dashboard-team-count">
-                  <strong>{row.customerCount}</strong>
-                  <span className="muted">customers</span>
+                <div className="dashboard-team-renewal-bar-track">
+                  <div
+                    className={
+                      row.rate >= 80
+                        ? "dashboard-team-renewal-bar-fill dashboard-team-renewal-bar-fill--good"
+                        : row.rate >= 50
+                        ? "dashboard-team-renewal-bar-fill dashboard-team-renewal-bar-fill--warn"
+                        : "dashboard-team-renewal-bar-fill dashboard-team-renewal-bar-fill--danger"
+                    }
+                    style={{ width: `${row.rate}%` }}
+                  />
+                </div>
+                <div className="dashboard-team-renewal-meta">
+                  <span className="muted">{row.renewed} of {row.total} contracts renewed</span>
                 </div>
               </div>
             ))}
