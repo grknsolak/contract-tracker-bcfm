@@ -19,6 +19,44 @@ import {
 } from "../utils/status";
 import { shouldCreateRenewalPipeline, getRenewalCurrentStage } from "../utils/pipelines";
 
+// ── Renewal Rate Ring ────────────────────────────────────────────────────────
+function RenewalRateRing({ contract, inPipeline }) {
+  // Show "-" when in pipeline or new contract period (no rates yet)
+  const rates = getRenewalRates(contract);
+  const scopes = contract.scopes || [];
+  const rateValues = scopes.map(s => Number(rates?.[s] || 0)).filter(v => v !== 0);
+
+  if (inPipeline || rateValues.length === 0) {
+    return <span className="renewal-rate-empty">—</span>;
+  }
+
+  const avg = Math.round(rateValues.reduce((s, v) => s + v, 0) / rateValues.length);
+  const color = avg > 0 ? "#10b981" : avg < 0 ? "#ef4444" : "#6b7280";
+  const size = 44;
+  const cx = size / 2;
+  const r = cx - 5;
+  const circ = 2 * Math.PI * r;
+  // Arc fill: avg% mapped to max 50% = full ring
+  const fillPct = Math.min(Math.abs(avg) / 50, 1);
+  const dash = circ * fillPct;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="renewal-rate-ring">
+      <circle cx={cx} cy={cx} r={r} fill="none" stroke="var(--border)" strokeWidth="3" />
+      <circle
+        cx={cx} cy={cx} r={r}
+        fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
+        strokeDasharray={`${dash} ${circ - dash}`}
+        transform={`rotate(-90 ${cx} ${cx})`}
+      />
+      <text x={cx} y={cx + 1} textAnchor="middle" dominantBaseline="middle"
+        className="renewal-rate-ring-text" fill={color}>
+        {avg > 0 ? "+" : ""}{avg}%
+      </text>
+    </svg>
+  );
+}
+
 // ── Stage display helper ─────────────────────────────────────────────────────
 const STAGE_COLORS = {
   Draft:             { color: "#64748b", bg: "rgba(100,116,139,0.12)" },
@@ -769,6 +807,7 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
             <div>Value</div>
             <div>Scopes</div>
             <div>Stage</div>
+            <div>Zam</div>
             <div>Tier</div>
             <div>Actions</div>
           </div>
@@ -847,6 +886,9 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                           </span>
                         );
                       })()}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <RenewalRateRing contract={contract} inPipeline={inPipeline} />
                     </div>
                     <div>
                       <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />

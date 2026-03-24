@@ -3452,6 +3452,25 @@ textarea {
   gap: 8px;
 }
 
+/* ── Renewal Rate Ring (customers table) ────────────────────────────────── */
+.renewal-rate-ring {
+  display: block;
+  flex-shrink: 0;
+}
+
+.renewal-rate-ring-text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.renewal-rate-empty {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  font-weight: 300;
+}
+
 /* ── Simple stage badge (customers table) ───────────────────────────────── */
 .stage-simple-badge {
   display: inline-block;
