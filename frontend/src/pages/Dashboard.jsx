@@ -289,7 +289,7 @@ export default function Dashboard({ contracts, onNavigate }) {
         {/* Team summary — scope gauge rows */}
         <Card
           title="Team summary"
-          subtitle="Sözleşme yenileme oranı"
+          subtitle="Average scope renewal rates by team"
         >
           {/* Company-wide renewal rate */}
           {companyAvgRate > 0 && (
