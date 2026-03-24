@@ -19,6 +19,56 @@ import {
 } from "../utils/status";
 import { shouldCreateRenewalPipeline, getRenewalCurrentStage } from "../utils/pipelines";
 
+// ── Pipeline stage steps ────────────────────────────────────────────────────
+const PIPELINE_STEPS = ["Draft", "Legal Review", "Signature", "Renewal Protocol", "Expired"];
+const INITIAL_STEPS  = ["Draft", "Legal Review", "Signature", "Active"];
+
+const STEP_COLORS = {
+  Draft:             "#64748b",
+  "Legal Review":    "#60a5fa",
+  Signature:         "#6366f1",
+  Active:            "#10b981",
+  "Renewal Protocol":"#f59e0b",
+  Expired:           "#ef4444",
+};
+
+function MiniStageStepper({ stage, isRenewal }) {
+  const steps   = isRenewal ? PIPELINE_STEPS : INITIAL_STEPS;
+  const current = steps.indexOf(stage);
+  const color   = STEP_COLORS[stage] || "var(--text-secondary)";
+
+  return (
+    <div className="mini-stepper">
+      {/* Step dots + connectors */}
+      <div className="mini-stepper-track">
+        {steps.map((step, i) => {
+          const done    = i < current;
+          const active  = i === current;
+          const stepCol = STEP_COLORS[step] || "var(--border)";
+          return (
+            <React.Fragment key={step}>
+              {i > 0 && (
+                <div
+                  className="mini-stepper-line"
+                  style={{ background: done || active ? stepCol : "var(--border)" }}
+                />
+              )}
+              <div
+                className={`mini-stepper-dot${active ? " active" : done ? " done" : ""}`}
+                style={active ? { background: stepCol, boxShadow: `0 0 0 3px ${stepCol}30` }
+                              : done ? { background: stepCol } : {}}
+                title={step}
+              />
+            </React.Fragment>
+          );
+        })}
+      </div>
+      {/* Current step label */}
+      <span className="mini-stepper-label" style={{ color }}>{stage}</span>
+    </div>
+  );
+}
+
 const scopeOptions = [
   "DaaS (Fix)",
   "7/24 Support",
@@ -828,7 +878,10 @@ export default function Customers({ contracts, setContracts, onNavigate, route, 
                       )}
                     </div>
                     <div>
-                      <Badge tone={meta.tone}>{meta.label}</Badge>
+                      <MiniStageStepper
+                        stage={displayStage}
+                        isRenewal={inPipeline || isRenewalContract(contract)}
+                      />
                     </div>
                     <div>
                       <TierBadge contractValue={contract.value} totalValue={totalPortfolioValue} size="sm" />

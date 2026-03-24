@@ -3452,6 +3452,47 @@ textarea {
   gap: 8px;
 }
 
+/* ── Mini Stage Stepper (customers table) ───────────────────────────────── */
+.mini-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mini-stepper-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.mini-stepper-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.mini-stepper-dot.done {
+  opacity: 0.55;
+}
+
+.mini-stepper-line {
+  flex: 1;
+  height: 2px;
+  min-width: 6px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.mini-stepper-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
 /* ── Global TierBadge (A+ / A / B / C) ─────────────────────────────────── */
 .tier-badge {
   display: inline-flex;
