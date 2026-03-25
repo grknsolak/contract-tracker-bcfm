@@ -7952,6 +7952,45 @@ textarea {
   transform: scale(1.1);
 }
 
+/* ── Expand / collapse ────────────────────────────────────── */
+
+/* Nodes with children are clickable */
+.org-node--expandable {
+  cursor: pointer;
+  user-select: none;
+}
+.org-node--expandable:hover {
+  box-shadow: 0 3px 12px rgba(0,0,0,.1);
+  border-color: var(--text-muted);
+}
+.org-node--open {
+  box-shadow: 0 3px 14px rgba(0,0,0,.12);
+}
+
+/* Chevron indicator */
+.org-expand-chevron {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: transform .22s ease;
+  transform: rotate(-90deg);   /* closed → pointing right */
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.org-expand-chevron--open {
+  transform: rotate(0deg);     /* open → pointing down */
+}
+
+/* Subtree fade-in animation */
+.org-subtree {
+  animation: orgExpand .22s ease;
+}
+
+@keyframes orgExpand {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
 /* ── Team count badge ─────────────────────────────────────── */
 .org-team-count-badge {
   font-size: 10px;
