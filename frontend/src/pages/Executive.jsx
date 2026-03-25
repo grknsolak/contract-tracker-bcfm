@@ -199,7 +199,6 @@ function TeamCard({ row, rank, maxUSD, onNavigate }) {
             </span>
           )}
           <span className="exec-team-name">{row.team}</span>
-          <TrendChip trend={row.trend} />
         </div>
         <span className="exec-team-value">{fmtUSD(row.teamUSD)}</span>
       </div>
@@ -230,13 +229,15 @@ function TeamCard({ row, rank, maxUSD, onNavigate }) {
         </div>
       </div>
 
-      {/* Tier breakdown */}
+      {/* Tier breakdown — only show tiers with at least 1 customer */}
       <div className="exec-tiers">
-        {Object.entries(TIER_CFG).map(([label, cfg]) => (
-          <span key={label} className="exec-tier-chip" style={{ color: cfg.color, background: cfg.bg }}>
-            {label} <strong>{row.tierCounts[label] || 0}</strong>
-          </span>
-        ))}
+        {Object.entries(TIER_CFG)
+          .filter(([label]) => (row.tierCounts[label] || 0) > 0)
+          .map(([label, cfg]) => (
+            <span key={label} className="exec-tier-chip" style={{ color: cfg.color, background: cfg.bg }}>
+              {label} <strong>{row.tierCounts[label]}</strong>
+            </span>
+          ))}
       </div>
 
       {/* Risk + pipeline */}
