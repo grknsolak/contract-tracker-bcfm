@@ -202,15 +202,15 @@ function Gauge({ value = 0 }) {
       <circle cx={cx} cy={cy} r="2"   fill={color} style={{ transition: "fill .3s" }}/>
 
       {/* ⑦ value — centered inside the ring, fully clear of the arc */}
-      <text x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="800"
+      <text x={cx} y={cy + 2} textAnchor="middle" fontSize="22" fontWeight="800"
         fill="white" letterSpacing="-0.04em" style={{ transition: "fill .3s" }}>
         {Math.round(value)}
       </text>
-      <text x={cx} y={cy + 10} textAnchor="middle" fontSize="10" fontWeight="600"
+      <text x={cx} y={cy + 18} textAnchor="middle" fontSize="10" fontWeight="600"
         fill={color} opacity="0.8" letterSpacing="0.01em" style={{ transition: "fill .3s" }}>
         %
       </text>
-      <text x={cx} y={cy + 21} textAnchor="middle" fontSize="6.5"
+      <text x={cx} y={cy + 30} textAnchor="middle" fontSize="6.5"
         fill="rgba(255,255,255,0.3)" letterSpacing="0.07em">
         SAĞLIK SKORU
       </text>
