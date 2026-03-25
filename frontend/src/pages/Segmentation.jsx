@@ -10,8 +10,9 @@ function normalizeUsdValue(contract, rate) {
 }
 
 const TIER = [
-  { min: 1, max: 1,  label: "A+", color: "#C4912A", bg: "rgba(196,145,42,0.12)" },
-  { min: 2, max: 3,  label: "A",  color: "#8E9BAD", bg: "rgba(142,155,173,0.1)"  },
+  { min: 1, max: 1,  label: "A+", color: "#F59E0B", bg: "rgba(245,158,11,0.14)"  },  // Gold
+  { min: 2, max: 2,  label: "A",  color: "#C0C8D8", bg: "rgba(192,200,216,0.12)" },  // Silver
+  { min: 3, max: 3,  label: "A",  color: "#CD7F32", bg: "rgba(205,127,50,0.13)"  },  // Bronze
   { min: 4, max: 6,  label: "B",  color: "#6EE7B7", bg: "rgba(110,231,183,0.08)" },
   { min: 7, max: 10, label: "C",  color: "#93C5FD", bg: "rgba(147,197,253,0.08)" },
 ];
