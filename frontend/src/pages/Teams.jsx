@@ -142,88 +142,90 @@ function Gauge({ value = 0 }) {
   });
 
   return (
-    <svg width="210" height="130" viewBox="0 0 120 82" style={{ display: "block", margin: "0 auto" }}>
-      <defs>
-        {/* subtle glow on filled arc */}
-        <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur"/>
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+      {/* SVG — arc + needle only, no value text inside */}
+      <svg width="210" height="110" viewBox="0 0 120 68" style={{ display: "block" }}>
+        <defs>
+          <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
 
-      {/* ① thick background track — neutral, no zones */}
-      <path
-        d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
-        fill="none"
-        stroke="rgba(255,255,255,0.07)"
-        strokeWidth="8"
-        strokeLinecap="round"
-      />
-
-      {/* ② filled arc — clean single color */}
-      <path
-        d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
-        fill="none"
-        stroke={color}
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeDasharray={`${fill} ${len}`}
-        filter="url(#gauge-glow)"
-        style={{ transition: "stroke-dasharray .55s cubic-bezier(.4,0,.2,1), stroke .3s" }}
-      />
-
-      {/* ③ tick marks */}
-      {ticks.map((t, i) => (
-        <line
-          key={i}
-          x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-          stroke={t.major ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.12)"}
-          strokeWidth={t.major ? 1.5 : 1}
-          strokeLinecap="round"
+        {/* background track */}
+        <path
+          d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
+          fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="8" strokeLinecap="round"
         />
-      ))}
 
-      {/* ④ tick labels */}
-      {tickLabels.map((l) => (
-        <text key={l.txt} x={l.x} y={l.y} textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.3)">
-          {l.txt}
-        </text>
-      ))}
+        {/* filled arc */}
+        <path
+          d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
+          fill="none"
+          stroke={color}
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={`${fill} ${len}`}
+          filter="url(#gauge-glow)"
+          style={{ transition: "stroke-dasharray .55s cubic-bezier(.4,0,.2,1), stroke .3s" }}
+        />
 
-      {/* ⑤ needle — thin white, tip has colored dot */}
-      <line
-        x1={cx} y1={cy}
-        x2={nx} y2={ny}
-        stroke="rgba(255,255,255,0.75)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-      {/* needle tip dot */}
-      <circle cx={nx} cy={ny} r="2" fill={color}/>
-      {/* center hub */}
-      <circle cx={cx} cy={cy} r="5"   fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-      <circle cx={cx} cy={cy} r="2.5" fill={color}/>
+        {/* ticks */}
+        {ticks.map((t, i) => (
+          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+            stroke={t.major ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.12)"}
+            strokeWidth={t.major ? 1.5 : 1} strokeLinecap="round"
+          />
+        ))}
 
-      {/* ⑥ value — large, inside the bowl */}
-      <text
-        x={cx} y={cy - 9}
-        textAnchor="middle"
-        fontSize="20"
-        fontWeight="800"
-        fill="white"
-        letterSpacing="-0.03em"
-      >
-        {Math.round(value)}%
-      </text>
+        {/* tick labels */}
+        {tickLabels.map((l) => (
+          <text key={l.txt} x={l.x} y={l.y} textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.3)">
+            {l.txt}
+          </text>
+        ))}
 
-      {/* ⑦ colored legend strip at the very bottom */}
-      <rect x="18" y="66" width="28" height="2.5" rx="1.5" fill="#ef4444" opacity="0.55"/>
-      <rect x="48" y="66" width="24" height="2.5" rx="1.5" fill="#f59e0b" opacity="0.55"/>
-      <rect x="74" y="66" width="28" height="2.5" rx="1.5" fill="#10b981" opacity="0.55"/>
-      <text x="32"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(239,68,68,0.65)" letterSpacing="0.04em">DÜŞÜK</text>
-      <text x="60"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(245,158,11,0.65)" letterSpacing="0.04em">ORTA</text>
-      <text x="88"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(16,185,129,0.65)" letterSpacing="0.04em">İYİ</text>
-    </svg>
+        {/* needle */}
+        <line x1={cx} y1={cy} x2={nx} y2={ny}
+          stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round"
+        />
+        <circle cx={nx} cy={ny} r="2"   fill={color}/>
+        <circle cx={cx} cy={cy} r="5"   fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+        <circle cx={cx} cy={cy} r="2.5" fill={color}/>
+      </svg>
+
+      {/* Value — outside SVG, crisp HTML rendering */}
+      <div style={{ display: "flex", alignItems: "baseline", gap: 3, lineHeight: 1, marginTop: -6 }}>
+        <span style={{
+          fontSize: 42,
+          fontWeight: 800,
+          color,
+          letterSpacing: "-0.04em",
+          fontVariantNumeric: "tabular-nums",
+          lineHeight: 1,
+          transition: "color .3s",
+        }}>
+          {Math.round(value)}
+        </span>
+        <span style={{ fontSize: 20, fontWeight: 600, color, opacity: 0.6, transition: "color .3s" }}>%</span>
+      </div>
+
+      {/* Zone legend strip */}
+      <div style={{ display: "flex", gap: 10, marginTop: 10, alignItems: "center" }}>
+        {[
+          { label: "DÜŞÜK", c: "#ef4444" },
+          { label: "ORTA",  c: "#f59e0b" },
+          { label: "İYİ",   c: "#10b981" },
+        ].map(({ label, c }) => (
+          <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 20, height: 3, borderRadius: 999, background: c, opacity: 0.55 }}/>
+            <span style={{ fontSize: 9, fontWeight: 700, color: c, opacity: 0.65, letterSpacing: "0.05em" }}>
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
