@@ -102,114 +102,119 @@ function useTeamData(contracts, usdRate) {
   }, [contracts, usdRate]);
 }
 
-// ─── Gauge (speedometer) ──────────────────────────────────────────────────────
-// Arc: cx=60 cy=58 r=42 → left=(18,58) top=(60,16) right=(102,58)
-// sweep-flag=0 → counterclockwise = visually upward
+// ─── Gauge — 270° circular ring speedometer ───────────────────────────────────
+// cx=60 cy=50 r=42
+// Start: 135° (SVG clockwise) → lower-left (30.3, 79.7)
+// End:    45° (SVG clockwise) → lower-right (89.7, 79.7)
+// Gap: 90° at the bottom  |  Arc spans 270° clockwise via top
 function Gauge({ value = 0 }) {
-  const pct   = Math.min(1, Math.max(0, value / 100));
-  const r = 42, cx = 60, cy = 58;
-  const len   = Math.PI * r;   // ≈131.9
-  const fill  = pct * len;
-  const color = pct >= 0.7 ? "#10b981" : pct >= 0.4 ? "#f59e0b" : "#ef4444";
-  const bgColor = pct >= 0.7 ? "rgba(16,185,129,.08)" : pct >= 0.4 ? "rgba(245,158,11,.08)" : "rgba(239,68,68,.08)";
+  const pct  = Math.min(1, Math.max(0, value / 100));
+  const cx = 60, cy = 50, r = 42;
 
-  // needle tip (shorter than arc radius)
-  const ang = Math.PI * (1 - pct);
-  const nx  = cx + 30 * Math.cos(ang);
-  const ny  = cy - 30 * Math.sin(ang);
+  // full 270° arc length
+  const totalLen = (270 / 360) * 2 * Math.PI * r;   // ≈ 197.9
+  const fillLen  = pct * totalLen;
+  const color    = pct >= 0.7 ? "#10b981" : pct >= 0.4 ? "#f59e0b" : "#ef4444";
 
-  // major ticks at 0 / 25 / 50 / 75 / 100 %
+  // Arc endpoints (fixed)
+  const deg = (d) => d * Math.PI / 180;
+  const sx = cx + r * Math.cos(deg(135));   // 30.3
+  const sy = cy + r * Math.sin(deg(135));   // 79.7
+  const ex = cx + r * Math.cos(deg(45));    // 89.7
+  const ey = cy + r * Math.sin(deg(45));    // 79.7
+  const arc = `M ${sx.toFixed(1)},${sy.toFixed(1)} A ${r},${r} 0 1,1 ${ex.toFixed(1)},${ey.toFixed(1)}`;
+
+  // Needle tip — sweeps from 135° to 405°(=45°) as pct goes 0→1
+  const needleAng = deg(135 + pct * 270);
+  const nx = cx + 28 * Math.cos(needleAng);
+  const ny = cy + 28 * Math.sin(needleAng);
+
+  // Tick marks at 0 / 25 / 50 / 75 / 100 %
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => {
-    const a = Math.PI * (1 - t);
-    const isMajor = t === 0 || t === 0.5 || t === 1;
+    const a  = deg(135 + t * 270);
+    const r1 = t === 0 || t === 0.5 || t === 1 ? 35 : 37;
     return {
-      x1: cx + (isMajor ? 35 : 37) * Math.cos(a),
-      y1: cy - (isMajor ? 35 : 37) * Math.sin(a),
-      x2: cx + 42 * Math.cos(a),
-      y2: cy - 42 * Math.sin(a),
-      major: isMajor,
+      x1: cx + r1 * Math.cos(a), y1: cy + r1 * Math.sin(a),
+      x2: cx + r  * Math.cos(a), y2: cy + r  * Math.sin(a),
+      major: t === 0 || t === 0.5 || t === 1,
     };
   });
 
-  // tick labels at 0 / 50 / 100
-  const tickLabels = [
+  // Labels at 0 / 50 / 100
+  const labels = [
     { t: 0,   txt: "0" },
     { t: 0.5, txt: "50" },
     { t: 1,   txt: "100" },
   ].map(({ t, txt }) => {
-    const a = Math.PI * (1 - t);
-    return { x: cx + 50 * Math.cos(a), y: cy - 50 * Math.sin(a) + 2, txt };
+    const a = deg(135 + t * 270);
+    return { x: cx + 51 * Math.cos(a), y: cy + 51 * Math.sin(a) + 2, txt };
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-      {/* SVG — arc + needle only, no value text inside */}
-      <svg width="210" height="110" viewBox="0 0 120 68" style={{ display: "block" }}>
-        <defs>
-          <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
+    <svg width="210" height="175" viewBox="0 0 120 100" style={{ display: "block", margin: "0 auto" }}>
+      <defs>
+        <filter id="gauge-glow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
 
-        {/* background track */}
-        <path
-          d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
-          fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="8" strokeLinecap="round"
+      {/* ① background ring */}
+      <path d={arc} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="9" strokeLinecap="round"/>
+
+      {/* ② subtle coloured zones on background */}
+      <path d={arc} fill="none" stroke="#ef4444" strokeWidth="9" strokeLinecap="round" opacity="0.07"/>
+
+      {/* ③ active fill */}
+      <path
+        d={arc}
+        fill="none"
+        stroke={color}
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeDasharray={`${fillLen} ${totalLen}`}
+        filter="url(#gauge-glow)"
+        style={{ transition: "stroke-dasharray .55s cubic-bezier(.4,0,.2,1), stroke .3s" }}
+      />
+
+      {/* ④ ticks */}
+      {ticks.map((t, i) => (
+        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+          stroke={t.major ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.12)"}
+          strokeWidth={t.major ? 1.5 : 1} strokeLinecap="round"
         />
+      ))}
 
-        {/* filled arc */}
-        <path
-          d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={`${fill} ${len}`}
-          filter="url(#gauge-glow)"
-          style={{ transition: "stroke-dasharray .55s cubic-bezier(.4,0,.2,1), stroke .3s" }}
-        />
+      {/* ⑤ tick labels */}
+      {labels.map((l) => (
+        <text key={l.txt} x={l.x} y={l.y} textAnchor="middle" fontSize="6" fill="rgba(255,255,255,0.28)">
+          {l.txt}
+        </text>
+      ))}
 
-        {/* ticks */}
-        {ticks.map((t, i) => (
-          <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-            stroke={t.major ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.12)"}
-            strokeWidth={t.major ? 1.5 : 1} strokeLinecap="round"
-          />
-        ))}
+      {/* ⑥ needle */}
+      <line x1={cx} y1={cy} x2={nx} y2={ny}
+        stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round"
+        style={{ transition: "x2 .55s, y2 .55s" }}
+      />
+      <circle cx={nx} cy={ny} r="2.5" fill={color} style={{ transition: "cx .55s, cy .55s, fill .3s" }}/>
+      <circle cx={cx} cy={cy} r="5"   fill="rgba(10,10,14,0.8)" stroke="rgba(255,255,255,0.12)" strokeWidth="1"/>
+      <circle cx={cx} cy={cy} r="2"   fill={color} style={{ transition: "fill .3s" }}/>
 
-        {/* tick labels */}
-        {tickLabels.map((l) => (
-          <text key={l.txt} x={l.x} y={l.y} textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.3)">
-            {l.txt}
-          </text>
-        ))}
-
-        {/* needle */}
-        <line x1={cx} y1={cy} x2={nx} y2={ny}
-          stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round"
-        />
-        <circle cx={nx} cy={ny} r="2"   fill={color}/>
-        <circle cx={cx} cy={cy} r="5"   fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
-        <circle cx={cx} cy={cy} r="2.5" fill={color}/>
-      </svg>
-
-      {/* Value — outside SVG, crisp HTML rendering */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 3, lineHeight: 1, marginTop: 10 }}>
-        <span style={{
-          fontSize: 42,
-          fontWeight: 800,
-          color,
-          letterSpacing: "-0.04em",
-          fontVariantNumeric: "tabular-nums",
-          lineHeight: 1,
-          transition: "color .3s",
-        }}>
-          {Math.round(value)}
-        </span>
-        <span style={{ fontSize: 20, fontWeight: 600, color, opacity: 0.6, transition: "color .3s" }}>%</span>
-      </div>
-    </div>
+      {/* ⑦ value — centered inside the ring, fully clear of the arc */}
+      <text x={cx} y={cy - 4} textAnchor="middle" fontSize="22" fontWeight="800"
+        fill="white" letterSpacing="-0.04em" style={{ transition: "fill .3s" }}>
+        {Math.round(value)}
+      </text>
+      <text x={cx} y={cy + 10} textAnchor="middle" fontSize="10" fontWeight="600"
+        fill={color} opacity="0.8" letterSpacing="0.01em" style={{ transition: "fill .3s" }}>
+        %
+      </text>
+      <text x={cx} y={cy + 21} textAnchor="middle" fontSize="6.5"
+        fill="rgba(255,255,255,0.3)" letterSpacing="0.07em">
+        SAĞLIK SKORU
+      </text>
+    </svg>
   );
 }
 
