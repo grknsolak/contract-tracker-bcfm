@@ -195,7 +195,7 @@ function Gauge({ value = 0 }) {
       </svg>
 
       {/* Value — outside SVG, crisp HTML rendering */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 3, lineHeight: 1, marginTop: -6 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 3, lineHeight: 1, marginTop: 10 }}>
         <span style={{
           fontSize: 42,
           fontWeight: 800,
@@ -208,22 +208,6 @@ function Gauge({ value = 0 }) {
           {Math.round(value)}
         </span>
         <span style={{ fontSize: 20, fontWeight: 600, color, opacity: 0.6, transition: "color .3s" }}>%</span>
-      </div>
-
-      {/* Zone legend strip */}
-      <div style={{ display: "flex", gap: 10, marginTop: 10, alignItems: "center" }}>
-        {[
-          { label: "DÜŞÜK", c: "#ef4444" },
-          { label: "ORTA",  c: "#f59e0b" },
-          { label: "İYİ",   c: "#10b981" },
-        ].map(({ label, c }) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <div style={{ width: 20, height: 3, borderRadius: 999, background: c, opacity: 0.55 }}/>
-            <span style={{ fontSize: 9, fontWeight: 700, color: c, opacity: 0.65, letterSpacing: "0.05em" }}>
-              {label}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
