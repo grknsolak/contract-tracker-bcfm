@@ -124,7 +124,7 @@ export default function App() {
   } else if (route.name === "executive") {
     content = <Executive contracts={contracts} usdRate={usdRate} onNavigate={navigate} />;
   } else if (route.name === "tribes") {
-    content = <Tribes contracts={contracts} onNavigate={navigate} />;
+    content = <Tribes contracts={contracts} setContracts={setContracts} onNavigate={navigate} />;
   } else if (route.name === "notifications") {
     content = <NotificationLog highlightId={route.query?.id} />;
   } else if (route.name === "alerts") {

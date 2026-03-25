@@ -7962,15 +7962,17 @@ textarea {
   flex-shrink: 0;
 }
 
-/* ── Customer cloud (chips below team node) ───────────────── */
+/* ════════════════════════════════════════════════════════════
+   CUSTOMER CLOUD
+   ════════════════════════════════════════════════════════════ */
+
 .org-customer-cloud {
   position: relative;
   padding-top: 20px;
-  width: 240px;
-  max-width: 90vw;
+  width: 260px;
 }
 
-/* Vertical connector from team node down to cloud */
+/* Vertical connector from team → cloud */
 .org-customer-cloud::before {
   content: "";
   position: absolute;
@@ -7982,24 +7984,37 @@ textarea {
   background: var(--border);
 }
 
+/* Card container */
 .org-customer-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 5px;
   padding: 10px;
   background: var(--card-bg);
   border: 1px solid var(--border);
   border-top: 2px solid var(--tc, #6b7280);
   border-radius: 10px;
-  justify-content: center;
 }
 
-.org-customer-chip {
-  display: inline-flex;
+/* Each chip wrapper (chip + × button) */
+.org-cchip-wrap {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.org-cchip-wrap:hover .org-cchip-del {
+  opacity: 1;
+}
+
+/* The clickable chip button */
+.org-cchip {
+  display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 9px;
-  border-radius: 20px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 7px;
   border: 1px solid var(--border);
   background: var(--bg);
   color: var(--text-secondary);
@@ -8007,21 +8022,120 @@ textarea {
   font-weight: 500;
   cursor: pointer;
   transition: all .12s;
-  white-space: nowrap;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.org-customer-chip:hover {
+.org-cchip:hover {
   background: var(--hover-bg);
   border-color: var(--tc, #6b7280);
   color: var(--text-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,0,0,.08);
 }
 
-.org-customer-dot {
+.org-cchip-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
+}
+
+.org-cchip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* × remove button */
+.org-cchip-del {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity .12s, background .12s, color .12s;
+  padding: 0;
+  z-index: 2;
+}
+
+.org-cchip-del:hover {
+  background: rgba(239,68,68,.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+/* Add customer form — spans both columns */
+.org-cchip-form {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.org-cchip-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  font-size: 11px;
+  border: 1px solid #3b82f6;
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.org-cchip-confirm,
+.org-cchip-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all .12s;
+}
+.org-cchip-confirm:hover { background: rgba(16,185,129,.15); border-color: #10b981; color: #10b981; }
+.org-cchip-cancel:hover  { background: rgba(239,68,68,.1);   border-color: #ef4444; color: #ef4444; }
+
+/* "+ Müşteri ekle" button — spans both columns */
+.org-cchip-add-btn {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px;
+  border-radius: 7px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .12s;
+  width: 100%;
+}
+
+.org-cchip-add-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--tc, #6b7280);
+  color: var(--text-secondary);
 }
 
