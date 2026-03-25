@@ -103,74 +103,126 @@ function useTeamData(contracts, usdRate) {
 }
 
 // ─── Gauge (speedometer) ──────────────────────────────────────────────────────
-// Arc: cx=60 cy=62 r=46 → left=(14,62) top=(60,16) right=(106,62)
-// 33% point ≈ (37,22)   66% point ≈ (83,22)
+// Arc: cx=60 cy=58 r=42 → left=(18,58) top=(60,16) right=(102,58)
 // sweep-flag=0 → counterclockwise = visually upward
-function Gauge({ value = 0, label }) {
-  const pct  = Math.min(1, Math.max(0, value / 100));
-  const r    = 46, cx = 60, cy = 62;
-  const len  = Math.PI * r;          // ~144.5
-  const fill = pct * len;
-
+function Gauge({ value = 0 }) {
+  const pct   = Math.min(1, Math.max(0, value / 100));
+  const r = 42, cx = 60, cy = 58;
+  const len   = Math.PI * r;   // ≈131.9
+  const fill  = pct * len;
   const color = pct >= 0.7 ? "#10b981" : pct >= 0.4 ? "#f59e0b" : "#ef4444";
+  const bgColor = pct >= 0.7 ? "rgba(16,185,129,.08)" : pct >= 0.4 ? "rgba(245,158,11,.08)" : "rgba(239,68,68,.08)";
 
-  // needle tip
+  // needle tip (shorter than arc radius)
   const ang = Math.PI * (1 - pct);
-  const nx  = cx + 34 * Math.cos(ang);
-  const ny  = cy - 34 * Math.sin(ang);
+  const nx  = cx + 30 * Math.cos(ang);
+  const ny  = cy - 30 * Math.sin(ang);
 
-  // tick positions (0 / 25 / 50 / 75 / 100 %)
+  // major ticks at 0 / 25 / 50 / 75 / 100 %
   const ticks = [0, 0.25, 0.5, 0.75, 1].map((t) => {
-    const a  = Math.PI * (1 - t);
-    const r1 = 39, r2 = 46;
+    const a = Math.PI * (1 - t);
+    const isMajor = t === 0 || t === 0.5 || t === 1;
     return {
-      x1: cx + r1 * Math.cos(a), y1: cy - r1 * Math.sin(a),
-      x2: cx + r2 * Math.cos(a), y2: cy - r2 * Math.sin(a),
+      x1: cx + (isMajor ? 35 : 37) * Math.cos(a),
+      y1: cy - (isMajor ? 35 : 37) * Math.sin(a),
+      x2: cx + 42 * Math.cos(a),
+      y2: cy - 42 * Math.sin(a),
+      major: isMajor,
     };
   });
 
+  // tick labels at 0 / 50 / 100
+  const tickLabels = [
+    { t: 0,   txt: "0" },
+    { t: 0.5, txt: "50" },
+    { t: 1,   txt: "100" },
+  ].map(({ t, txt }) => {
+    const a = Math.PI * (1 - t);
+    return { x: cx + 50 * Math.cos(a), y: cy - 50 * Math.sin(a) + 2, txt };
+  });
+
   return (
-    <svg width="200" height="128" viewBox="0 0 120 80" style={{ display: "block", margin: "0 auto" }}>
-      {/* colour zones */}
-      <path d="M 14,62 A 46,46 0 0,0 37,22"   fill="none" stroke="rgba(239,68,68,.18)"   strokeWidth="9"/>
-      <path d="M 37,22 A 46,46 0 0,0 83,22"   fill="none" stroke="rgba(245,158,11,.18)"  strokeWidth="9"/>
-      <path d="M 83,22 A 46,46 0 0,0 106,62"  fill="none" stroke="rgba(16,185,129,.18)"  strokeWidth="9"/>
+    <svg width="210" height="130" viewBox="0 0 120 82" style={{ display: "block", margin: "0 auto" }}>
+      <defs>
+        {/* subtle glow on filled arc */}
+        <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.8" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
 
-      {/* background arc */}
-      <path d="M 14,62 A 46,46 0 0,0 106,62"  fill="none" stroke="var(--hover-bg)"       strokeWidth="7" strokeLinecap="round"/>
-
-      {/* filled arc */}
+      {/* ① thick background track — neutral, no zones */}
       <path
-        d="M 14,62 A 46,46 0 0,0 106,62"
+        d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
         fill="none"
-        stroke={color}
-        strokeWidth="7"
+        stroke="rgba(255,255,255,0.07)"
+        strokeWidth="8"
         strokeLinecap="round"
-        strokeDasharray={`${fill} ${len}`}
-        style={{ transition: "stroke-dasharray .6s ease" }}
       />
 
-      {/* ticks */}
+      {/* ② filled arc — clean single color */}
+      <path
+        d={`M 18,${cy} A ${r},${r} 0 0,0 102,${cy}`}
+        fill="none"
+        stroke={color}
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeDasharray={`${fill} ${len}`}
+        filter="url(#gauge-glow)"
+        style={{ transition: "stroke-dasharray .55s cubic-bezier(.4,0,.2,1), stroke .3s" }}
+      />
+
+      {/* ③ tick marks */}
       {ticks.map((t, i) => (
-        <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="var(--border)" strokeWidth="1.5" strokeLinecap="round"/>
+        <line
+          key={i}
+          x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+          stroke={t.major ? "rgba(255,255,255,0.3)" : "rgba(255,255,255,0.12)"}
+          strokeWidth={t.major ? 1.5 : 1}
+          strokeLinecap="round"
+        />
       ))}
 
-      {/* needle */}
-      <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
-      <circle cx={cx} cy={cy} r="4"  fill="var(--surface-raised)" stroke={color} strokeWidth="2.5"/>
-      <circle cx={cx} cy={cy} r="1.5" fill={color}/>
+      {/* ④ tick labels */}
+      {tickLabels.map((l) => (
+        <text key={l.txt} x={l.x} y={l.y} textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.3)">
+          {l.txt}
+        </text>
+      ))}
 
-      {/* value */}
-      <text x={cx} y={cy - 8}  textAnchor="middle" fontSize="18" fontWeight="800" fill={color}>
+      {/* ⑤ needle — thin white, tip has colored dot */}
+      <line
+        x1={cx} y1={cy}
+        x2={nx} y2={ny}
+        stroke="rgba(255,255,255,0.75)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      {/* needle tip dot */}
+      <circle cx={nx} cy={ny} r="2" fill={color}/>
+      {/* center hub */}
+      <circle cx={cx} cy={cy} r="5"   fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="1"/>
+      <circle cx={cx} cy={cy} r="2.5" fill={color}/>
+
+      {/* ⑥ value — large, inside the bowl */}
+      <text
+        x={cx} y={cy - 9}
+        textAnchor="middle"
+        fontSize="20"
+        fontWeight="800"
+        fill="white"
+        letterSpacing="-0.03em"
+      >
         {Math.round(value)}%
       </text>
-      <text x={cx} y={cy + 13} textAnchor="middle" fontSize="8"  fill="var(--text-muted)" letterSpacing="0.06em">
-        {(label || "").toUpperCase()}
-      </text>
 
-      {/* axis labels */}
-      <text x="8"   y="74" textAnchor="middle" fontSize="7.5" fill="var(--text-muted)">0</text>
-      <text x="112" y="74" textAnchor="middle" fontSize="7.5" fill="var(--text-muted)">100</text>
+      {/* ⑦ colored legend strip at the very bottom */}
+      <rect x="18" y="66" width="28" height="2.5" rx="1.5" fill="#ef4444" opacity="0.55"/>
+      <rect x="48" y="66" width="24" height="2.5" rx="1.5" fill="#f59e0b" opacity="0.55"/>
+      <rect x="74" y="66" width="28" height="2.5" rx="1.5" fill="#10b981" opacity="0.55"/>
+      <text x="32"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(239,68,68,0.65)" letterSpacing="0.04em">DÜŞÜK</text>
+      <text x="60"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(245,158,11,0.65)" letterSpacing="0.04em">ORTA</text>
+      <text x="88"  y="75" textAnchor="middle" fontSize="6.5" fill="rgba(16,185,129,0.65)" letterSpacing="0.04em">İYİ</text>
     </svg>
   );
 }
@@ -417,7 +469,7 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
 
             {/* Gauge card */}
             <Card title="Takım Sağlığı" sub="composite score">
-              <Gauge value={selected.healthScore} label="Health Score"/>
+              <Gauge value={selected.healthScore}/>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 9 }}>
                 {[
                   { label: "Yenileme Oranı",  value: selected.avgRate ? `${selected.avgRate}%` : "—",  accent: selected.avgRate >= 70 ? "#10b981" : selected.avgRate >= 40 ? "#f59e0b" : "#ef4444" },
