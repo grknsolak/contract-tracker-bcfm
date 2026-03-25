@@ -212,7 +212,7 @@ function Gauge({ value = 0 }) {
       </text>
       <text x={cx} y={cy + 30} textAnchor="middle" fontSize="6.5"
         fill="rgba(255,255,255,0.3)" letterSpacing="0.07em">
-        SAĞLIK SKORU
+        HEALTH SCORE
       </text>
     </svg>
   );
@@ -221,7 +221,7 @@ function Gauge({ value = 0 }) {
 // ─── Scope horizontal bars ────────────────────────────────────────────────────
 function ScopeBars({ scopes }) {
   if (!scopes.length) {
-    return <div style={{ color: "var(--text-muted)", fontSize: 13, padding: "12px 0" }}>Kapsam verisi yok</div>;
+    return <div style={{ color: "var(--text-muted)", fontSize: 13, padding: "12px 0" }}>No scope data</div>;
   }
   const maxVal = scopes[0].value;
   return (
@@ -237,7 +237,7 @@ function ScopeBars({ scopes }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-                  {s.count} sözleşme
+                  {s.count} contract{s.count !== 1 ? "s" : ""}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text)", minWidth: 56, textAlign: "right" }}>
                   {fmtUSD(s.value)}
@@ -319,7 +319,7 @@ function CustomerChips({ contracts, usdRate, onNavigate }) {
         );
       })}
       {contracts.length === 0 && (
-        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>Henüz müşteri yok</div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>No customers yet</div>
       )}
     </div>
   );
@@ -410,7 +410,7 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
   }, [teamData, activeTeam]);
 
   if (!teamData.length) {
-    return <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>Henüz sözleşme yok.</div>;
+    return <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>No contracts yet.</div>;
   }
 
   const hColor = selected
@@ -423,7 +423,7 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
       <div style={{ padding: "28px 28px 0" }}>
         <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "var(--text)" }}>Teams</h1>
         <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--text-muted)" }}>
-          Takım bazlı analitik ve sözleşme sağlığı
+          Team-based analytics and contract health
         </p>
       </div>
 
@@ -444,14 +444,14 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
 
           {/* KPI strip */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 20 }}>
-            <Kpi label="Portföy Değeri" value={fmtUSD(selected.teamUSD)} sub={`Toplamın ${selected.pct.toFixed(1)}%'i`}/>
-            <Kpi label="Müşteriler" value={selected.customers.length} sub={`${selected.contractCount} sözleşme`}/>
-            <Kpi label="Sağlık Skoru" value={`${selected.healthScore}%`} sub="bileşik skor" accent={hColor}/>
-            <Kpi label="Ort. Yenileme" value={selected.avgRate ? `${selected.avgRate}%` : "—"} sub="oran ortalaması"
+            <Kpi label="Portfolio Value" value={fmtUSD(selected.teamUSD)} sub={`${selected.pct.toFixed(1)}% of total`}/>
+            <Kpi label="Customers" value={selected.customers.length} sub={`${selected.contractCount} contracts`}/>
+            <Kpi label="Health Score" value={`${selected.healthScore}%`} sub="composite score" accent={hColor}/>
+            <Kpi label="Avg Renewal" value={selected.avgRate ? `${selected.avgRate}%` : "—"} sub="rate average"
               accent={selected.avgRate >= 70 ? "#10b981" : selected.avgRate >= 40 ? "#f59e0b" : "#ef4444"}/>
-            <Kpi label="Risk" value={selected.atRisk} sub="≤30 gün kalan"
+            <Kpi label="At Risk" value={selected.atRisk} sub="expiring ≤30 days"
               accent={selected.atRisk > 0 ? "#f59e0b" : undefined}/>
-            <Kpi label="Süresi Doldu" value={selected.expired} sub="churn / vadesi geçmiş"
+            <Kpi label="Expired" value={selected.expired} sub="churn / overdue"
               accent={selected.expired > 0 ? "#ef4444" : undefined}/>
           </div>
 
@@ -459,14 +459,14 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
           <div style={{ display: "grid", gridTemplateColumns: "230px 1fr 1fr", gap: 16, marginBottom: 16, alignItems: "start" }}>
 
             {/* Gauge card */}
-            <Card title="Takım Sağlığı" sub="composite score">
+            <Card title="Team Health" sub="composite score">
               <Gauge value={selected.healthScore}/>
               <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 9 }}>
                 {[
-                  { label: "Yenileme Oranı",  value: selected.avgRate ? `${selected.avgRate}%` : "—",  accent: selected.avgRate >= 70 ? "#10b981" : selected.avgRate >= 40 ? "#f59e0b" : "#ef4444" },
-                  { label: "Pipeline'da",      value: selected.inPipeline,   accent: selected.inPipeline  > 0 ? "#3b82f6" : undefined },
-                  { label: "Aktif Sözleşme",   value: selected.active,       accent: undefined },
-                  { label: "Risk Altında",     value: selected.atRisk,       accent: selected.atRisk > 0 ? "#f59e0b" : undefined },
+                  { label: "Renewal Rate",    value: selected.avgRate ? `${selected.avgRate}%` : "—",  accent: selected.avgRate >= 70 ? "#10b981" : selected.avgRate >= 40 ? "#f59e0b" : "#ef4444" },
+                  { label: "In Pipeline",     value: selected.inPipeline,   accent: selected.inPipeline  > 0 ? "#3b82f6" : undefined },
+                  { label: "Active Contracts", value: selected.active,      accent: undefined },
+                  { label: "At Risk",         value: selected.atRisk,       accent: selected.atRisk > 0 ? "#f59e0b" : undefined },
                 ].map((r) => (
                   <div key={r.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.label}</span>
@@ -477,18 +477,18 @@ export default function Teams({ contracts = [], usdRate = 32, onNavigate }) {
             </Card>
 
             {/* Scope breakdown */}
-            <Card title="Kapsam Dağılımı" sub="portföy değerine göre">
+            <Card title="Scope Breakdown" sub="by portfolio value">
               <ScopeBars scopes={selected.scopes}/>
             </Card>
 
             {/* Customer chips */}
-            <Card title="Müşteri Durumu" sub={`${selected.customers.length} müşteri`}>
+            <Card title="Customer Status" sub={`${selected.customers.length} customers`}>
               <CustomerChips contracts={selected.contracts} usdRate={usdRate} onNavigate={onNavigate}/>
             </Card>
           </div>
 
           {/* Stage distribution — full width */}
-          <Card title="Stage Dağılımı" sub={`${selected.contractCount} sözleşme toplamı`}>
+          <Card title="Stage Distribution" sub={`${selected.contractCount} contracts total`}>
             <StageDist stageCounts={selected.stageCounts} total={selected.contractCount}/>
           </Card>
 
