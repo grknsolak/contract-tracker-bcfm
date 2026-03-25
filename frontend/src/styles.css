@@ -2672,7 +2672,42 @@ textarea {
 
 .row-actions {
   display: flex;
-  gap: 6px;
+  gap: 4px;
+  align-items: center;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.table-row:hover .row-actions {
+  opacity: 1;
+}
+
+.row-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .12s;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.row-icon-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.row-icon-btn--danger:hover {
+  background: rgba(239, 68, 68, .1);
+  border-color: rgba(239, 68, 68, .3);
+  color: #ef4444;
 }
 
 /* ─── Badges ─────────────────────────────────────── */
