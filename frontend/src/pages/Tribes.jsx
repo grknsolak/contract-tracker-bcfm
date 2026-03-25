@@ -11,6 +11,20 @@ const PALETTE = [
   "#14b8a6", "#84cc16",
 ];
 
+// Stage → dot color
+const STAGE_COLOR = {
+  "Active":             "#10b981",
+  "Signed":             "#3b82f6",
+  "Renewal Upcoming":   "#f59e0b",
+  "Renewal Protocol":   "#f59e0b",
+  "Approval Pending":   "#8b5cf6",
+  "Under Review":       "#60a5fa",
+  "Legal Review":       "#60a5fa",
+  "Expired":            "#ef4444",
+  "NDA":                "#64748b",
+  "Draft":              "#64748b",
+};
+
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const IconBuilding = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -37,19 +51,39 @@ const IconCheck = ({ size = 12 }) => (
   </svg>
 );
 
-const IconUsers = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-    <circle cx="9" cy="7" r="4" />
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-  </svg>
-);
+// ── Customer cloud beneath a team node ────────────────────────────────────────
+function CustomerCloud({ teamName, contracts, tribeColor, onNavigate }) {
+  const customers = contracts.filter((c) => c.team === teamName);
+  if (customers.length === 0) return null;
+
+  return (
+    <div className="org-customer-cloud" style={{ "--tc": tribeColor }}>
+      <div className="org-customer-grid">
+        {customers.map((c) => {
+          const dotColor = STAGE_COLOR[c.stage] || "#6b7280";
+          return (
+            <button
+              key={c.id}
+              className="org-customer-chip"
+              onClick={() => onNavigate && onNavigate(`/contracts/${c.id}`)}
+              title={`${c.stage} · ${c.currency === "USD" ? "$" : "₺"}${(c.value / 1000).toFixed(0)}K`}
+            >
+              <span
+                className="org-customer-dot"
+                style={{ background: dotColor }}
+              />
+              {c.customerName}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function Tribes() {
+export default function Tribes({ contracts = [], onNavigate }) {
   const [settings, setSettings] = useState(() => {
-    // If old tribe IDs found in localStorage, reset to new defaults
     const raw = localStorage.getItem("appSettings");
     if (raw) {
       try {
@@ -131,7 +165,9 @@ export default function Tribes() {
     persist(newTribes, allTeams);
   };
 
-  const totalTeams = tribes.reduce((s, t) => s + (t.teams || []).length, 0);
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const totalTeams     = tribes.reduce((s, t) => s + (t.teams || []).length, 0);
+  const totalCustomers = contracts.length;
 
   return (
     <div className="tribes-page">
@@ -140,7 +176,7 @@ export default function Tribes() {
         <div>
           <h1 className="tribes-title">Tribe Structure</h1>
           <p className="tribes-subtitle">
-            {tribes.length} tribe · {totalTeams} takım
+            {tribes.length} tribe &middot; {totalTeams} takım &middot; {totalCustomers} müşteri
           </p>
         </div>
       </div>
@@ -156,100 +192,130 @@ export default function Tribes() {
                   <IconBuilding />
                 </div>
                 <span className="org-node-label">{companyName}</span>
+                <span className="org-node-sub" style={{ color: "#3b82f6", fontWeight: 600 }}>
+                  {totalCustomers} müşteri
+                </span>
               </div>
 
               {/* ── Tribe level ── */}
               <ul>
-                {tribes.map((tribe) => (
-                  <li key={tribe.id}>
-                    {/* Tribe node */}
-                    <div
-                      className="org-node org-node--tribe"
-                      style={{ "--tc": tribe.color, borderTopColor: tribe.color }}
-                    >
-                      <button
-                        className="org-node-del"
-                        onClick={() => deleteTribe(tribe.id)}
-                        title="Tribe'ı sil"
-                      >
-                        <IconX />
-                      </button>
+                {tribes.map((tribe) => {
+                  const tribeCustomerCount = contracts.filter((c) =>
+                    (tribe.teams || []).includes(c.team)
+                  ).length;
+
+                  return (
+                    <li key={tribe.id}>
+                      {/* Tribe node */}
                       <div
-                        className="org-tribe-avatar"
-                        style={{ background: `${tribe.color}22`, color: tribe.color }}
+                        className="org-node org-node--tribe"
+                        style={{ "--tc": tribe.color, borderTopColor: tribe.color }}
                       >
-                        {tribe.name.slice(0, 2).toUpperCase()}
+                        <button
+                          className="org-node-del"
+                          onClick={() => deleteTribe(tribe.id)}
+                          title="Tribe'ı sil"
+                        >
+                          <IconX />
+                        </button>
+                        <div
+                          className="org-tribe-avatar"
+                          style={{ background: `${tribe.color}22`, color: tribe.color }}
+                        >
+                          {tribe.name.slice(0, 2).toUpperCase()}
+                        </div>
+                        <span className="org-node-label">{tribe.name}</span>
+                        <span className="org-node-sub">
+                          {(tribe.teams || []).length} takım
+                          {tribeCustomerCount > 0 && (
+                            <> &middot; <span style={{ color: tribe.color, fontWeight: 600 }}>{tribeCustomerCount}</span> müşteri</>
+                          )}
+                        </span>
                       </div>
-                      <span className="org-node-label">{tribe.name}</span>
-                      <span className="org-node-sub">
-                        <IconUsers />
-                        {(tribe.teams || []).length} takım
-                      </span>
-                    </div>
 
-                    {/* ── Team level ── */}
-                    <ul>
-                      {(tribe.teams || []).map((teamName) => (
-                        <li key={teamName}>
-                          <div
-                            className="org-node org-node--team"
-                            style={{ borderTopColor: tribe.color }}
-                          >
-                            <button
-                              className="org-node-del org-node-del--sm"
-                              onClick={() => deleteTeam(tribe.id, teamName)}
-                              title="Takımı sil"
-                            >
-                              <IconX size={10} />
-                            </button>
-                            <span className="org-node-label">{teamName}</span>
-                          </div>
-                        </li>
-                      ))}
+                      {/* ── Team level ── */}
+                      <ul>
+                        {(tribe.teams || []).map((teamName) => {
+                          const teamCount = contracts.filter((c) => c.team === teamName).length;
+                          return (
+                            <li key={teamName}>
+                              <div
+                                className="org-node org-node--team"
+                                style={{ borderTopColor: tribe.color }}
+                              >
+                                <button
+                                  className="org-node-del org-node-del--sm"
+                                  onClick={() => deleteTeam(tribe.id, teamName)}
+                                  title="Takımı sil"
+                                >
+                                  <IconX size={10} />
+                                </button>
+                                <span className="org-node-label">{teamName}</span>
+                                {teamCount > 0 && (
+                                  <span
+                                    className="org-team-count-badge"
+                                    style={{ background: `${tribe.color}22`, color: tribe.color }}
+                                  >
+                                    {teamCount}
+                                  </span>
+                                )}
+                              </div>
 
-                      {/* Add team inline */}
-                      <li className="org-li--add">
-                        {addTeamFor === tribe.id ? (
-                          <div className="org-node org-node--input">
-                            <input
-                              className="org-input"
-                              value={newTeamName}
-                              onChange={(e) => setNewTeamName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") submitAddTeam(tribe.id);
-                                if (e.key === "Escape") setAddTeamFor(null);
-                              }}
-                              placeholder="Takım adı..."
-                              autoFocus
-                            />
-                            <div className="org-input-actions">
-                              <button
-                                className="org-action-btn org-action-btn--confirm"
-                                onClick={() => submitAddTeam(tribe.id)}
-                              >
-                                <IconCheck />
-                              </button>
-                              <button
-                                className="org-action-btn org-action-btn--cancel"
-                                onClick={() => setAddTeamFor(null)}
-                              >
-                                <IconX />
-                              </button>
+                              {/* ── Customer cloud ── */}
+                              <CustomerCloud
+                                teamName={teamName}
+                                contracts={contracts}
+                                tribeColor={tribe.color}
+                                onNavigate={onNavigate}
+                              />
+                            </li>
+                          );
+                        })}
+
+                        {/* Add team inline */}
+                        <li className="org-li--add">
+                          {addTeamFor === tribe.id ? (
+                            <div className="org-node org-node--input">
+                              <input
+                                className="org-input"
+                                value={newTeamName}
+                                onChange={(e) => setNewTeamName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") submitAddTeam(tribe.id);
+                                  if (e.key === "Escape") setAddTeamFor(null);
+                                }}
+                                placeholder="Takım adı..."
+                                autoFocus
+                              />
+                              <div className="org-input-actions">
+                                <button
+                                  className="org-action-btn org-action-btn--confirm"
+                                  onClick={() => submitAddTeam(tribe.id)}
+                                >
+                                  <IconCheck />
+                                </button>
+                                <button
+                                  className="org-action-btn org-action-btn--cancel"
+                                  onClick={() => setAddTeamFor(null)}
+                                >
+                                  <IconX />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <button
-                            className="org-node org-node--ghost"
-                            onClick={() => openAddTeam(tribe.id)}
-                          >
-                            <IconPlus />
-                            <span>Takım ekle</span>
-                          </button>
-                        )}
-                      </li>
-                    </ul>
-                  </li>
-                ))}
+                          ) : (
+                            <button
+                              className="org-node org-node--ghost"
+                              onClick={() => openAddTeam(tribe.id)}
+                            >
+                              <IconPlus />
+                              <span>Takım ekle</span>
+                            </button>
+                          )}
+                        </li>
+                      </ul>
+                    </li>
+                  );
+                })}
 
                 {/* Add tribe */}
                 <li className="org-li--add">

@@ -7952,3 +7952,76 @@ textarea {
   transform: scale(1.1);
 }
 
+/* ── Team count badge ─────────────────────────────────────── */
+.org-team-count-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+/* ── Customer cloud (chips below team node) ───────────────── */
+.org-customer-cloud {
+  position: relative;
+  padding-top: 20px;
+  width: 240px;
+  max-width: 90vw;
+}
+
+/* Vertical connector from team node down to cloud */
+.org-customer-cloud::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 20px;
+  background: var(--border);
+}
+
+.org-customer-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--tc, #6b7280);
+  border-radius: 10px;
+  justify-content: center;
+}
+
+.org-customer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+
+.org-customer-chip:hover {
+  background: var(--hover-bg);
+  border-color: var(--tc, #6b7280);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+
+.org-customer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
