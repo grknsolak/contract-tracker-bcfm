@@ -148,11 +148,35 @@ function useTeamMetrics(contracts, usdRate) {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function HorizBar({ value, max, color = "var(--primary)" }) {
-  const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+function PortfolioShare({ pct, color = "var(--primary)" }) {
+  const r = 18, cx = 22, cy = 22;
+  const circ = 2 * Math.PI * r;
+  const fill = (pct / 100) * circ;
   return (
-    <div className="exec-hbar-track" style={{ height: 5 }}>
-      <div className="exec-hbar-fill" style={{ width: `${pct}%`, background: color, height: 5 }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <svg width="44" height="44" viewBox="0 0 44 44" style={{ flexShrink: 0 }}>
+        {/* track */}
+        <circle cx={cx} cy={cy} r={r} fill="none"
+          stroke="rgba(255,255,255,0.07)" strokeWidth="5"/>
+        {/* fill — starts at top (-90°) */}
+        <circle cx={cx} cy={cy} r={r} fill="none"
+          stroke={color} strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray={`${fill} ${circ}`}
+          strokeDashoffset={circ / 4}
+          style={{ transition: "stroke-dasharray .5s ease, stroke .3s" }}/>
+        {/* center label */}
+        <text x={cx} y={cy + 4} textAnchor="middle"
+          fontSize="8" fontWeight="800" fill="white" letterSpacing="-0.02em">
+          {pct.toFixed(0)}%
+        </text>
+      </svg>
+      <div style={{ lineHeight: 1.3 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)" }}>
+          {pct.toFixed(1)}%
+        </div>
+        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>of portfolio</div>
+      </div>
     </div>
   );
 }
@@ -187,8 +211,7 @@ function TeamCard({ row, rank, maxUSD, onNavigate }) {
       </div>
 
       <div className="exec-pct-row">
-        <HorizBar value={row.teamUSD} max={maxUSD} color={cfg?.color || "var(--primary)"} />
-        <span className="exec-pct-label">{row.pct.toFixed(1)}% of portfolio</span>
+        <PortfolioShare pct={row.pct} color={cfg?.color || "var(--primary)"} />
       </div>
 
       <div className="exec-metrics-row">
@@ -214,9 +237,36 @@ function TeamCard({ row, rank, maxUSD, onNavigate }) {
         {Object.entries(TIER_CFG)
           .filter(([label]) => (row.tierCounts[label] || 0) > 0)
           .map(([label, c]) => (
-            <span key={label} className="exec-tier-chip" style={{ color: c.color, background: c.bg }}>
-              {label} <strong>{row.tierCounts[label]}</strong>
-            </span>
+            <div key={label} style={{
+              display: "inline-flex",
+              alignItems: "stretch",
+              borderRadius: 7,
+              border: `1px solid ${c.color}40`,
+              overflow: "hidden",
+              fontSize: 11,
+              flexShrink: 0,
+            }}>
+              {/* Tier letter — colored left side */}
+              <span style={{
+                padding: "4px 8px",
+                background: `${c.color}28`,
+                color: c.color,
+                fontWeight: 800,
+                letterSpacing: "0.03em",
+              }}>
+                {label}
+              </span>
+              {/* Count — neutral right side */}
+              <span style={{
+                padding: "4px 9px",
+                background: "rgba(255,255,255,0.03)",
+                color: "var(--text)",
+                fontWeight: 700,
+                borderLeft: `1px solid ${c.color}25`,
+              }}>
+                {row.tierCounts[label]}
+              </span>
+            </div>
           ))}
       </div>
 
@@ -386,6 +436,20 @@ export default function Dashboard({ contracts, onNavigate, usdRate = 32 }) {
         ))}
       </div>
 
+      {/* Team Performance */}
+      <div className="exec-section-title">Team Performance</div>
+      <div className="exec-team-grid">
+        {teamRows.map((row, i) => (
+          <TeamCard key={row.team} row={row} rank={i} maxUSD={maxTeamUSD} onNavigate={onNavigate} />
+        ))}
+      </div>
+
+      {/* Charts */}
+      <div className="exec-charts-row">
+        <RevenueChart rows={teamRows} />
+        <RenewalChart rows={teamRows} />
+      </div>
+
       {/* Quarter view */}
       <Card title="Quarter view" subtitle="Contracts grouped by end quarter">
         <div className="dashboard-quarter-grid">
@@ -415,20 +479,6 @@ export default function Dashboard({ contracts, onNavigate, usdRate = 32 }) {
           ))}
         </div>
       </Card>
-
-      {/* Team Performance */}
-      <div className="exec-section-title">Team Performance</div>
-      <div className="exec-team-grid">
-        {teamRows.map((row, i) => (
-          <TeamCard key={row.team} row={row} rank={i} maxUSD={maxTeamUSD} onNavigate={onNavigate} />
-        ))}
-      </div>
-
-      {/* Charts */}
-      <div className="exec-charts-row">
-        <RevenueChart rows={teamRows} />
-        <RenewalChart rows={teamRows} />
-      </div>
 
       {/* Metric modal */}
       {selectedMetric ? (
